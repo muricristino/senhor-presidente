@@ -220,6 +220,28 @@ export class Director {
     return d;
   }
 
+  // ---------- legado ----------
+
+  /** A manchete e o epitáfio do governo, escritos pelo Claude com o histórico completo. */
+  legacy(state: GameState, ending: string): Promise<{ headline: string; epitaph: string } | null> {
+    const how: Record<string, string> = {
+      impeachment: 'Terminou afastado por impeachment.',
+      derrota: 'Terminou derrotado ao tentar a reeleição.',
+      renuncia: 'Terminou renunciando.',
+      fim: 'Completou os dois mandatos.',
+      pausa: 'O governo ainda está em curso.',
+    };
+    return claudeOnline().then((online) =>
+      online
+        ? post<{ headline: string; epitaph: string }>(
+            '/api/legacy',
+            { briefing: `${briefing(state, this.country).replace('Escreva a próxima crise.', '')}\nDesfecho: ${how[ending] ?? ending}\nEscreva o legado.` },
+            90_000,
+          ).then((r) => (r?.headline ? { headline: String(r.headline).slice(0, 90), epitaph: String(r.epitaph ?? '').slice(0, 420) } : null))
+        : null,
+    );
+  }
+
   // ---------- coletivas ----------
 
   private interview: Promise<Interview | null> | null = null;

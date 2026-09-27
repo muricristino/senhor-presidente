@@ -244,13 +244,21 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   if (ending !== 'pausa') clearSave();
   music.play(ending === 'fim' ? 'epic' : ending === 'pausa' ? 'calm' : 'sad');
   g.destroy();
-  summaryScreen(stage, country, createState(country, start.player), g.state, ending, {
-    onReplay: () => {
-      clearSave();
-      void runMandate(countryId, createState(country, start.player), true);
+  summaryScreen(
+    stage,
+    country,
+    createState(country, start.player),
+    g.state,
+    ending,
+    {
+      onReplay: () => {
+        clearSave();
+        void runMandate(countryId, createState(country, start.player), true);
+      },
+      onNewPresident: startCreation,
     },
-    onNewPresident: startCreation,
-  });
+    director.legacy(g.state, ending),
+  );
 }
 
 startCreation();

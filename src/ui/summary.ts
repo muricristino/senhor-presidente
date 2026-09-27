@@ -8,7 +8,8 @@ import { ageOf, yearOf } from '../engine/calendar';
 import { dominantLeans, profileTitle } from '../engine/profile';
 import type { Country, GameState } from '../engine/types';
 import { slow } from '../speed';
-import { el, esc, wait } from './dom';
+import { el, esc, typewriter, wait } from './dom';
+import { showLegacyCard, type Legacy } from './legacyCard';
 
 /** Frase de legado provisório a partir dos dois polos mais fortes. */
 function legacy(state: GameState, ending: Ending): string {
@@ -42,6 +43,8 @@ export function summaryScreen(
   end: GameState,
   ending: Ending,
   cb: { onReplay: () => void; onNewPresident: () => void },
+  /** Manchete e epitáfio do governo, escritos pelo Claude. */
+  written: Promise<Legacy | null> = Promise.resolve(null),
 ) {
 
   const screen = el('div', 'screen summary');
@@ -53,6 +56,7 @@ export function summaryScreen(
         <div class="sum-span">${start.startYear}–${yearOf(end, end.month)} · ${end.term === 1 ? 'primeiro' : 'segundo'} mandato · ${end.month} meses no poder · ${start.startAge} → ${ageOf(end, end.month)} anos</div>
         <h1>${esc(end.player.name)}</h1>
         <div class="profile-big">${esc(profileTitle(end.axes))}</div>
+        <h2 class="legacy-headline"></h2>
         <p class="legacy"></p>
         <div class="sum-trophies">${(end.trophies ?? [])
           .map((id) => ACHIEVEMENTS.find((a) => a.id === id))
@@ -93,6 +97,7 @@ export function summaryScreen(
       </section>
     </div>
     <div class="lesson-actions">
+      <button class="btn-card">🖼️ CARTÃO DO LEGADO</button>
       <button class="btn-new">NOVO PRESIDENTE</button>
       <button class="btn-next">↺ JOGAR DE NOVO COM OUTRAS ESCOLHAS</button>
     </div>`;
@@ -109,13 +114,25 @@ export function summaryScreen(
       setTimeout(() => (m.style.left = `${m.dataset.v}%`), slow(i * 70));
     });
     const p = screen.querySelector<HTMLElement>('.legacy')!;
-    const text = `${ending === 'pausa' ? 'Legado provisório' : 'Legado'}: ${legacy(end, ending)}`;
-    for (let i = 0; i <= text.length; i++) {
-      p.textContent = text.slice(0, i);
-      if (i % 3 === 0) sfx.type();
-      await wait(14);
+    p.innerHTML = '<span class="loading-dots">📜 O historiador escreve o seu legado</span>';
+    const got = await written;
+    if (got) {
+      await typewriter(screen.querySelector<HTMLElement>('.legacy-headline')!, `“${got.headline}”`, 22, sfx.type);
+      await typewriter(p, got.epitaph, 16, sfx.type);
+    } else {
+      await typewriter(p, `${ending === 'pausa' ? 'Legado provisório' : 'Legado'}: ${legacy(end, ending)}`, 14, sfx.type);
     }
   })();
+
+  const cardBtn = screen.querySelector<HTMLButtonElement>('.btn-card')!;
+  cardBtn.addEventListener('click', async () => {
+    sfx.click();
+    cardBtn.disabled = true;
+    cardBtn.textContent = '⏳ PREPARANDO…';
+    await showLegacyCard(screen, start, end, ending, await written);
+    cardBtn.disabled = false;
+    cardBtn.textContent = '🖼️ CARTÃO DO LEGADO';
+  });
 
   screen.querySelector('.btn-next')!.addEventListener('click', () => {
     sfx.click();

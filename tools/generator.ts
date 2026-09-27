@@ -247,6 +247,12 @@ Regras:
 - Cada resposta tem a manchete que sairia no dia seguinte (até 90 caracteres) e efeitos pequenos: eixos até ±8, aprovacao/coalizao até ±4, bancadas e relations até ±10.
 Português do Brasil, com acentos.`;
 
+const LEGACY_SYSTEM = `Você é o historiador de "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
+O mandato do jogador acabou (ou está em pausa). Com base no histórico completo, escreva como a história vai lembrar deste presidente:
+- headline: a manchete definitiva do legado, marcante e específica às decisões dele (até 80 caracteres), no estilo de capa de revista.
+- epitaph: 2 frases (até 220 caracteres) que resumem o governo, citando 1 ou 2 decisões concretas do histórico e o perfil ideológico. Pode ter ironia; não precisa ser elogioso.
+Português do Brasil, com acentos.`;
+
 const CUTSCENE_SYSTEM = `Você é o diretor de cena de "Senhor Presidente", um jogo em pixel art. Escreva o roteiro de uma cinemática curta (4 a 7 segundos) para a decisão descrita.
 A tela tem 192x112 pixels. O y de um ator é a posição dos PÉS; pessoas têm 22px de altura, então o chão fica por volta de y=96..108. x é o centro do ator.
 
@@ -388,6 +394,11 @@ export function claudeDirector(): Plugin {
           if (req.url === '/api/interview' && req.method === 'POST') {
             const out = await runClaude(INTERVIEW_SYSTEM, body.briefing, interviewSchema(body.axes, body.factions));
             console.log(`[claude] coletiva gerada em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, out);
+          }
+          if (req.url === '/api/legacy' && req.method === 'POST') {
+            const out = await runClaude(LEGACY_SYSTEM, body.briefing, { type: 'object', properties: { headline: str, epitaph: str }, required: ['headline', 'epitaph'] });
+            console.log(`[claude] legado gerado em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, out);
           }
           if (req.url === '/api/event-details' && req.method === 'POST') {

@@ -836,3 +836,12 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .btn-gallery:hover { filter: brightness(1.2); }
 .sum-trophies { display: flex; flex-wrap: wrap; gap: 6px; }
 .sum-trophies span { font-size: 15px; }
+
+/* legado */
+.legacy-headline { margin: 4px 0 0; font-size: 30px; color: var(--paper); min-height: 0; }
+.legacy-headline:empty { display: none; }
+.btn-card { margin-right: auto; background: #2f2a1c !important; border-color: var(--yellow) !important; color: var(--yellow) !important; }
+.card-box { width: 1040px; background: var(--panel); border: 4px solid var(--yellow); box-shadow: 10px 10px 0 var(--shadow); padding: 16px 20px; animation: slam 0.3s ease-out; }
+.card-preview { margin: 12px 0; display: flex; justify-content: center; }
+.card-canvas { width: 960px; height: 504px; image-rendering: pixelated; border: 3px solid #07080d; box-shadow: 0 0 40px #f4c54233; animation: pop-in 0.5s; }
+.card-status { margin: 8px 0 0; text-align: right; color: var(--green-2); font-size: 17px; min-height: 22px; }
