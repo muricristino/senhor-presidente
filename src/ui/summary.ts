@@ -3,6 +3,7 @@ import { makeCanvas } from '../art/pixel';
 import { sfx } from '../audio/sfx';
 import { AXES } from '../engine/data';
 import { formatDelta, formatKpi, KPIS } from '../engine/kpis';
+import { ACHIEVEMENTS } from '../engine/achievements';
 import { ageOf, yearOf } from '../engine/calendar';
 import { dominantLeans, profileTitle } from '../engine/profile';
 import type { Country, GameState } from '../engine/types';
@@ -53,6 +54,11 @@ export function summaryScreen(
         <h1>${esc(end.player.name)}</h1>
         <div class="profile-big">${esc(profileTitle(end.axes))}</div>
         <p class="legacy"></p>
+        <div class="sum-trophies">${(end.trophies ?? [])
+          .map((id) => ACHIEVEMENTS.find((a) => a.id === id))
+          .filter((a) => !!a)
+          .map((a) => `<span class="chip lean" title="${esc(a!.desc)}">${a!.icon} ${esc(a!.name)}</span>`)
+          .join('')}</div>
       </div>
     </header>
     <div class="sum-grid">

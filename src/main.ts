@@ -2,6 +2,7 @@ import '@fontsource/press-start-2p/400.css';
 import './fonts.css';
 import './style.css';
 import { dateLabel, monthName, yearOf } from './engine/calendar';
+import { checkAchievements, type Milestones } from './engine/achievements';
 import { Director } from './engine/director';
 import { getCountry } from './engine/data';
 import {
@@ -19,6 +20,7 @@ import { runInterview } from './ui/interview';
 import { wait } from './ui/dom';
 import { inaugurationScreen } from './ui/inauguration';
 import { showVerdict } from './ui/overlays';
+import { toastAchievement } from './ui/trophies';
 import { Gabinete } from './ui/shell';
 import { summaryScreen, type Ending } from './ui/summary';
 
@@ -100,6 +102,16 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     return g.state.decisions[g.state.decisions.length - 1]?.split(':')[1];
   };
 
+  const milestones: Milestones = {};
+  /** Confere conquistas depois de cada acontecimento: troféu na mesa e aviso na tela. */
+  const trophies = () => {
+    const fresh = checkAchievements(g.state, milestones, country);
+    if (!fresh.length) return;
+    g.state = { ...g.state, trophies: [...(g.state.trophies ?? []), ...fresh.map((a) => a.id)] };
+    g.renderTrophies();
+    fresh.forEach((a) => toastAchievement(g.screen, a));
+  };
+
   const nextMonth = () => {
     g.state = advanceMonth(g.state, country);
     g.renderRelations();
@@ -120,6 +132,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
         });
         return 'impeachment';
       }
+      milestones.survivedImpeachment = true;
       g.state = { ...applyEffects(g.state, { kpis: { coalizao: 6, aprovacao: 3 } }, country, false).state, impeachmentShieldUntil: g.state.month + 12 };
       g.render();
       await showVerdict(g.screen, {
@@ -141,6 +154,8 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
         });
         return 'derrota';
       }
+      milestones.reelected = true;
+      trophies();
       await showVerdict(g.screen, {
         icon: '🎉', kicker: 'TRIBUNAL SUPERIOR ELEITORAL', title: 'Reeleito!', good: true, button: 'COMEÇAR O 2º MANDATO ➔',
         text: `${(result.runoff ?? result.firstRound).toFixed(1).replace('.', ',')}% dos votos válidos${result.runoff ? ' no segundo turno' : ' já no primeiro turno'}. São mais quatro anos, os últimos: a Constituição não permite um terceiro mandato seguido.`,
@@ -174,8 +189,10 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   let sinceInterview = 2;
 
   for (;;) {
+    trophies();
     ending = await politics();
     if (ending) break;
+    trophies();
     saveGame(countryId, g.state);
 
     if (sinceBig >= 1) {
@@ -222,6 +239,8 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     sinceBig = 1;
   }
 
+  milestones.ending = ending;
+  trophies();
   if (ending !== 'pausa') clearSave();
   music.play(ending === 'fim' ? 'epic' : ending === 'pausa' ? 'calm' : 'sad');
   g.destroy();

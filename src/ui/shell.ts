@@ -7,6 +7,7 @@ import { sfx } from '../audio/sfx';
 import { AXES } from '../engine/data';
 import { ageOf, monthName, shortDate, yearOf } from '../engine/calendar';
 import { formatDelta, formatKpi, KPIS } from '../engine/kpis';
+import { ACHIEVEMENTS } from '../engine/achievements';
 import { profileTitle } from '../engine/profile';
 import { regionalApproval } from '../engine/regions';
 import type { Country, Deltas, Effects, GameState, KpiId, PixelSprite, Place, SceneAnim } from '../engine/types';
@@ -98,6 +99,7 @@ export class Gabinete {
 
         <main class="desk">
           <div class="nameplate">${esc(country.head_of_state_title.toUpperCase())} · ${esc(state.player.name.toUpperCase())}</div>
+          <div class="desk-trophies"></div>
           <div class="desk-content"></div>
         </main>
 
@@ -268,6 +270,7 @@ export class Gabinete {
     this.renderAxes();
     this.renderFactions();
     this.renderRelations();
+    this.renderTrophies();
     this.renderProfile();
     this.renderMonth();
     this.renderTimeline();
@@ -308,6 +311,15 @@ export class Gabinete {
       fill.classList.toggle('neg', v < 0);
       row.querySelector('.f-face')!.textContent = factionFace(v);
     }
+  }
+
+  /** Troféus da partida em cima da mesa. */
+  renderTrophies() {
+    this.$('.desk-trophies').innerHTML = (this.state.trophies ?? [])
+      .map((id) => ACHIEVEMENTS.find((a) => a.id === id))
+      .filter((a) => !!a)
+      .map((a) => `<span title="${esc(a!.name)}: ${esc(a!.desc)}">${a!.icon}</span>`)
+      .join('');
   }
 
   renderRelations() {

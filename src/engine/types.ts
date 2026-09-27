@@ -185,6 +185,8 @@ export interface GameState {
   impeachmentShieldUntil: number;
   /** Mandatos cuja eleição já aconteceu. */
   electionsHeld: number[];
+  /** Conquistas ganhas nesta partida (os troféus na mesa). */
+  trophies?: string[];
   kpis: Record<KpiId, number>;
   axes: Record<AxisId, number>;
   factions: Record<string, number>;

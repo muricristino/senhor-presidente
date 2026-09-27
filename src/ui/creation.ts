@@ -1,7 +1,9 @@
 import { AVATARS, drawAvatar } from '../art/avatar';
 import { makeCanvas } from '../art/pixel';
 import { sfx } from '../audio/sfx';
+import { ACHIEVEMENTS, loadUnlocked } from '../engine/achievements';
 import { listCountries } from '../engine/data';
+import { showGallery } from './trophies';
 import type { Player } from '../engine/types';
 import { el, esc } from './dom';
 
@@ -67,6 +69,7 @@ export function creationScreen(
           </div>
         </div>
         <div class="start-row">
+          <button class="btn-gallery">🏆 CONQUISTAS ${Object.keys(loadUnlocked()).length}/${ACHIEVEMENTS.length}</button>
           ${resume ? `<button class="btn-resume">▶ CONTINUAR: ${esc(resume.label)}</button>` : ''}
           <button class="btn-start" disabled>INICIAR MANDATO ➔</button>
         </div>
@@ -126,6 +129,7 @@ export function creationScreen(
     onStart({ name: input.value.trim(), avatar, bioId }, countryId);
   };
   start.addEventListener('click', go);
+  screen.querySelector('.btn-gallery')!.addEventListener('click', () => showGallery(screen));
   screen.querySelector('.btn-resume')?.addEventListener('click', () => {
     sfx.fanfare();
     resume!.onResume();
