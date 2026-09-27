@@ -31,14 +31,22 @@ function waitClick(button: HTMLElement): Promise<void> {
   });
 }
 
-export async function showNewspaper(host: HTMLElement, opt: EventOption, deltas: Deltas, state: GameState) {
-  const rows = KPIS.filter((k) => deltas.kpis[k.id])
-    .map((k) => {
-      const d = deltas.kpis[k.id]!;
-      const good = d * k.good > 0;
-      return `<li class="${good ? 'good' : 'bad'}"><span>${esc(k.label)}</span><b>${good ? '▲' : '▼'} ${formatDelta(k.id, d)}</b></li>`;
-    })
-    .join('');
+export async function showNewspaper(host: HTMLElement, opt: EventOption, deltas: Deltas, state: GameState, country?: Country) {
+  const rows =
+    KPIS.filter((k) => deltas.kpis[k.id])
+      .map((k) => {
+        const d = deltas.kpis[k.id]!;
+        const good = d * k.good > 0;
+        return `<li class="${good ? 'good' : 'bad'}"><span>${esc(k.label)}</span><b>${good ? '▲' : '▼'} ${formatDelta(k.id, d)}</b></li>`;
+      })
+      .join('') +
+    (country?.partners ?? [])
+      .filter((p) => deltas.relations?.[p.id])
+      .map((p) => {
+        const d = deltas.relations[p.id];
+        return `<li class="${d > 0 ? 'good' : 'bad'}"><span>${p.flag} Relação com ${esc(p.short)}</span><b>${d > 0 ? '▲' : '▼'} ${d > 0 ? '+' : ''}${Math.round(d)}</b></li>`;
+      })
+      .join('');
   const overlay = mount(
     host,
     'newspaper-overlay',
@@ -109,12 +117,11 @@ export async function showLesson(
     const l = lean(a, d);
     return `<li style="--i:${i}"><b class="${d > 0 ? 'pb' : 'pa'}">${d > 0 ? '▶' : '◀'} ${esc(l.pole)}</b> <small>(${esc(a.category)})</small><p>${esc(l.explain)}</p></li>`;
   });
-  const factionLines = country.factions
-    .filter((f) => opt.effects.factions?.[f.id])
-    .map((f, i) => {
-      const d = opt.effects.factions![f.id];
-      return `<span class="chip ${d > 0 ? 'up' : 'down'}" style="--i:${i}">${d > 0 ? '👍' : '👎'} ${esc(f.short)}</span>`;
-    })
+  const factionLines = [
+    ...country.factions.filter((f) => opt.effects.factions?.[f.id]).map((f) => ({ d: opt.effects.factions![f.id], label: f.short })),
+    ...(country.partners ?? []).filter((p) => opt.effects.relations?.[p.id]).map((p) => ({ d: opt.effects.relations![p.id], label: `${p.flag} ${p.short}` })),
+  ]
+    .map(({ d, label }, i) => `<span class="chip ${d > 0 ? 'up' : 'down'}" style="--i:${i}">${d > 0 ? '👍' : '👎'} ${esc(label)}</span>`)
     .join('');
   const leans = dominantLeans(state.axes, 3);
   const allPaths = [...event.options, event.omission];

@@ -361,7 +361,8 @@
         "reaction": "Federalismo na prática: a União paga e o estado executa. É mais lento, mas respeita quem conhece o território.",
         "anim": "money_rain"
       }
-    ]
+    ],
+    "region": "sul"
   },
   {
     "id": "BR_d_blusinhas",
@@ -385,6 +386,9 @@
           },
           "factions": {
             "ruralistas": 3
+          },
+          "relations": {
+            "china": -8
           }
         },
         "reaction": "Protecionismo: você defendeu a indústria nacional, e quem paga a conta é o consumidor.",
@@ -412,6 +416,9 @@
           },
           "factions": {
             "ruralistas": -3
+          },
+          "relations": {
+            "china": 8
           }
         },
         "reaction": "Globalismo: preços menores para o consumidor, mais concorrência para a indústria nacional.",
@@ -442,6 +449,11 @@
           "axes": {
             "diplomacia": -10,
             "defesa": 5
+          },
+          "relations": {
+            "china": 4,
+            "russia": 5,
+            "eua": -4
           }
         },
         "reaction": "Tradição do Itamaraty: não intervenção e solução pacífica, princípios do art. 4º da Constituição.",
@@ -461,6 +473,11 @@
           },
           "factions": {
             "tecnologica": 3
+          },
+          "relations": {
+            "eua": 10,
+            "ue": 10,
+            "russia": -15
           }
         },
         "reaction": "Posição firme nos direitos humanos, com um custo: o país agressor é um grande comprador da soja brasileira.",
@@ -483,12 +500,18 @@
           "factions": {
             "seguranca": 6,
             "tecnologica": -6
+          },
+          "relations": {
+            "eua": 5,
+            "russia": -10,
+            "china": -5
           }
         },
         "reaction": "A indústria de defesa lucra, mas o Brasil entra indiretamente num conflito alheio.",
         "anim": "military"
       }
-    ]
+    ],
+    "region": "exterior"
   },
   {
     "id": "BR_d_genetica",
@@ -686,6 +709,380 @@
         },
         "reaction": "Estatal mantida: serviço garantido onde o lucro não chega, e o prejuízo continua no orçamento.",
         "anim": "calm"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_tarifa_aco",
+    "icon": "🏗️",
+    "from": "Itamaraty",
+    "region": "exterior",
+    "title": "EUA taxam o aço brasileiro em 25%",
+    "text": "Washington anuncia tarifa sobre o aço do Brasil. Siderúrgicas de Minas ameaçam demitir.",
+    "options": [
+      {
+        "id": "retaliar",
+        "icon": "⚔️",
+        "label": "Retaliar com tarifa",
+        "stamp": "RETALIADO",
+        "effects": {
+          "axes": {
+            "comercio": -10,
+            "diplomacia": 5
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "inflacao": 0.2
+          },
+          "relations": {
+            "eua": -15
+          }
+        },
+        "reaction": "Retaliação é o olho por olho do comércio. Agrada o orgulho nacional, mas guerras tarifárias costumam deixar os dois lados mais pobres.",
+        "anim": "protest"
+      },
+      {
+        "id": "negociar",
+        "icon": "🤝",
+        "label": "Negociar na OMC",
+        "stamp": "NEGOCIANDO",
+        "effects": {
+          "axes": {
+            "comercio": 6,
+            "diplomacia": -4
+          },
+          "kpis": {
+            "desemprego": 0.1
+          },
+          "relations": {
+            "eua": 4,
+            "ue": 3
+          }
+        },
+        "reaction": "Multilateralismo: levar a briga à OMC é lento, mas segue as regras do jogo que o Brasil defende há décadas.",
+        "anim": "speech"
+      },
+      {
+        "id": "china",
+        "icon": "🇨🇳",
+        "label": "Vender o aço para a China",
+        "stamp": "REDIRECIONADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -5
+          },
+          "kpis": {
+            "desemprego": -0.05
+          },
+          "relations": {
+            "china": 12,
+            "eua": -6
+          }
+        },
+        "reaction": "Diversificar parceiros reduz a dependência de um só mercado, e aproxima o Brasil do rival dos EUA.",
+        "anim": "market_boom"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_brics",
+    "icon": "🌐",
+    "from": "Itamaraty",
+    "region": "exterior",
+    "title": "Convite para a cúpula do BRICS",
+    "text": "A cúpula do BRICS na Índia vai discutir uma moeda comum para o comércio entre os membros.",
+    "options": [
+      {
+        "id": "apoiar",
+        "icon": "💱",
+        "label": "Apoiar a moeda do BRICS",
+        "stamp": "ASSINADO",
+        "effects": {
+          "axes": {
+            "diplomacia": 8,
+            "comercio": -4
+          },
+          "relations": {
+            "china": 15,
+            "russia": 10,
+            "eua": -15
+          }
+        },
+        "reaction": "Desdolarizar o comércio dá autonomia, mas os EUA leem como desafio direto ao dólar.",
+        "anim": "speech"
+      },
+      {
+        "id": "observar",
+        "icon": "👀",
+        "label": "Ir, mas sem compromisso",
+        "stamp": "PRESENTE",
+        "effects": {
+          "relations": {
+            "china": 4,
+            "eua": -2
+          }
+        },
+        "reaction": "A tradição do Itamaraty de equilíbrio: estar em todas as mesas sem se prender a nenhuma.",
+        "anim": "calm"
+      },
+      {
+        "id": "faltar",
+        "icon": "🚫",
+        "label": "Não ir",
+        "stamp": "AUSENTE",
+        "effects": {
+          "axes": {
+            "diplomacia": -6
+          },
+          "relations": {
+            "china": -10,
+            "russia": -6,
+            "eua": 6
+          }
+        },
+        "reaction": "A ausência também é recado: você sinalizou alinhamento com o Ocidente.",
+        "anim": "calm"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_mercosul_ue",
+    "icon": "🇪🇺",
+    "from": "Itamaraty",
+    "region": "exterior",
+    "title": "Acordo Mercosul-União Europeia na mesa",
+    "text": "Depois de 25 anos, o acordo pode ser assinado. Os europeus exigem metas ambientais; a indústria teme a concorrência.",
+    "options": [
+      {
+        "id": "assinar",
+        "icon": "✍️",
+        "label": "Assinar com as metas",
+        "stamp": "ASSINADO",
+        "effects": {
+          "axes": {
+            "comercio": 12,
+            "diplomacia": 4
+          },
+          "kpis": {
+            "desemprego": -0.1,
+            "inflacao": -0.1
+          },
+          "factions": {
+            "ruralistas": 6,
+            "tecnologica": 4
+          },
+          "relations": {
+            "ue": 20,
+            "mercosul": 8
+          }
+        },
+        "reaction": "Um dos maiores acordos comerciais do mundo: mais exportação do agro e mais concorrência para a indústria.",
+        "anim": "celebrate"
+      },
+      {
+        "id": "recusar",
+        "icon": "🛡️",
+        "label": "Recusar as exigências",
+        "stamp": "RECUSADO",
+        "effects": {
+          "axes": {
+            "comercio": -8,
+            "diplomacia": -4
+          },
+          "factions": {
+            "ruralistas": -4
+          },
+          "relations": {
+            "ue": -12,
+            "mercosul": -5
+          }
+        },
+        "reaction": "Soberania sobre a política ambiental, ao custo de um mercado de 450 milhões de consumidores.",
+        "anim": "calm"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_asilo",
+    "icon": "🛂",
+    "from": "Embaixada em Brasília",
+    "region": "exterior",
+    "title": "Opositor russo pede asilo",
+    "text": "Um jornalista russo perseguido pelo Kremlin se refugiou na nossa embaixada em Moscou e pede asilo político.",
+    "options": [
+      {
+        "id": "conceder",
+        "icon": "🕊️",
+        "label": "Conceder asilo",
+        "stamp": "CONCEDIDO",
+        "effects": {
+          "axes": {
+            "direitos": 8,
+            "diplomacia": 5
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "relations": {
+            "russia": -18,
+            "ue": 8,
+            "eua": 6
+          }
+        },
+        "reaction": "O asilo político é tradição latino-americana e está no art. 4º da Constituição. Moscou não perdoa.",
+        "anim": "speech"
+      },
+      {
+        "id": "negar",
+        "icon": "🚪",
+        "label": "Negar",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "direitos": -6,
+            "diplomacia": -5
+          },
+          "relations": {
+            "russia": 8,
+            "ue": -8
+          }
+        },
+        "reaction": "Pragmatismo: você preservou a relação com a Rússia, grande fornecedora de fertilizantes para o agro.",
+        "anim": "calm"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_cacas",
+    "icon": "✈️",
+    "from": "Ministério da Defesa",
+    "region": "exterior",
+    "title": "Compra de 36 caças",
+    "text": "A FAB precisa renovar a frota. Três ofertas: Suécia (com transferência de tecnologia), EUA e China.",
+    "options": [
+      {
+        "id": "suecia",
+        "icon": "🇸🇪",
+        "label": "Suecos, com tecnologia",
+        "stamp": "CONTRATADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 6,
+            "defesa": -4
+          },
+          "kpis": {
+            "desemprego": -0.05
+          },
+          "relations": {
+            "ue": 8
+          }
+        },
+        "reaction": "Transferência de tecnologia cria indústria nacional de defesa. É o caminho mais caro e o mais duradouro.",
+        "anim": "military"
+      },
+      {
+        "id": "eua",
+        "icon": "🇺🇸",
+        "label": "Americanos, mais baratos",
+        "stamp": "CONTRATADO",
+        "effects": {
+          "axes": {
+            "defesa": -4,
+            "diplomacia": 4
+          },
+          "relations": {
+            "eua": 14,
+            "china": -6
+          }
+        },
+        "reaction": "Comprar pronto é mais barato, mas amarra a manutenção dos aviões ao humor de Washington.",
+        "anim": "military"
+      },
+      {
+        "id": "china",
+        "icon": "🇨🇳",
+        "label": "Chineses, com financiamento",
+        "stamp": "CONTRATADO",
+        "effects": {
+          "axes": {
+            "defesa": -4,
+            "diplomacia": -4
+          },
+          "relations": {
+            "china": 14,
+            "eua": -14
+          }
+        },
+        "reaction": "Financiamento generoso e um recado geopolítico: nenhum país da OTAN vai gostar.",
+        "anim": "military"
+      }
+    ]
+  },
+  {
+    "id": "BR_d_venezuela",
+    "icon": "🇻🇪",
+    "from": "Itamaraty",
+    "region": "exterior",
+    "title": "Eleição contestada no país vizinho",
+    "text": "O governo vizinho declarou vitória numa eleição que observadores chamam de fraudada. Milhares cruzam a fronteira para Roraima.",
+    "options": [
+      {
+        "id": "reconhecer",
+        "icon": "✅",
+        "label": "Reconhecer o resultado",
+        "stamp": "RECONHECIDO",
+        "effects": {
+          "axes": {
+            "diplomacia": -6,
+            "poder": 4
+          },
+          "relations": {
+            "russia": 6,
+            "eua": -10,
+            "ue": -8
+          }
+        },
+        "reaction": "Não intervenção levada ao limite: você priorizou a soberania do vizinho sobre a democracia dele.",
+        "anim": "calm"
+      },
+      {
+        "id": "mediar",
+        "icon": "🕊️",
+        "label": "Propor mediação",
+        "stamp": "MEDIAÇÃO",
+        "effects": {
+          "axes": {
+            "diplomacia": 6
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "relations": {
+            "mercosul": 8,
+            "ue": 4
+          }
+        },
+        "reaction": "O Brasil como potência mediadora, papel clássico do Itamaraty na América do Sul.",
+        "anim": "speech"
+      },
+      {
+        "id": "sancionar",
+        "icon": "🚫",
+        "label": "Não reconhecer e sancionar",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "diplomacia": 10,
+            "poder": -4
+          },
+          "relations": {
+            "eua": 10,
+            "ue": 8,
+            "russia": -10
+          }
+        },
+        "reaction": "Defesa ativa da democracia na região, e um vizinho furioso do outro lado da fronteira.",
+        "anim": "protest"
       }
     ]
   }

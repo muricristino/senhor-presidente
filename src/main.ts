@@ -68,6 +68,7 @@ function startCreation() {
 async function runMandate(countryId: string, start: GameState, fresh: boolean, prepared?: Director) {
   const country = getCountry(countryId);
   const director = prepared ?? new Director(country);
+  if (!start.relations) start = { ...start, relations: createState(country, start.player).relations };
   const g = new Gabinete(stage, country, start);
   let inBig = false;
 
@@ -96,6 +97,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
 
   const nextMonth = () => {
     g.state = advanceMonth(g.state, country);
+    g.renderRelations();
   };
 
   /** Eleição, impeachment e fim do tempo. Devolve o final do jogo, se houver. */
@@ -149,6 +151,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
 
   let ending: Ending | null = null;
   if (!prepared) director.requestBig(g.state);
+  if (!fresh) void g.say(`Bem-vindo de volta, Presidente. Estamos em ${dateLabel(g.state, g.state.month)}.`);
   director.refillDispatches(g.state);
 
   // Abertura: dá alguns segundos para a primeira crise chegar; se não chegar, começam os despachos.

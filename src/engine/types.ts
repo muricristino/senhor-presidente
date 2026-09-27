@@ -19,6 +19,33 @@ export interface Effects {
   axes?: Partial<Record<AxisId, number>>;
   kpis?: Partial<Record<KpiId, number>>;
   factions?: Record<string, number>;
+  /** Relação com outros países (-100 a +100). */
+  relations?: Record<string, number>;
+}
+
+export type RegionId = 'norte' | 'nordeste' | 'centro_oeste' | 'sudeste' | 'sul';
+/** Onde um acontecimento se passa: uma região, o país todo ou o exterior. */
+export type Place = RegionId | 'nacional' | 'exterior';
+
+export interface Region {
+  id: RegionId;
+  name: string;
+  /** % da população. */
+  pop: number;
+  /** Como eixos e bancadas mexem na aprovação desta região, além da nacional. */
+  lean: { axes?: Partial<Record<AxisId, number>>; factions?: Record<string, number> };
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  short: string;
+  flag: string;
+  /** Peso no comércio exterior brasileiro (a soma dá ~1). */
+  trade: number;
+  start: number;
+  /** Como a posição do Brasil nos eixos agrada ou irrita este parceiro. */
+  likes: Partial<Record<AxisId, number>>;
 }
 
 export interface Faction {
@@ -62,6 +89,8 @@ export interface Country {
   advisor: { name: string; role: string; avatar: string };
   ministers: Minister[];
   bios: Bio[];
+  partners: Partner[];
+  regions: Region[];
 }
 
 /** Animações da Janela do Planalto. O gerador de eventos só pode escolher entre estas. */
@@ -130,6 +159,7 @@ export interface GameEvent {
   generated?: boolean;
   /** crise, oportunidade, marco, escândalo, conquista, catástrofe... */
   kind?: string;
+  region?: Place;
   /** Resolve quando lições e redes das opções chegaram (eventos gerados em duas etapas). */
   ready?: Promise<void>;
 }
@@ -158,6 +188,7 @@ export interface GameState {
   kpis: Record<KpiId, number>;
   axes: Record<AxisId, number>;
   factions: Record<string, number>;
+  relations: Record<string, number>;
   stf: 'OK' | 'LIMINAR';
   decisions: string[];
   /** Resumo do que já aconteceu, usado pelo gerador para dar continuidade. */
@@ -177,6 +208,7 @@ export interface Deltas {
   kpis: Partial<Record<KpiId, number>>;
   axes: Partial<Record<AxisId, number>>;
   factions: Record<string, number>;
+  relations: Record<string, number>;
 }
 
 // ---------- Cenas (roteiro que o Claude escreve e o jogo encena) ----------
@@ -258,4 +290,5 @@ export interface Dispatch {
   text: string;
   options: DispatchOption[];
   generated?: boolean;
+  region?: Place;
 }

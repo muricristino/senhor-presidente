@@ -25,6 +25,7 @@ export function runDispatch(g: Gabinete, d: Dispatch): Promise<GameState> {
     let remaining = SECONDS;
     g.renderMonth();
     g.renderTimeline(d.icon);
+    g.setPlace(d.region, d.icon);
 
     g.desk.innerHTML = `
       <div class="memo">
@@ -64,7 +65,10 @@ export function runDispatch(g: Gabinete, d: Dispatch): Promise<GameState> {
       const fac = g.country.factions
         .filter((f) => o.effects.factions?.[f.id])
         .map((f) => `<span class="chip ${o.effects.factions![f.id] > 0 ? 'up' : 'down'}">${o.effects.factions![f.id] > 0 ? '👍' : '👎'} ${esc(f.short)}</span>`);
-      chips.innerHTML = [...axis, ...fac].map((c, i) => c.replace('class="chip', `style="--i:${i}" class="chip`)).join('');
+      const rel = (g.country.partners ?? [])
+        .filter((p) => o.effects.relations?.[p.id])
+        .map((p) => `<span class="chip ${o.effects.relations![p.id] > 0 ? 'up' : 'down'}">${p.flag} ${o.effects.relations![p.id] > 0 ? '👍' : '👎'}</span>`);
+      chips.innerHTML = [...axis, ...fac, ...rel].map((c, i) => c.replace('class="chip', `style="--i:${i}" class="chip`)).join('');
     };
     buttons.forEach((b) => {
       const o = d.options.find((x) => x.id === b.dataset.option)!;
@@ -121,6 +125,7 @@ export function runDispatch(g: Gabinete, d: Dispatch): Promise<GameState> {
       void g.animateKpis(result.deltas);
       void g.animateAxes(result.deltas, false);
       void g.animateFactions(result.deltas, false);
+      void g.animateRelations(result.deltas, false);
       if (o.post) {
         g.feed.push(o.post);
       }

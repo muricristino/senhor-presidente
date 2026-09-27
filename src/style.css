@@ -407,7 +407,7 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 
 /* coluna direita: abas */
 .col-right { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); }
-.tabs { display: grid; grid-template-columns: 1fr 1fr 1.25fr; border-bottom: 3px solid var(--line); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 3px solid var(--line); }
 .tab { position: relative; background: #0c0e17; border: 0; border-right: 2px solid var(--line); padding: 10px 4px; font-weight: 700; font-size: 16.5px; color: var(--muted); }
 .tab:last-child { border-right: 0; }
 .tab:hover { color: var(--text); }
@@ -767,3 +767,21 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .btn-resume:hover { filter: brightness(1.2); }
 .start-row { display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
 .sum-span { font-size: 18px; color: var(--muted); margin-bottom: 4px; }
+
+/* mapa e mundo */
+.map-wrap { position: relative; align-self: center; }
+.brazil-map { width: 256px; height: 232px; cursor: crosshair; }
+.map-marker { position: absolute; transform: translate(-50%, -100%); font-size: 26px; pointer-events: none; animation: marker-bounce 0.9s infinite; filter: drop-shadow(2px 2px 0 #07080d); }
+@keyframes marker-bounce { 50% { transform: translate(-50%, calc(-100% - 8px)); } }
+.map-abroad { position: absolute; right: -6px; top: 0; font-size: 28px; opacity: 0.25; }
+.map-abroad.on { opacity: 1; animation: wiggle 0.9s infinite; }
+.map-info { font-size: 15px; color: var(--muted); text-align: center; min-height: 20px; margin-top: 4px; }
+.map-info b { color: var(--text); }
+.partner { position: relative; display: grid; grid-template-columns: 30px 1fr 26px; gap: 8px; align-items: center; padding: 4px 6px; margin-bottom: 4px; background: #0c0e17; border: 2px solid var(--line); }
+.p-flag { font-size: 22px; text-align: center; }
+.p-top { display: flex; justify-content: space-between; font-size: 15px; }
+.p-val { font-size: 13px; color: var(--muted); }
+.p-val.good { color: var(--green-2); }
+.p-val.bad { color: var(--red); }
+.partner .f-bar { margin: 3px 0 0; }
+.tab { font-size: 15px; }

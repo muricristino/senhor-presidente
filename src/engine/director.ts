@@ -22,6 +22,9 @@ export function briefing(state: GameState, country: Country): string {
   const history = state.history.length
     ? state.history.slice(-25).map((h) => `- ${dateLabel(state, h.month)} · ${h.event}: o presidente escolheu "${h.choice}". Manchete: ${h.headline}${h.stf ? ` · STF reagiu: ${h.stf}` : ''}`).join('\n')
     : '- (nenhuma ainda)';
+  const relations = (country.partners ?? [])
+    .map((p) => `- ${p.name}: ${Math.round(state.relations?.[p.id] ?? 0)} → ${moodWord(state.relations?.[p.id] ?? 0)}`)
+    .join('\n');
   const leans = dominantLeans(state.axes, 3).map((l) => `${l.pole} (${Math.abs(l.value)})`).join(', ') || 'nenhum';
   const nextElection = state.term < country.calendar.max_terms ? electionMonth(state, state.term, country.calendar.election_month) : null;
   const calendar = nextElection
@@ -40,6 +43,9 @@ ${axes}
 
 Bancadas no Congresso (-100 a +100):
 ${factions}
+
+Relações internacionais (-100 a +100):
+${relations}
 
 Decisões anteriores, da mais antiga à mais recente:
 ${history}
@@ -147,6 +153,7 @@ export class Director {
         briefing: briefing(state, this.country).replace('Escreva a próxima crise.', 'Escreva o próximo grande acontecimento.'),
         axes: AXES.map((a) => a.id),
         factions: this.country.factions.map((f) => f.id),
+        partners: (this.country.partners ?? []).map((p) => p.id),
         ministers: this.country.ministers.map((m) => m.id),
       },
       260_000,
@@ -190,6 +197,7 @@ export class Director {
                 briefing: briefing(state, this.country).replace('Escreva a próxima crise.', 'Escreva 4 despachos para as próximas semanas.'),
                 axes: AXES.map((a) => a.id),
                 factions: this.country.factions.map((f) => f.id),
+        partners: (this.country.partners ?? []).map((p) => p.id),
               },
               120_000,
             )

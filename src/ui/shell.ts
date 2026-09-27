@@ -1,5 +1,6 @@
 import { drawAvatar } from '../art/avatar';
 import { makeCanvas } from '../art/pixel';
+import { BrazilMap, regionAt } from '../art/brazilMap';
 import { PlanaltoScene } from '../art/scene';
 import { buildLibrary } from '../art/sprites';
 import { sfx } from '../audio/sfx';
@@ -7,7 +8,8 @@ import { AXES } from '../engine/data';
 import { ageOf, monthName, shortDate, yearOf } from '../engine/calendar';
 import { formatDelta, formatKpi, KPIS } from '../engine/kpis';
 import { profileTitle } from '../engine/profile';
-import type { Country, Deltas, Effects, GameState, KpiId, PixelSprite, SceneAnim } from '../engine/types';
+import { regionalApproval } from '../engine/regions';
+import type { Country, Deltas, Effects, GameState, KpiId, PixelSprite, Place, SceneAnim } from '../engine/types';
 import { slow } from '../speed';
 import { countTo, el, esc, shake, typewriter, wait } from './dom';
 import { SocialFeed } from './social';
@@ -22,7 +24,7 @@ const KPI_ICONS: Record<KpiId, string> = {
   educacao: '🎓',
 };
 
-export type Tab = 'redes' | 'eixos' | 'bancadas';
+export type Tab = 'redes' | 'eixos' | 'bancadas' | 'mapa';
 
 function factionFace(v: number): string {
   if (v >= 40) return '😍';
@@ -41,6 +43,7 @@ export class Gabinete {
   readonly screen = el('div', 'screen cabinet');
   readonly scene = new PlanaltoScene();
   readonly feed = new SocialFeed();
+  readonly map = new BrazilMap();
   readonly library: Map<string, PixelSprite>;
   readonly desk: HTMLElement;
   state: GameState;
@@ -102,7 +105,8 @@ export class Gabinete {
           <nav class="tabs">
             <button class="tab" data-tab="redes">📱 REDES<i class="badge"></i></button>
             <button class="tab" data-tab="eixos">🧭 EIXOS<i class="badge"></i></button>
-            <button class="tab" data-tab="bancadas">🏛️ CONGRESSO<i class="badge"></i></button>
+            <button class="tab" data-tab="bancadas">🏛️ CONGR.<i class="badge"></i></button>
+            <button class="tab" data-tab="mapa">🌎 MAPA<i class="badge"></i></button>
           </nav>
           <section class="pane" data-pane="redes"></section>
           <section class="pane" data-pane="eixos">
@@ -127,6 +131,20 @@ export class Gabinete {
                     <div class="f-bar"><i class="f-fill"></i><i class="f-mid"></i></div>
                     <div class="f-cares">Se importa com: ${esc(f.cares.join(', '))}</div>
                   </div>
+                  <span class="f-preview"></span>
+                </div>`,
+              )
+              .join('')}
+          </section>
+          <section class="pane" data-pane="mapa">
+            <div class="map-wrap"><span class="map-marker"></span><span class="map-abroad">🌎</span></div>
+            <div class="map-info">Passe o mouse numa região. <b>Verde</b> aprova, <b>vermelho</b> reprova.</div>
+            <div class="panel-label mt">RELAÇÕES INTERNACIONAIS</div>
+            ${(country.partners ?? [])
+              .map(
+                (p) => `<div class="partner" data-partner="${p.id}">
+                  <span class="p-flag">${p.flag}</span>
+                  <div class="p-info"><div class="p-top"><b>${esc(p.name)}</b><span class="p-val"></span></div><div class="f-bar"><i class="f-fill"></i><i class="f-mid"></i></div></div>
                   <span class="f-preview"></span>
                 </div>`,
               )
@@ -175,6 +193,35 @@ export class Gabinete {
       row.addEventListener('mouseleave', () => (tip.innerHTML = defaultTip));
     });
 
+    const wrap = this.$('.map-wrap');
+    wrap.prepend(this.map.canvas);
+    const info = this.$('.map-info');
+    const defaultInfo = info.innerHTML;
+    this.map.canvas.addEventListener('mousemove', (e) => {
+      const r = this.map.canvas.getBoundingClientRect();
+      const id = regionAt(((e.clientX - r.left) / r.width) * this.map.canvas.width, ((e.clientY - r.top) / r.height) * this.map.canvas.height);
+      this.map.setHover(id);
+      const region = country.regions.find((x) => x.id === id);
+      info.innerHTML = region
+        ? `<b>${esc(region.name)}</b> · ${region.pop}% da população · aprovação <b>${regionalApproval(this.state, country)[region.id]}%</b>`
+        : defaultInfo;
+    });
+    this.map.canvas.addEventListener('mouseleave', () => {
+      this.map.setHover(null);
+      info.innerHTML = defaultInfo;
+    });
+    this.every(120, () => {
+      this.map.draw();
+      const pos = this.map.markerPos();
+      const marker = this.$('.map-marker');
+      marker.style.display = pos ? 'block' : 'none';
+      if (pos) {
+        marker.style.left = `${(pos.x / this.map.canvas.width) * 100}%`;
+        marker.style.top = `${(pos.y / this.map.canvas.height) * 100}%`;
+        marker.textContent = this.map.markerIcon;
+      }
+    });
+
     this.$('.tb-mute').addEventListener('click', (e) => {
       (e.currentTarget as HTMLElement).textContent = sfx.toggleMute() ? '🔇' : '🔊';
     });
@@ -220,6 +267,7 @@ export class Gabinete {
     for (const k of KPIS) this.$(`.kpi[data-kpi="${k.id}"] b`).textContent = formatKpi(k.id, state.kpis[k.id]);
     this.renderAxes();
     this.renderFactions();
+    this.renderRelations();
     this.renderProfile();
     this.renderMonth();
     this.renderTimeline();
@@ -260,6 +308,47 @@ export class Gabinete {
       fill.classList.toggle('neg', v < 0);
       row.querySelector('.f-face')!.textContent = factionFace(v);
     }
+  }
+
+  renderRelations() {
+    this.map.set(regionalApproval(this.state, this.country));
+    for (const p of this.country.partners ?? []) {
+      const v = Math.round(this.state.relations?.[p.id] ?? 0);
+      const row = this.$(`.partner[data-partner="${p.id}"]`);
+      const fill = row.querySelector<HTMLElement>('.f-fill')!;
+      fill.style.left = v >= 0 ? '50%' : `${50 + v / 2}%`;
+      fill.style.width = `${Math.abs(v) / 2}%`;
+      fill.classList.toggle('neg', v < 0);
+      const label = row.querySelector<HTMLElement>('.p-val')!;
+      label.textContent = v >= 40 ? 'aliado' : v >= 10 ? 'amigável' : v > -10 ? 'neutro' : v > -40 ? 'tenso' : 'hostil';
+      label.className = `p-val ${v >= 10 ? 'good' : v <= -10 ? 'bad' : ''}`;
+    }
+  }
+
+  /** Onde o acontecimento atual se passa: pulsa no mapa e ganha um marcador. */
+  setPlace(place: Place | undefined, icon: string) {
+    this.map.mark(place, icon);
+    this.$('.map-abroad').classList.toggle('on', place === 'exterior');
+  }
+
+  async animateRelations(deltas: Deltas, showTab = true) {
+    if (!Object.keys(deltas.relations ?? {}).length) return;
+    if (showTab) this.setTab('mapa');
+    else this.badge('mapa');
+    await wait(showTab ? 200 : 0);
+    this.renderRelations();
+    (this.country.partners ?? []).forEach((p, i) => {
+      const d = deltas.relations[p.id];
+      if (!d) return;
+      setTimeout(() => {
+        const row = this.$(`.partner[data-partner="${p.id}"]`);
+        const bubble = el('span', `reaction ${d > 0 ? 'up' : 'down'}`, d > 0 ? (d >= 12 ? '🤝' : '🙂') : d <= -12 ? '😡' : '😒');
+        row.append(bubble);
+        if (showTab) d > 0 ? sfx.up() : sfx.down();
+        setTimeout(() => bubble.remove(), slow(1400));
+      }, slow(i * 160));
+    });
+    if (showTab) await wait(1500);
   }
 
   renderProfile() {
@@ -316,6 +405,12 @@ export class Gabinete {
       p.textContent = d > 0 ? '👍' : d < 0 ? '👎' : '';
       p.className = `f-preview ${d ? 'show' : ''}`;
     }
+    for (const partner of this.country.partners ?? []) {
+      const d = effects?.relations?.[partner.id] ?? 0;
+      const p = this.$(`.partner[data-partner="${partner.id}"] .f-preview`);
+      p.textContent = d > 0 ? '👍' : d < 0 ? '👎' : '';
+      p.className = `f-preview ${d ? 'show' : ''}`;
+    }
   }
 
   // ---------- consequências animadas ----------
@@ -352,6 +447,7 @@ export class Gabinete {
       jobs.push(countTo(1000, to - d, to, (v) => (b.textContent = formatKpi(k.id, v))));
     });
     if (good || bad) good >= bad ? sfx.up() : sfx.down();
+    this.map.set(regionalApproval(this.state, this.country));
     await Promise.all(jobs);
   }
 

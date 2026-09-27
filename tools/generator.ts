@@ -16,6 +16,8 @@ const EFFORT = process.env.SP_EFFORT ?? 'low';
 
 const num = { type: 'number' };
 const str = { type: 'string' };
+let PARTNERS: string[] = [];
+const PLACES = ['norte', 'nordeste', 'centro_oeste', 'sudeste', 'sul', 'nacional', 'exterior'];
 const effectsSchema = (axes: string[], factions: string[]) => ({
   type: 'object',
   properties: {
@@ -26,6 +28,7 @@ const effectsSchema = (axes: string[], factions: string[]) => ({
       additionalProperties: false,
     },
     factions: { type: 'object', properties: Object.fromEntries(factions.map((f) => [f, num])), additionalProperties: false },
+    relations: { type: 'object', description: 'relação com países parceiros', properties: Object.fromEntries(PARTNERS.map((p) => [p, num])), additionalProperties: false },
   },
   required: ['axes', 'kpis', 'factions'],
 });
@@ -65,6 +68,7 @@ function eventSchema(axes: string[], factions: string[], ministers: string[]) {
     type: 'object',
     properties: {
       kind: { enum: ['crise', 'oportunidade', 'marco', 'escandalo', 'conquista', 'catastrofe', 'internacional'] },
+      region: { enum: PLACES, description: 'onde acontece' },
       kicker: str,
       title: str,
       callback: { type: 'string', description: 'uma frase que liga esta crise a uma decisão anterior do jogador' },
@@ -77,7 +81,7 @@ function eventSchema(axes: string[], factions: string[], ministers: string[]) {
       options: { type: 'array', items: option, minItems: 4, maxItems: 4 },
       omission: option,
     },
-    required: ['kind', 'kicker', 'title', 'callback', 'dossier', 'advisor', 'scene', 'pressure', 'ministers', 'social', 'options', 'omission'],
+    required: ['kind', 'region', 'kicker', 'title', 'callback', 'dossier', 'advisor', 'scene', 'pressure', 'ministers', 'social', 'options', 'omission'],
   };
 }
 
@@ -103,6 +107,7 @@ const dispatchesSchema = (axes: string[], factions: string[]) => ({
         type: 'object',
         properties: {
           icon: { type: 'string', description: 'um emoji' },
+          region: { enum: PLACES },
           from: str,
           title: str,
           text: str,
@@ -117,7 +122,7 @@ const dispatchesSchema = (axes: string[], factions: string[]) => ({
             },
           },
         },
-        required: ['icon', 'from', 'title', 'text', 'options'],
+        required: ['icon', 'region', 'from', 'title', 'text', 'options'],
       },
     },
   },
@@ -181,7 +186,9 @@ Regras de continuidade (as mais importantes):
 Regras de conteúdo:
 - Instituições reais, pessoas fictícias. Nunca cite políticos, juízes ou partidos reais por nome.
 - Equilíbrio: as 4 opções devem puxar para lados diferentes dos eixos; nenhuma é "a certa". Toda opção tem custo.
-- Efeitos: eixos entre -30 e 30; aprovacao e coalizao entre -12 e 12; selic ±1.5; inflacao ±1.2; desemprego ±0.8; seguranca ±1; educacao ±0.6; bancadas ±25. Seja coerente com o conteúdo.
+- Efeitos: eixos entre -30 e 30; aprovacao e coalizao entre -12 e 12; selic ±1.5; inflacao ±1.2; desemprego ±0.8; seguranca ±1; educacao ±0.6; bancadas ±25; relations (EUA, China, UE, Mercosul, Rússia) ±25. Seja coerente com o conteúdo.
+- Política externa importa: cerca de 1 em cada 3 acontecimentos deve ter dimensão internacional (comércio, guerra, clima, cúpulas, sanções, imigração, espionagem). Use "relations" sempre que uma decisão agradar ou irritar outro país, e leve em conta as relações atuais.
+- "region": onde acontece (uma região do Brasil, "nacional" ou "exterior").
 - "stf" só quando a opção for claramente inconstitucional (cláusulas pétreas, direitos fundamentais, separação de Poderes). Cite artigos da Constituição só se tiver certeza.
 - O "omission" é o que acontece se o presidente não decidir a tempo: sem eixos, custo alto.
 - ${SOCIAL_RULE}
@@ -196,7 +203,8 @@ const DISPATCH_SYSTEM = `Você escreve DESPACHOS para "Senhor Presidente", simul
 Despachos são decisões rápidas do dia a dia do presidente, lidas e decididas em 15 segundos: sancionar ou vetar uma lei, nomear alguém, responder um repórter, reagir a um post viral, liberar emendas, aceitar um convite, atender um governador, posicionar o Itamaraty.
 Regras:
 - 2 ou 3 opções, rótulos curtíssimos (até 30 caracteres). Texto do despacho com até 180 caracteres.
-- Efeitos pequenos: eixos até ±12, aprovacao/coalizao até ±6, selic ±0.5, inflacao ±0.4, desemprego ±0.3, seguranca ±0.4, educacao ±0.3, bancadas até ±15.
+- Efeitos pequenos: eixos até ±12, aprovacao/coalizao até ±6, selic ±0.5, inflacao ±0.4, desemprego ±0.3, seguranca ±0.4, educacao ±0.3, bancadas até ±15, relations até ±15.
+- Pelo menos 1 dos 4 despachos deve ser de política externa (Itamaraty, embaixadas, comércio, ONU), com "relations".
 - "reaction" é uma micro-lição de 1-2 frases: consequência da escolha + o conceito político por trás (veto, federalismo, protecionismo, Efeito Streisand...).
 - "stamp": carimbo em caixa alta (SANCIONADO, VETADO, NOMEADO, POSTADO, NEGADO...).
 - "post" opcional: reação de um perfil das redes. ${SOCIAL_RULE}
@@ -330,6 +338,7 @@ export function claudeDirector(): Plugin {
           if (req.url === '/api/health') return send(res, 200, { claude: claudeAvailable(), model: MODEL });
           if (!claudeAvailable()) return send(res, 503, { error: 'claude indisponível' });
           const body = await readBody(req);
+          if (Array.isArray(body.partners)) PARTNERS = body.partners;
           if (req.url === '/api/event' && req.method === 'POST') {
             const { briefing, axes, factions, ministers } = body;
             const event = await runClaude(EVENT_SYSTEM, briefing, eventSchema(axes, factions, ministers));

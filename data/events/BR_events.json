@@ -240,6 +240,10 @@
             "tecnologica": 10,
             "ruralistas": -10,
             "centrao": -6
+          },
+          "relations": {
+            "eua": 6,
+            "ue": 4
           }
         },
         "scene": {
@@ -372,7 +376,8 @@
           "tone": "neutral"
         }
       ]
-    }
+    },
+    "region": "sudeste"
   },
   {
     "id": "BR_deepfake",
@@ -523,6 +528,11 @@
             "tecnologica": -15,
             "religiosos": -8,
             "seguranca": 5
+          },
+          "relations": {
+            "eua": -8,
+            "ue": -6,
+            "russia": 4
           }
         },
         "scene": {
@@ -744,7 +754,8 @@
         "title": "No mundo digital, o silêncio vira confirmação",
         "text": "Numa crise de desinformação, a ausência de resposta é lida como confissão. Você não se moveu em nenhum eixo, e a mentira ocupou o espaço vazio. Um boato virou crise financeira de verdade."
       }
-    }
+    },
+    "region": "nacional"
   },
   {
     "id": "BR_pec_religiosa",
@@ -1107,7 +1118,8 @@
         "title": "Quem não governa o Congresso é governado por ele",
         "text": "No presidencialismo de coalizão, o Executivo precisa conduzir a pauta. Quando o presidente se omite, o Congresso ocupa o espaço, e seus aliados aprendem que não vale a pena esperar por você."
       }
-    }
+    },
+    "region": "nacional"
   },
   {
     "id": "BR_amazonia",
@@ -1202,6 +1214,10 @@
             "ruralistas": -15,
             "tecnologica": 15,
             "centrao": -4
+          },
+          "relations": {
+            "ue": 12,
+            "eua": 4
           }
         },
         "scene": {
@@ -1260,6 +1276,10 @@
             "tecnologica": 10,
             "ruralistas": -5,
             "seguranca": -8
+          },
+          "relations": {
+            "ue": 18,
+            "eua": 5
           }
         },
         "scene": {
@@ -1320,6 +1340,11 @@
             "seguranca": 15,
             "ruralistas": 8,
             "tecnologica": -15
+          },
+          "relations": {
+            "ue": -20,
+            "eua": -5,
+            "russia": 6
           }
         },
         "scene": {
@@ -1379,6 +1404,10 @@
             "ruralistas": 22,
             "centrao": 6,
             "tecnologica": -20
+          },
+          "relations": {
+            "ue": -15,
+            "china": 3
           }
         },
         "scene": {
@@ -1448,6 +1477,9 @@
           "ruralistas": -5,
           "centrao": -8,
           "seguranca": -5
+        },
+        "relations": {
+          "ue": -12
         }
       },
       "scene": {
@@ -1486,7 +1518,8 @@
         "title": "O mundo também vota",
         "text": "Em temas globais, a omissão do governo também manda uma mensagem, e ela é ouvida fora do país. Sem liderança federal, cada estado agiu de um jeito e o Brasil perdeu mercados."
       }
-    }
+    },
+    "region": "norte"
   },
   {
     "id": "BR_inflacao_arroz",
@@ -1641,6 +1674,10 @@
             "ruralistas": -10,
             "tecnologica": 5,
             "centrao": -2
+          },
+          "relations": {
+            "mercosul": 12,
+            "china": 5
           }
         },
         "scene": {
@@ -1701,6 +1738,9 @@
             "centrao": 8,
             "tecnologica": -8,
             "ruralistas": -3
+          },
+          "relations": {
+            "eua": -3
           }
         },
         "scene": {
@@ -1857,6 +1897,7 @@
         "title": "A inflação não espera",
         "text": "Quando o governo não age, o Banco Central é a única ferramenta que sobra, e juros só combatem a inflação freando a economia inteira. A omissão tirou de você a chance de escolher QUEM paga a conta."
       }
-    }
+    },
+    "region": "nacional"
   }
 ]

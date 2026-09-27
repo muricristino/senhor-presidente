@@ -25,6 +25,7 @@ export function createState(country: Country, player: Player): GameState {
     kpis: { ...country.kpis_iniciais },
     axes,
     factions,
+    relations: Object.fromEntries((country.partners ?? []).map((p) => [p.id, p.start])),
     stf: 'OK',
     decisions: [],
     history: [],
@@ -44,8 +45,16 @@ export function applyEffects(
     kpis: { ...state.kpis },
     axes: { ...state.axes },
     factions: { ...state.factions },
+    relations: { ...(state.relations ?? {}) },
   };
-  const deltas: Deltas = { kpis: {}, axes: {}, factions: {} };
+  const deltas: Deltas = { kpis: {}, axes: {}, factions: {}, relations: {} };
+
+  for (const [id, d] of Object.entries(effects.relations ?? {})) {
+    if (!(id in next.relations)) continue;
+    const before = next.relations[id];
+    next.relations[id] = clamp(before + d, -100, 100);
+    deltas.relations[id] = next.relations[id] - before;
+  }
 
   for (const [id, d] of Object.entries(effects.axes ?? {}) as [AxisId, number][]) {
     const before = next.axes[id];
@@ -100,10 +109,21 @@ export function advanceMonth(state: GameState, country: Country, months = 1): Ga
   const total = country.factions.reduce((n, f) => n + f.influence, 0) || 1;
   const mood = country.factions.reduce((n, f) => n + (state.factions[f.id] ?? 0) * f.influence, 0) / total;
   const coalitionBase = clamp(45 + mood * 0.4, 10, 90);
+  // Comércio exterior: boas relações com os grandes parceiros seguram emprego e preços.
+  const trade = (country.partners ?? []).reduce((n, p) => n + ((state.relations?.[p.id] ?? 0) / 100) * p.trade, 0);
+  const relations = { ...(state.relations ?? {}) };
   for (let i = 0; i < months; i++) {
     next.kpis.aprovacao = round(next.kpis.aprovacao + (45 - next.kpis.aprovacao) * 0.05, 1);
     next.kpis.coalizao = round(next.kpis.coalizao + (coalitionBase - next.kpis.coalizao) * 0.07, 1);
+    next.kpis.desemprego = round(clamp(next.kpis.desemprego - trade * 0.06, 2, 30), 2);
+    next.kpis.inflacao = round(clamp(next.kpis.inflacao - trade * 0.04, -2, 40), 2);
+    // Cada parceiro reage devagar à postura ideológica do governo.
+    for (const p of country.partners ?? []) {
+      const taste = Object.entries(p.likes).reduce((n, [axis, w]) => n + (state.axes[axis as AxisId] ?? 0) * (w ?? 0), 0);
+      relations[p.id] = round(clamp((relations[p.id] ?? 0) + taste * 0.05, -100, 100), 1);
+    }
   }
+  next.relations = relations;
   next = { ...next };
   return next;
 }

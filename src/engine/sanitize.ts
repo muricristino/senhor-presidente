@@ -1,7 +1,7 @@
 import { BACKDROPS, CUSTOM_BACKDROP, CUT_ACTIONS, LIB_SPRITES, MAX_SPRITE, SCENE_ANIMS } from './catalog';
 import { AXES } from './data';
 import type {
-  AxisId, Country, CutAction, Dispatch, DispatchOption, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
+  AxisId, Country, CutAction, Dispatch, DispatchOption, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
 } from './types';
 
 /* Tudo que o Claude gera passa por aqui: valores limitados, ids conferidos, textos cortados. */
@@ -21,8 +21,11 @@ export const KPI_LIMITS: Record<KpiId, number> = {
 const AXIS_LIMIT = 30;
 const FACTION_LIMIT = 25;
 
+const PLACES: Place[] = ['norte', 'nordeste', 'centro_oeste', 'sudeste', 'sul', 'nacional', 'exterior'];
+const place = (v: unknown): Place | undefined => (PLACES.includes(v as Place) ? (v as Place) : undefined);
+
 export function sanitizeEffects(raw: unknown, country: Country): Effects {
-  const out: Effects = { axes: {}, kpis: {}, factions: {} };
+  const out: Effects = { axes: {}, kpis: {}, factions: {}, relations: {} };
   if (!isObj(raw)) return out;
   const axes = isObj(raw.axes) ? raw.axes : {};
   for (const a of AXES) {
@@ -38,6 +41,11 @@ export function sanitizeEffects(raw: unknown, country: Country): Effects {
   for (const f of country.factions) {
     const v = num(factions[f.id], -FACTION_LIMIT, FACTION_LIMIT, 0);
     if (v) out.factions![f.id] = Math.round(v);
+  }
+  const relations = isObj(raw.relations) ? raw.relations : {};
+  for (const p of country.partners ?? []) {
+    const v = num(relations[p.id], -FACTION_LIMIT, FACTION_LIMIT, 0);
+    if (v) out.relations![p.id] = Math.round(v);
   }
   return out;
 }
@@ -244,6 +252,7 @@ export function sanitizeEvent(raw: unknown, country: Country, month: number, mon
     omission,
     generated: true,
     kind: str(raw.kind, 20) || undefined,
+    region: place(raw.region),
   };
 }
 
@@ -261,6 +270,7 @@ export function sanitizeDispatch(raw: unknown, country: Country): Dispatch | nul
       for (const k of Object.keys(effects.kpis ?? {}) as KpiId[]) effects.kpis![k] = Math.max(-KPI_LIMITS[k] / 2, Math.min(KPI_LIMITS[k] / 2, effects.kpis![k]!));
       for (const k of Object.keys(effects.axes ?? {}) as AxisId[]) effects.axes![k] = Math.max(-15, Math.min(15, effects.axes![k]!));
       for (const k of Object.keys(effects.factions ?? {})) effects.factions![k] = Math.max(-15, Math.min(15, effects.factions![k]));
+      for (const k of Object.keys(effects.relations ?? {})) effects.relations![k] = Math.max(-15, Math.min(15, effects.relations![k]));
       return {
         id: `o${i + 1}`,
         icon: str(o.icon, 4, '✅') || '✅',
@@ -283,5 +293,6 @@ export function sanitizeDispatch(raw: unknown, country: Country): Dispatch | nul
     text: str(raw.text, 240),
     options,
     generated: true,
+    region: place(raw.region),
   };
 }

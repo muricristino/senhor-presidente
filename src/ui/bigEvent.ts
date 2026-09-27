@@ -30,6 +30,7 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
     g.state = state;
     g.renderMonth();
     g.renderTimeline('!');
+    g.setPlace(event.region, event.options[0]?.icon ?? '❗');
     g.setScene(event.scene.anim);
 
     let selected: EventOption | null = null;
@@ -100,6 +101,10 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
           const d = opt.effects.factions![f.id];
           return `<span class="chip ${d > 0 ? 'up' : 'down'}">${d > 0 ? '👍' : '👎'} ${esc(f.short)}</span>`;
         });
+      const relationChips = (country.partners ?? [])
+        .filter((p) => opt.effects.relations?.[p.id])
+        .map((p) => `<span class="chip ${opt.effects.relations![p.id] > 0 ? 'up' : 'down'}">${p.flag} ${opt.effects.relations![p.id] > 0 ? '👍' : '👎'}</span>`);
+      factionChips.push(...relationChips);
       previewBox.innerHTML = `
         <p class="preview-summary">${esc(opt.summary)}</p>
         <div class="preview-chips">${[...axisChips, ...factionChips].map((c, i) => c.replace('class="chip', `style="--i:${i}" class="chip`)).join('')}<span class="chip hidden-kpi" style="--i:${axisChips.length + factionChips.length}">💰 economia: ???</span></div>`;
@@ -333,12 +338,13 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
       await g.animateKpis(result.deltas);
       await g.animateAxes(result.deltas);
       await g.animateFactions(result.deltas);
+      await g.animateRelations(result.deltas);
       if (event.ready) await Promise.race([event.ready, wait(45_000)]);
       g.setTab('redes');
       g.feed.wave(opt.social, 900, 100);
       await wait(2000);
 
-      await showNewspaper(g.screen, opt, result.deltas, state);
+      await showNewspaper(g.screen, opt, result.deltas, state, country);
 
       if (opt.stf) {
         g.$('.stf-status').textContent = 'LIMINAR';

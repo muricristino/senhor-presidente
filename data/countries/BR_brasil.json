@@ -197,5 +197,141 @@
   "chamber": {
     "seats": 513,
     "impeachment_votes": 342
-  }
+  },
+  "partners": [
+    {
+      "id": "eua",
+      "name": "Estados Unidos",
+      "short": "EUA",
+      "flag": "🇺🇸",
+      "trade": 0.25,
+      "start": 20,
+      "likes": {
+        "diplomacia": 0.2,
+        "economia": 0.15,
+        "comercio": 0.1
+      }
+    },
+    {
+      "id": "china",
+      "name": "China",
+      "short": "CHINA",
+      "flag": "🇨🇳",
+      "trade": 0.35,
+      "start": 20,
+      "likes": {
+        "propriedade": -0.1,
+        "diplomacia": -0.15
+      }
+    },
+    {
+      "id": "ue",
+      "name": "União Europeia",
+      "short": "UE",
+      "flag": "🇪🇺",
+      "trade": 0.2,
+      "start": 10,
+      "likes": {
+        "poder": -0.2,
+        "direitos": 0.1,
+        "comercio": 0.1
+      }
+    },
+    {
+      "id": "mercosul",
+      "name": "Argentina e Mercosul",
+      "short": "MERCOSUL",
+      "flag": "🇦🇷",
+      "trade": 0.15,
+      "start": 25,
+      "likes": {
+        "comercio": 0.05
+      }
+    },
+    {
+      "id": "russia",
+      "name": "Rússia",
+      "short": "RÚSSIA",
+      "flag": "🇷🇺",
+      "trade": 0.05,
+      "start": 0,
+      "likes": {
+        "poder": 0.1,
+        "diplomacia": -0.1
+      }
+    }
+  ],
+  "regions": [
+    {
+      "id": "norte",
+      "name": "Norte",
+      "pop": 9,
+      "lean": {
+        "axes": {
+          "tecnologia": -0.05,
+          "governanca": 0.05
+        },
+        "factions": {
+          "ruralistas": 0.05
+        }
+      }
+    },
+    {
+      "id": "nordeste",
+      "name": "Nordeste",
+      "pop": 27,
+      "lean": {
+        "axes": {
+          "economia": -0.12,
+          "propriedade": -0.08
+        },
+        "factions": {
+          "religiosos": 0.04
+        }
+      }
+    },
+    {
+      "id": "centro_oeste",
+      "name": "Centro-Oeste",
+      "pop": 8,
+      "lean": {
+        "axes": {
+          "economia": 0.08,
+          "valores": 0.06
+        },
+        "factions": {
+          "ruralistas": 0.15
+        }
+      }
+    },
+    {
+      "id": "sudeste",
+      "name": "Sudeste",
+      "pop": 42,
+      "lean": {
+        "axes": {
+          "economia": 0.05,
+          "direitos": 0.05
+        },
+        "factions": {
+          "tecnologica": 0.06
+        }
+      }
+    },
+    {
+      "id": "sul",
+      "name": "Sul",
+      "pop": 14,
+      "lean": {
+        "axes": {
+          "economia": 0.1,
+          "valores": 0.08
+        },
+        "factions": {
+          "seguranca": 0.08,
+          "ruralistas": 0.05
+        }
+      }
+    }
+  ]
 }
