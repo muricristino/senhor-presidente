@@ -1,0 +1,41 @@
+{
+  "country_id": "US",
+  "country_name": "Estados Unidos",
+  "flag": "🇺🇸",
+  "available": false,
+  "head_of_state_title": "Mr. President",
+  "capital": "Washington, D.C.",
+  "palace": "Casa Branca",
+  "institutions": {
+    "supreme_court": "Suprema Corte",
+    "legislative": "Congresso (Senado e House)",
+    "constitution_year": 1787
+  },
+  "factions": [],
+  "kpis_iniciais": {
+    "aprovacao": 50,
+    "coalizao": 50,
+    "seguranca": 6.5,
+    "educacao": 7.0,
+    "desemprego": 4.0,
+    "selic": 5.0,
+    "inflacao": 3.0
+  },
+  "advisor": {
+    "name": "",
+    "role": ""
+  },
+  "ministers": [],
+  "bios": [],
+  "calendar": {
+    "start_year": 2026,
+    "term_months": 48,
+    "max_terms": 2,
+    "election_month": 10,
+    "min_age": 35
+  },
+  "chamber": {
+    "seats": 513,
+    "impeachment_votes": 342
+  }
+}

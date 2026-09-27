@@ -1,0 +1,201 @@
+{
+  "country_id": "BR",
+  "country_name": "Brasil",
+  "flag": "🇧🇷",
+  "available": true,
+  "head_of_state_title": "Senhor Presidente",
+  "capital": "Brasília",
+  "palace": "Palácio do Planalto",
+  "institutions": {
+    "supreme_court": "STF",
+    "legislative": "Congresso Nacional",
+    "constitution_year": 1988
+  },
+  "factions": [
+    {
+      "id": "centrao",
+      "name": "Centrão",
+      "short": "CENTRÃO",
+      "influence": 40,
+      "color": "#9aa0b4",
+      "cares": [
+        "Cargos",
+        "Emendas"
+      ]
+    },
+    {
+      "id": "ruralistas",
+      "name": "Bancada do Agro",
+      "short": "AGRO",
+      "influence": 35,
+      "color": "#7fb04a",
+      "cares": [
+        "Economia",
+        "Comércio",
+        "Propriedade"
+      ]
+    },
+    {
+      "id": "religiosos",
+      "name": "Bancada Evangélica",
+      "short": "EVANGÉLICA",
+      "influence": 30,
+      "color": "#e0b04a",
+      "cares": [
+        "Cultura",
+        "Valores"
+      ]
+    },
+    {
+      "id": "seguranca",
+      "name": "Bancada da Bala",
+      "short": "BALA",
+      "influence": 25,
+      "color": "#c65a4a",
+      "cares": [
+        "Direitos",
+        "Defesa"
+      ]
+    },
+    {
+      "id": "tecnologica",
+      "name": "Frente Tecnológica e Progressista",
+      "short": "TEC/PROG",
+      "influence": 20,
+      "color": "#4ab0c6",
+      "cares": [
+        "Tecnologia",
+        "Sociedade",
+        "Valores"
+      ]
+    }
+  ],
+  "kpis_iniciais": {
+    "aprovacao": 50,
+    "coalizao": 55,
+    "seguranca": 6.5,
+    "educacao": 6.0,
+    "desemprego": 8.0,
+    "selic": 10.5,
+    "inflacao": 4.2
+  },
+  "advisor": {
+    "name": "Íris Monteiro",
+    "role": "Chefe de Gabinete",
+    "avatar": "iris"
+  },
+  "ministers": [
+    {
+      "id": "fazenda",
+      "name": "Helena Queiroz",
+      "role": "Fazenda",
+      "color": "#3a6fd8",
+      "avatar": "helena"
+    },
+    {
+      "id": "justica",
+      "name": "Otávio Brandão",
+      "role": "Justiça",
+      "color": "#8a5cc6",
+      "avatar": "otavio"
+    },
+    {
+      "id": "casacivil",
+      "name": "Rui Paranhos",
+      "role": "Casa Civil",
+      "color": "#9aa0b4",
+      "avatar": "rui"
+    },
+    {
+      "id": "defesa",
+      "name": "Gen. Augusto Vilela",
+      "role": "Defesa",
+      "color": "#5a7a3a",
+      "avatar": "general"
+    },
+    {
+      "id": "agricultura",
+      "name": "Tereza Lins",
+      "role": "Agricultura",
+      "color": "#7fb04a",
+      "avatar": "tereza"
+    },
+    {
+      "id": "comunicacao",
+      "name": "Caio Nunes",
+      "role": "Comunicação",
+      "color": "#e0579f",
+      "avatar": "caio"
+    }
+  ],
+  "bios": [
+    {
+      "id": "politico",
+      "name": "Carreira Política",
+      "desc": "Três mandatos de deputado. Você sabe contar votos no plenário.",
+      "bonus": "+10 Coalizão · Bancadas mais receptivas",
+      "effects": {
+        "kpis": {
+          "coalizao": 10
+        },
+        "factions": {
+          "centrao": 15,
+          "ruralistas": 5,
+          "religiosos": 5,
+          "seguranca": 5,
+          "tecnologica": 5
+        }
+      }
+    },
+    {
+      "id": "empresario",
+      "name": "Empresário / Inovador",
+      "desc": "Fundou uma empresa de tecnologia. O mercado confia em você.",
+      "bonus": "Selic e desemprego menores · Frente Tec simpática",
+      "effects": {
+        "kpis": {
+          "selic": -0.5,
+          "desemprego": -0.4
+        },
+        "factions": {
+          "tecnologica": 15,
+          "ruralistas": 5
+        },
+        "axes": {
+          "economia": 10,
+          "tecnologia": 10
+        }
+      }
+    },
+    {
+      "id": "popular",
+      "name": "Líder Popular / Militar",
+      "desc": "Veio das ruas (ou dos quartéis). O povo te reconhece na padaria.",
+      "bonus": "+6 Aprovação · +0.5 Segurança · Bancada da Bala",
+      "effects": {
+        "kpis": {
+          "aprovacao": 6,
+          "seguranca": 0.5
+        },
+        "factions": {
+          "seguranca": 15,
+          "religiosos": 5
+        },
+        "axes": {
+          "defesa": -10
+        }
+      }
+    }
+  ],
+  "calendar": {
+    "start_year": 2026,
+    "term_months": 48,
+    "max_terms": 2,
+    "election_month": 10,
+    "min_age": 35
+  },
+  "chamber": {
+    "seats": 513,
+    "impeachment_votes": 342
+  }
+}

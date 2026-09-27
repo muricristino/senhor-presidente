@@ -1,0 +1,86 @@
+[
+  {
+    "id": "governanca", "category": "Governança",
+    "poleA": "Federalista", "poleB": "Unitário",
+    "titleA": "Federalista", "titleB": "Centralizador",
+    "explainA": "Estados e municípios decidem mais. O poder fica perto de quem é governado, mas as regras variam de lugar para lugar.",
+    "explainB": "Brasília decide e o país inteiro segue. Mais uniformidade e rapidez, menos autonomia local."
+  },
+  {
+    "id": "poder", "category": "Poder",
+    "poleA": "Democrático", "poleB": "Autocrático",
+    "titleA": "Democrata", "titleB": "Autoritário",
+    "explainA": "O poder é dividido, fiscalizado e trocado nas urnas. Decidir demora, mas os erros são corrigidos.",
+    "explainB": "O poder se concentra no Executivo. Decide rápido, mas ninguém consegue frear um erro."
+  },
+  {
+    "id": "direitos", "category": "Direitos",
+    "poleA": "Segurança", "poleB": "Liberdade",
+    "titleA": "Linha-dura", "titleB": "Libertário",
+    "explainA": "O Estado pode restringir liberdades individuais para garantir ordem e proteção coletiva.",
+    "explainB": "As liberdades individuais vêm primeiro, mesmo que isso custe algum controle sobre a ordem."
+  },
+  {
+    "id": "sociedade", "category": "Sociedade",
+    "poleA": "Assimilação", "poleB": "Multiculturalismo",
+    "titleA": "Assimilacionista", "titleB": "Multiculturalista",
+    "explainA": "Uma identidade nacional comum, que minorias e imigrantes devem adotar.",
+    "explainB": "Várias identidades convivem e são protegidas, sem uma cultura dominante obrigatória."
+  },
+  {
+    "id": "defesa", "category": "Defesa",
+    "poleA": "Militarista", "poleB": "Pacifista",
+    "titleA": "Militarista", "titleB": "Pacifista",
+    "explainA": "Forças Armadas fortes e presentes, inclusive em assuntos internos.",
+    "explainB": "Militares longe da política e conflitos resolvidos por diplomacia e instituições civis."
+  },
+  {
+    "id": "diplomacia", "category": "Diplomacia",
+    "poleA": "Não-Intervencionista", "poleB": "Intervencionista",
+    "titleA": "Neutro", "titleB": "Intervencionista",
+    "explainA": "O país cuida de si e evita tomar lado em conflitos alheios.",
+    "explainB": "O país age lá fora (sanções, alianças, pressão) para defender interesses e valores."
+  },
+  {
+    "id": "propriedade", "category": "Propriedade",
+    "poleA": "Público", "poleB": "Privado",
+    "titleA": "Estatista", "titleB": "Privatista",
+    "explainA": "Setores estratégicos (petróleo, energia, bancos) nas mãos do Estado.",
+    "explainB": "Empresas privadas produzem e o Estado regula. Estatais são vendidas ou abertas ao mercado."
+  },
+  {
+    "id": "economia", "category": "Economia",
+    "poleA": "Planejada", "poleB": "Livre Mercado",
+    "titleA": "Planejador", "titleB": "Liberal",
+    "explainA": "O governo controla preços, crédito e investimentos para dirigir a economia.",
+    "explainB": "Preços e investimentos são definidos pela oferta e demanda, com pouca interferência."
+  },
+  {
+    "id": "comercio", "category": "Comércio",
+    "poleA": "Protecionista", "poleB": "Globalista",
+    "titleA": "Protecionista", "titleB": "Globalista",
+    "explainA": "Tarifas e barreiras protegem a indústria nacional da concorrência estrangeira.",
+    "explainB": "Fronteiras abertas a produtos e capital. Mais concorrência e preços menores, mais exposição a crises lá fora."
+  },
+  {
+    "id": "cultura", "category": "Cultura",
+    "poleA": "Laico", "poleB": "Religioso",
+    "titleA": "Laico", "titleB": "Confessional",
+    "explainA": "Estado e religião separados: a fé não orienta leis nem políticas públicas.",
+    "explainB": "Valores religiosos inspiram abertamente leis e políticas do governo."
+  },
+  {
+    "id": "valores", "category": "Valores",
+    "poleA": "Progressista", "poleB": "Tradicionalista",
+    "titleA": "Progressista", "titleB": "Tradicionalista",
+    "explainA": "Costumes e instituições devem mudar para incluir novas demandas sociais.",
+    "explainB": "Costumes e instituições herdados devem ser preservados. Mudanças, só devagar."
+  },
+  {
+    "id": "tecnologia", "category": "Tecnologia",
+    "poleA": "Bioconservador", "poleB": "Aceleração",
+    "titleA": "Cauteloso", "titleB": "Aceleracionista",
+    "explainA": "Novas tecnologias só chegam com limites éticos e regulação prévia.",
+    "explainB": "Inovar primeiro e regular depois. O progresso técnico resolve mais problemas do que cria."
+  }
+]
