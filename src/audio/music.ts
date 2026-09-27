@@ -45,6 +45,10 @@ class Music {
     onMuteChange((m) => this.master?.gain.setTargetAtTime(m ? 0 : VOLUME, ac()?.currentTime ?? 0, 0.1));
   }
 
+  get current(): Mood {
+    return this.pending ?? this.mood ?? 'calm';
+  }
+
   /** Troca o clima no próximo compasso. Antes do primeiro gesto do jogador, só guarda o pedido. */
   play(mood: Mood) {
     if (mood === this.mood && !this.pending) return;

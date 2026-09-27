@@ -187,6 +187,12 @@ export interface GameState {
   electionsHeld: number[];
   /** Conquistas ganhas nesta partida (os troféus na mesa). */
   trophies?: string[];
+  /** Indicadores mês a mês, para os gráficos da Home. */
+  series?: { month: number; kpis: Record<KpiId, number> }[];
+  /** Últimos posts que passaram pelo feed. */
+  recentPosts?: SocialPost[];
+  /** Boletim do Planalto escrito pelo Claude (editorial e fala de cada ministro), por mês. */
+  bulletin?: { month: number; editorial: string; ministers: Record<string, string> };
   kpis: Record<KpiId, number>;
   axes: Record<AxisId, number>;
   factions: Record<string, number>;

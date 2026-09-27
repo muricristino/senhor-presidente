@@ -36,7 +36,7 @@ export class SocialFeed {
   private meterFill: HTMLElement;
   private meterFace: HTMLElement;
   private timers: number[] = [];
-  onPost?: () => void;
+  onPost?: (post: SocialPost) => void;
 
   constructor() {
     this.root.innerHTML = `
@@ -93,7 +93,7 @@ export class SocialFeed {
     this.list.prepend(node);
     while (this.list.children.length > MAX_POSTS) this.list.lastElementChild!.remove();
     sfx.tick();
-    this.onPost?.();
+    this.onPost?.(p);
     const likes = node.querySelector<HTMLElement>('.likes')!;
     void countTo(1600, 0, p.likes, (v) => (likes.textContent = compact(v))).then(() => node.querySelector('.heart')!.classList.add('beat'));
   }

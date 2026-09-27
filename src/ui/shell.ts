@@ -51,6 +51,8 @@ export class Gabinete {
   /** Tecla tratada pelo conteúdo atual da mesa. */
   onKey: ((e: KeyboardEvent) => void) | null = null;
   onKeyUp: ((e: KeyboardEvent) => void) | null = null;
+  /** Botão 🏠: abre a Home por cima do gabinete. */
+  onHome: (() => void) | null = null;
   private tab: Tab = 'redes';
   private advisorTalking = false;
   private timers: number[] = [];
@@ -70,6 +72,7 @@ export class Gabinete {
           </div>`,
         ).join('')}
         <div class="tb-item stf" title="Supremo Tribunal Federal"><i class="ico">⚖️</i><div><span>${esc(country.institutions.supreme_court)}</span><b class="stf-status"></b></div></div>
+        <button class="tb-home" title="Início: painel do país (pausa o jogo)">🏠</button>
         <button class="tb-mute" title="Som (M)">🔊</button>
       </div>
 
@@ -182,7 +185,10 @@ export class Gabinete {
       }),
     );
     this.setTab('redes');
-    this.feed.onPost = () => this.badge('redes');
+    this.feed.onPost = (post) => {
+      this.badge('redes');
+      this.state = { ...this.state, recentPosts: [post, ...(this.state.recentPosts ?? [])].slice(0, 12) };
+    };
     this.$('[data-pane="redes"]').append(this.feed.root);
 
     const tip = this.$('.axis-tip');
@@ -224,12 +230,17 @@ export class Gabinete {
       }
     });
 
+    this.$('.tb-home').addEventListener('click', () => {
+      sfx.click();
+      this.onHome?.();
+    });
     this.$('.tb-mute').addEventListener('click', (e) => {
       (e.currentTarget as HTMLElement).textContent = sfx.toggleMute() ? '🔇' : '🔊';
     });
     const keydown = (e: KeyboardEvent) => {
       if (!s.isConnected) return document.removeEventListener('keydown', keydown);
       if (e.key.toLowerCase() === 'm') this.$('.tb-mute').click();
+      if (document.querySelector('.home-overlay')) return;
       this.onKey?.(e);
     };
     const keyup = (e: KeyboardEvent) => {

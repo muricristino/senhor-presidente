@@ -67,3 +67,13 @@ describe('eleição e impeachment', () => {
     expect(fraco.yes + fraco.no).toBeLessThanOrEqual(513);
   });
 });
+
+describe('relações internacionais', () => {
+  it('convergem para um equilíbrio em vez de acumular sem limite', () => {
+    let s = createState(br, { name: 'T', avatar: 0, bioId: 'politico' });
+    s = { ...s, axes: { ...s.axes, propriedade: -60, diplomacia: -60 } };
+    s = advanceMonth(s, br, 60);
+    expect(s.relations.china).toBeGreaterThan(20);
+    expect(s.relations.china).toBeLessThan(40);
+  });
+});

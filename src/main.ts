@@ -18,6 +18,7 @@ import { creationScreen } from './ui/creation';
 import { runDispatch } from './ui/dispatch';
 import { runInterview } from './ui/interview';
 import { wait } from './ui/dom';
+import { showHome } from './ui/home';
 import { inaugurationScreen } from './ui/inauguration';
 import { showVerdict } from './ui/overlays';
 import { toastAchievement } from './ui/trophies';
@@ -35,6 +36,37 @@ window.addEventListener('resize', fit);
 fit();
 
 let lastPlayer: Partial<Player> = {};
+
+/** Tela inicial: título do jogo ou, se houver mandato salvo, o painel do país. */
+function startHome() {
+  music.play('title');
+  const save = loadGame();
+  if (!save) {
+    showHome(stage, { onNew: startCreation });
+    return;
+  }
+  const country = getCountry(save.countryId);
+  showHome(stage, {
+    state: save.state,
+    country,
+    primary: {
+      label: '▶ CONTINUAR MANDATO',
+      onClick: () => {
+        lastPlayer = save.state.player;
+        void runMandate(save.countryId, save.state, false);
+      },
+    },
+    onNew: () => {
+      clearSave();
+      startCreation();
+    },
+    loadBulletin: () =>
+      new Director(country).bulletin(save.state).then((b) => {
+        if (b) saveGame(save.countryId, { ...save.state, bulletin: b });
+        return b;
+      }),
+  });
+}
 
 function startCreation() {
   music.play('title');
@@ -110,6 +142,30 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     g.state = { ...g.state, trophies: [...(g.state.trophies ?? []), ...fresh.map((a) => a.id)] };
     g.renderTrophies();
     fresh.forEach((a) => toastAchievement(g.screen, a));
+  };
+
+  g.onHome = () => {
+    const mood = music.current;
+    music.play('title');
+    showHome(g.screen, {
+      overlay: true,
+      state: g.state,
+      country,
+      primary: { label: '▶ VOLTAR AO GABINETE', onClick: () => music.play(mood) },
+      onNew: () => {
+        g.destroy();
+        clearSave();
+        startCreation();
+      },
+      loadBulletin: () =>
+        director.bulletin(g.state).then((b) => {
+          if (b) {
+            g.state = { ...g.state, bulletin: b };
+            saveGame(countryId, g.state);
+          }
+          return b;
+        }),
+    });
   };
 
   const nextMonth = () => {
@@ -255,10 +311,10 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
         clearSave();
         void runMandate(countryId, createState(country, start.player), true);
       },
-      onNewPresident: startCreation,
+      onNewPresident: startHome,
     },
     director.legacy(g.state, ending),
   );
 }
 
-startCreation();
+startHome();

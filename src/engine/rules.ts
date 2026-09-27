@@ -117,13 +117,17 @@ export function advanceMonth(state: GameState, country: Country, months = 1): Ga
     next.kpis.coalizao = round(next.kpis.coalizao + (coalitionBase - next.kpis.coalizao) * 0.07, 1);
     next.kpis.desemprego = round(clamp(next.kpis.desemprego - trade * 0.06, 2, 30), 2);
     next.kpis.inflacao = round(clamp(next.kpis.inflacao - trade * 0.04, -2, 40), 2);
-    // Cada parceiro reage devagar à postura ideológica do governo.
+    // Cada parceiro caminha devagar para um ponto de equilíbrio que depende da ideologia do governo:
+    // o efeito de uma decisão vai se diluindo e o que fica é a postura de fundo.
     for (const p of country.partners ?? []) {
       const taste = Object.entries(p.likes).reduce((n, [axis, w]) => n + (state.axes[axis as AxisId] ?? 0) * (w ?? 0), 0);
-      relations[p.id] = round(clamp((relations[p.id] ?? 0) + taste * 0.05, -100, 100), 1);
+      const target = clamp(p.start + taste, -80, 80);
+      const now = relations[p.id] ?? p.start;
+      relations[p.id] = round(now + (target - now) * 0.04, 1);
     }
   }
   next.relations = relations;
+  next.series = [...(state.series ?? [{ month: state.month, kpis: { ...state.kpis } }]), { month: next.month, kpis: { ...next.kpis } }].slice(-120);
   next = { ...next };
   return next;
 }

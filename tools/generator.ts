@@ -253,6 +253,12 @@ O mandato do jogador acabou (ou está em pausa). Com base no histórico completo
 - epitaph: 2 frases (até 220 caracteres) que resumem o governo, citando 1 ou 2 decisões concretas do histórico e o perfil ideológico. Pode ter ironia; não precisa ser elogioso.
 Português do Brasil, com acentos.`;
 
+const BULLETIN_SYSTEM = `Você escreve o BOLETIM DO PLANALTO de "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
+Com base no estado do país e nas decisões recentes, escreva:
+- editorial: 2 frases (até 240 caracteres) sobre o momento do governo, como a abertura de um telejornal.
+- ministers: para cada ministro, UMA frase em primeira pessoa (até 90 caracteres) dizendo como ele vê a própria área agora, com personalidade e coerente com os números. Ministros: fazenda (Helena Queiroz, economia), justica (Otávio Brandão, STF e direitos), casacivil (Rui Paranhos, Congresso), defesa (Gen. Augusto Vilela, Forças Armadas e fronteiras), agricultura (Tereza Lins, agro e comércio), comunicacao (Caio Nunes, redes e imagem).
+Português do Brasil, com acentos.`;
+
 const CUTSCENE_SYSTEM = `Você é o diretor de cena de "Senhor Presidente", um jogo em pixel art. Escreva o roteiro de uma cinemática curta (4 a 7 segundos) para a decisão descrita.
 A tela tem 192x112 pixels. O y de um ator é a posição dos PÉS; pessoas têm 22px de altura, então o chão fica por volta de y=96..108. x é o centro do ator.
 
@@ -394,6 +400,16 @@ export function claudeDirector(): Plugin {
           if (req.url === '/api/interview' && req.method === 'POST') {
             const out = await runClaude(INTERVIEW_SYSTEM, body.briefing, interviewSchema(body.axes, body.factions));
             console.log(`[claude] coletiva gerada em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, out);
+          }
+          if (req.url === '/api/bulletin' && req.method === 'POST') {
+            const ministers = ['fazenda', 'justica', 'casacivil', 'defesa', 'agricultura', 'comunicacao'];
+            const out = await runClaude(BULLETIN_SYSTEM, body.briefing, {
+              type: 'object',
+              properties: { editorial: str, ministers: { type: 'object', properties: Object.fromEntries(ministers.map((m) => [m, str])), required: ministers } },
+              required: ['editorial', 'ministers'],
+            });
+            console.log(`[claude] boletim gerado em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, out);
           }
           if (req.url === '/api/legacy' && req.method === 'POST') {

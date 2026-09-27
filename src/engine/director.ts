@@ -220,6 +220,29 @@ export class Director {
     return d;
   }
 
+  // ---------- boletim ----------
+
+  /** Editorial do momento e a fala de cada ministro, escritos pelo Claude. */
+  bulletin(state: GameState): Promise<GameState['bulletin'] | null> {
+    return claudeOnline().then((online) =>
+      online
+        ? post<{ editorial: string; ministers: Record<string, string> }>(
+            '/api/bulletin',
+            { briefing: briefing(state, this.country).replace('Escreva a próxima crise.', 'Escreva o boletim do Planalto.') },
+            90_000,
+          ).then((r) =>
+            r?.editorial
+              ? {
+                  month: state.month,
+                  editorial: String(r.editorial).slice(0, 320),
+                  ministers: Object.fromEntries(Object.entries(r.ministers ?? {}).map(([k, v]) => [k, String(v).slice(0, 130)])),
+                }
+              : null,
+          )
+        : null,
+    );
+  }
+
   // ---------- legado ----------
 
   /** A manchete e o epitáfio do governo, escritos pelo Claude com o histórico completo. */
