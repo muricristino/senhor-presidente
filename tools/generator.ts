@@ -374,16 +374,39 @@ function claudeAvailable(): boolean {
   return available;
 }
 
+/*
+ * Proteção para quando o jogo está exposto (ex.: Cloudflare Tunnel): cada chamada gasta a conta
+ * do Claude de quem roda o servidor. Limita chamadas simultâneas e o total por hora.
+ */
+const MAX_CONCURRENT = Number(process.env.SP_MAX_CONCURRENT ?? 4);
+const MAX_PER_HOUR = Number(process.env.SP_MAX_PER_HOUR ?? 240);
+let running = 0;
+const recent: number[] = [];
+const waiting: (() => void)[] = [];
+
+async function acquire(): Promise<boolean> {
+  const now = Date.now();
+  while (recent.length && now - recent[0] > 3_600_000) recent.shift();
+  if (recent.length >= MAX_PER_HOUR) return false;
+  recent.push(now);
+  if (running >= MAX_CONCURRENT) await new Promise<void>((r) => waiting.push(r));
+  running++;
+  return true;
+}
+
+function release() {
+  running--;
+  waiting.shift()?.();
+}
+
 export function claudeDirector(): Plugin {
-  return {
-    name: 'senhor-presidente-claude-director',
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+  const middleware = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         if (!req.url?.startsWith('/api/')) return next();
         const started = Date.now();
+        if (req.url === '/api/health') return send(res, 200, { claude: claudeAvailable(), model: MODEL });
+        if (!claudeAvailable()) return send(res, 503, { error: 'claude indisponível' });
+        if (!(await acquire())) return send(res, 429, { error: 'limite de gerações por hora atingido' });
         try {
-          if (req.url === '/api/health') return send(res, 200, { claude: claudeAvailable(), model: MODEL });
-          if (!claudeAvailable()) return send(res, 503, { error: 'claude indisponível' });
           const body = await readBody(req);
           if (Array.isArray(body.partners)) PARTNERS = body.partners;
           if (req.url === '/api/event' && req.method === 'POST') {
@@ -431,8 +454,18 @@ export function claudeDirector(): Plugin {
         } catch (e) {
           console.warn(`[claude] falhou em ${((Date.now() - started) / 1000).toFixed(1)}s:`, (e as Error).message);
           return send(res, 502, { error: (e as Error).message });
+        } finally {
+          release();
         }
-      });
+  };
+  return {
+    name: 'senhor-presidente-claude-director',
+    configureServer(server) {
+      server.middlewares.use(middleware);
+    },
+    // Também no `vite preview`, que é o que vai pelo túnel.
+    configurePreviewServer(server) {
+      server.middlewares.use(middleware);
     },
   };
 }

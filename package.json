@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tunnel": "vite build && (vite preview --port 4173 & cloudflared tunnel --config tools/cloudflared.yml --no-autoupdate --url http://localhost:4173)"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
