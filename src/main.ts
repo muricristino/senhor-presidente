@@ -10,6 +10,7 @@ import {
 import { advanceMonth, applyEffects, createState } from './engine/rules';
 import { clearSave, loadGame, saveGame } from './engine/save';
 import type { GameEvent, GameState, Player } from './engine/types';
+import { music } from './audio/music';
 import { runBigEvent } from './ui/bigEvent';
 import { playCinematic } from './ui/cinematic';
 import { creationScreen } from './ui/creation';
@@ -34,6 +35,7 @@ fit();
 let lastPlayer: Partial<Player> = {};
 
 function startCreation() {
+  music.play('title');
   const save = loadGame();
   creationScreen(
     stage,
@@ -81,6 +83,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   const noCutscene = async () => null;
   const playBig = async (event: GameEvent, generatedFlow = true) => {
     inBig = true;
+    music.play('tense');
     const ev = { ...event, month: g.state.month, month_name: monthName(g.state.month) };
     if (generatedFlow) director.prepareCutscenes(ev, g.state);
     await g.urgent(ev.kicker, ev.title);
@@ -93,6 +96,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
       if (!r.retry) break;
     }
     inBig = false;
+    music.play('calm');
     return g.state.decisions[g.state.decisions.length - 1]?.split(':')[1];
   };
 
@@ -108,6 +112,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
       if (choice === 'renunciar') return 'renuncia';
       const vote = impeachmentVote(g.state, country);
       await playCinematic(g.screen, impeachmentCutscene(vote), g.library, 'CÂMARA · AO VIVO');
+      music.play(vote.passed ? 'sad' : 'epic');
       if (vote.passed) {
         await showVerdict(g.screen, {
           icon: '⚖️', kicker: 'CÂMARA DOS DEPUTADOS', title: 'Impeachment aprovado', good: false, button: 'VER O BALANÇO ➔',
@@ -126,6 +131,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     if (electionDue(g.state, country)) {
       await playBig(campaignEvent(g.state), false);
       const result = electionResult(g.state);
+      music.play(result.won ? 'epic' : 'sad');
       await playCinematic(g.screen, electionCutscene(g.state, result), g.library, `APURAÇÃO · ${yearOf(g.state, g.state.month)}`);
       g.state = { ...g.state, electionsHeld: [...g.state.electionsHeld, g.state.term] };
       if (!result.won) {
@@ -151,6 +157,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   };
 
   let ending: Ending | null = null;
+  music.play('calm');
   if (!prepared) director.requestBig(g.state);
   if (!fresh) void g.say(`Bem-vindo de volta, Presidente. Estamos em ${dateLabel(g.state, g.state.month)}.`);
   director.refillDispatches(g.state);
@@ -188,7 +195,9 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
       const interview = director.takeInterview();
       if (interview) {
         nextMonth();
+        music.play('press');
         await runInterview(g, interview);
+        music.play('calm');
         sinceInterview = 0;
         continue;
       }
@@ -214,6 +223,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   }
 
   if (ending !== 'pausa') clearSave();
+  music.play(ending === 'fim' ? 'epic' : ending === 'pausa' ? 'calm' : 'sad');
   g.destroy();
   summaryScreen(stage, country, createState(country, start.player), g.state, ending, {
     onReplay: () => {

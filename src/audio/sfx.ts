@@ -1,7 +1,12 @@
 let ctx: AudioContext | null = null;
 let muted = false;
+const muteListeners: ((muted: boolean) => void)[] = [];
 
-function ac(): AudioContext | null {
+export function onMuteChange(fn: (muted: boolean) => void) {
+  muteListeners.push(fn);
+}
+
+export function ac(): AudioContext | null {
   if (muted) return null;
   try {
     ctx ??= new AudioContext();
@@ -57,5 +62,10 @@ export const sfx = {
   gavel: () => { noise(0.12, 0.3); noise(0.12, 0.3, 0.22); tone(70, 0.3, 'triangle', 0.1, 50, 0.22); },
   fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.35 : 0.12, 'square', 0.035, undefined, i * 0.11)),
   type: () => tone(1200 + Math.random() * 400, 0.015, 'square', 0.008),
-  toggleMute(): boolean { muted = !muted; return muted; },
+  toggleMute(): boolean {
+    muted = !muted;
+    muteListeners.forEach((fn) => fn(muted));
+    return muted;
+  },
+  isMuted: () => muted,
 };
