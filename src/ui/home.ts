@@ -22,6 +22,7 @@ export interface HomeOptions {
   /** 'resume' vem de um jogo salvo; 'back' volta para um mandato já aberto. */
   primary?: { label: string; onClick: () => void };
   onNew: () => void;
+  onLab?: () => void;
   /** Busca o boletim do Claude quando o salvo está desatualizado. */
   loadBulletin?: () => Promise<GameState['bulletin'] | null>;
   /** Home por cima do gabinete (pausa o jogo) em vez de tela própria. */
@@ -61,6 +62,7 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
         <div class="home-actions">
           <button class="home-btn primary home-new">▶ NOVO MANDATO</button>
           ${gallery}
+          <button class="home-btn ghost home-lab">🧪 LAB DE ANIMAÇÃO</button>
         </div>
       </div>`,
     );
@@ -216,6 +218,11 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
     o.onNew();
   });
   root.querySelector('.home-gallery')!.addEventListener('click', () => showGallery(root));
+  root.querySelector('.home-lab')?.addEventListener('click', () => {
+    sfx.click();
+    close();
+    o.onLab?.();
+  });
 
   if (o.overlay) host.append(root);
   else host.replaceChildren(root);

@@ -18,6 +18,7 @@ import { creationScreen } from './ui/creation';
 import { runDispatch } from './ui/dispatch';
 import { runInterview } from './ui/interview';
 import { wait } from './ui/dom';
+import { showLab } from './lab/lab';
 import { showHome } from './ui/home';
 import { inaugurationScreen } from './ui/inauguration';
 import { showVerdict } from './ui/overlays';
@@ -53,8 +54,15 @@ let lastPlayer: Partial<Player> = {};
 function startHome() {
   music.play('title');
   const save = loadGame();
+  if (location.hash === '#lab') {
+    showLab(stage, () => {
+      history.replaceState(null, '', location.pathname);
+      startHome();
+    });
+    return;
+  }
   if (!save) {
-    showHome(stage, { onNew: startCreation });
+    showHome(stage, { onNew: startCreation, onLab: () => (location.hash = '#lab') });
     return;
   }
   const country = getCountry(save.countryId);
@@ -329,4 +337,5 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   );
 }
 
+window.addEventListener('hashchange', () => location.hash === '#lab' && startHome());
 startHome();
