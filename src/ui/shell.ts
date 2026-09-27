@@ -106,6 +106,15 @@ export class Gabinete {
           <div class="desk-content"></div>
         </main>
 
+        <nav class="mnav">
+          <button data-view="mesa">🖋️<small>MESA</small><i class="badge"></i></button>
+          <button data-view="planalto">🏛️<small>PLANALTO</small><i class="badge"></i></button>
+          <button data-view="redes">📱<small>REDES</small><i class="badge"></i></button>
+          <button data-view="eixos">🧭<small>EIXOS</small><i class="badge"></i></button>
+          <button data-view="bancadas">🏛️<small>CONGR.</small><i class="badge"></i></button>
+          <button data-view="mapa">🌎<small>MAPA</small><i class="badge"></i></button>
+        </nav>
+
         <aside class="col-right">
           <nav class="tabs">
             <button class="tab" data-tab="redes">📱 REDES<i class="badge"></i></button>
@@ -143,7 +152,7 @@ export class Gabinete {
           </section>
           <section class="pane" data-pane="mapa">
             <div class="map-wrap"><span class="map-marker"></span><span class="map-abroad">🌎</span></div>
-            <div class="map-info">Passe o mouse numa região. <b>Verde</b> aprova, <b>vermelho</b> reprova.</div>
+            <div class="map-info">Toque ou passe o mouse numa região. <b>Verde</b> aprova, <b>vermelho</b> reprova.</div>
             <div class="panel-label mt">RELAÇÕES INTERNACIONAIS</div>
             ${(country.partners ?? [])
               .map(
@@ -185,6 +194,15 @@ export class Gabinete {
       }),
     );
     this.setTab('redes');
+    this.$$('.mnav button').forEach((b) =>
+      b.addEventListener('click', () => {
+        sfx.click();
+        const v = b.dataset.view!;
+        if (v === 'mesa' || v === 'planalto') this.setView(v);
+        else this.setTab(v as Tab, true);
+      }),
+    );
+    this.setView('mesa');
     this.feed.onPost = (post) => {
       this.badge('redes');
       this.state = { ...this.state, recentPosts: [post, ...(this.state.recentPosts ?? [])].slice(0, 12) };
@@ -205,7 +223,7 @@ export class Gabinete {
     wrap.prepend(this.map.canvas);
     const info = this.$('.map-info');
     const defaultInfo = info.innerHTML;
-    this.map.canvas.addEventListener('mousemove', (e) => {
+    const inspect = (e: PointerEvent | MouseEvent) => {
       const r = this.map.canvas.getBoundingClientRect();
       const id = regionAt(((e.clientX - r.left) / r.width) * this.map.canvas.width, ((e.clientY - r.top) / r.height) * this.map.canvas.height);
       this.map.setHover(id);
@@ -213,7 +231,9 @@ export class Gabinete {
       info.innerHTML = region
         ? `<b>${esc(region.name)}</b> · ${region.pop}% da população · aprovação <b>${regionalApproval(this.state, country)[region.id]}%</b>`
         : defaultInfo;
-    });
+    };
+    this.map.canvas.addEventListener('mousemove', inspect);
+    this.map.canvas.addEventListener('pointerdown', inspect);
     this.map.canvas.addEventListener('mouseleave', () => {
       this.map.setHover(null);
       info.innerHTML = defaultInfo;
@@ -394,15 +414,35 @@ export class Gabinete {
     this.advisorTalking = false;
   }
 
-  setTab(t: Tab) {
+  /** No celular, a aba também vira a vista principal (a mesa some enquanto as consequências aparecem). */
+  setTab(t: Tab, showOnMobile = true) {
     this.tab = t;
     this.$$('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === t));
     this.$$('.pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === t));
     this.$(`.tab[data-tab="${t}"] .badge`).classList.remove('on');
+    if (showOnMobile && this.mobile) this.setView(t);
+  }
+
+  get mobile(): boolean {
+    return document.body.classList.contains('mobile');
+  }
+
+  /** Vista do celular: mesa, planalto (janela e retrato) ou uma das abas. */
+  setView(v: string) {
+    this.$('.cab-grid').dataset.view = v;
+    this.$$('.mnav button').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
+    this.$(`.mnav button[data-view="${v}"] .badge`).classList.remove('on');
+  }
+
+  /** Cada novo acontecimento começa com a mesa na frente. */
+  showDesk() {
+    this.setView('mesa');
+    this.setTab(this.tab, false);
   }
 
   badge(t: Tab) {
     if (t !== this.tab) this.$(`.tab[data-tab="${t}"] .badge`).classList.add('on');
+    if (this.mobile && this.$('.cab-grid').dataset.view !== t) this.$(`.mnav button[data-view="${t}"] .badge`).classList.add('on');
   }
 
   /** Mostra, nos eixos e nas bancadas, para onde uma opção empurra o governo. */

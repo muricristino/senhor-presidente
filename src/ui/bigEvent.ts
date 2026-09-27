@@ -30,6 +30,7 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
     g.state = state;
     g.renderMonth();
     g.renderTimeline('!');
+    g.showDesk();
     g.setPlace(event.region, event.options[0]?.icon ?? '❗');
     g.setScene(event.scene.anim);
 
@@ -85,7 +86,7 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
     const $$ = <T extends Element = HTMLElement>(s: string) => [...g.desk.querySelectorAll<T>(s)];
 
     void g.say(event.advisor);
-    g.setTab('redes');
+    g.setTab('redes', false);
     g.feed.wave(event.social, 2600, 700);
 
     // --- prévia ---

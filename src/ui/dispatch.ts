@@ -25,6 +25,7 @@ export function runDispatch(g: Gabinete, d: Dispatch): Promise<GameState> {
     let remaining = SECONDS;
     g.renderMonth();
     g.renderTimeline(d.icon);
+    g.showDesk();
     g.setPlace(d.region, d.icon);
 
     g.desk.innerHTML = `

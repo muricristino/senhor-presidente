@@ -27,12 +27,24 @@ import { summaryScreen, type Ending } from './ui/summary';
 
 const stage = document.getElementById('stage')!;
 
-// Palco fixo de 1280x720 escalado para caber na janela, mantendo a proporção.
+/**
+ * Palco: 1280x720 no computador; no celular em pé, 480 de largura com a altura da tela.
+ * Tudo é desenhado nesse tamanho lógico e escalado para caber.
+ */
 function fit() {
-  const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
-  stage.style.transform = `scale(${scale})`;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const mobile = vw < 760 && vh > vw;
+  document.body.classList.toggle('mobile', mobile);
+  const w = mobile ? 480 : 1280;
+  const h = mobile ? Math.round((480 * vh) / vw) : 720;
+  const scale = Math.min(vw / w, vh / h);
+  stage.style.width = `${w}px`;
+  stage.style.height = `${h}px`;
+  stage.style.transform = `translate(${(vw - w * scale) / 2}px, ${(vh - h * scale) / 2}px) scale(${scale})`;
 }
 window.addEventListener('resize', fit);
+window.addEventListener('orientationchange', () => setTimeout(fit, 200));
 fit();
 
 let lastPlayer: Partial<Player> = {};

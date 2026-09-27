@@ -5,10 +5,11 @@ import type { Cutscene, PixelSprite } from '../engine/types';
 import { slow } from '../speed';
 import { el, esc, typewriter, wait } from './dom';
 
-const SCALE = 5;
 
 /** Toca um roteiro em tela cheia, com legenda de telejornal e balões de fala. Clique pula. */
 export async function playCinematic(host: HTMLElement, script: Cutscene, library: Map<string, PixelSprite>, kicker = 'AO VIVO') {
+  const stageW = document.getElementById('stage')?.offsetWidth ?? 1280;
+  const SCALE = Math.min(5, (stageW - 16) / SCENE_W);
   const overlay = el(
     'div',
     'overlay cinema',

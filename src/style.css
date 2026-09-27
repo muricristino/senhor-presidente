@@ -37,14 +37,13 @@ html, body {
 
 #stage {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 0;
+  top: 0;
   width: 1280px;
   height: 720px;
-  margin: -360px 0 0 -640px;
   background: var(--bg);
   overflow: hidden;
-  transform-origin: center center;
+  transform-origin: 0 0;
 }
 
 button { font-family: inherit; color: inherit; cursor: pointer; }
@@ -934,3 +933,133 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .hemicycle { width: 300px; height: 158px; }
 .hp-map .brazil-map { width: 160px; height: 145px; }
 .home-mid .home-panel { padding: 8px 12px; }
+
+/* ======================================================================
+   CELULAR (em pé): palco de 480px de largura, uma vista por vez.
+   ====================================================================== */
+.mnav { display: none; }
+.mobile .cabinet .topbar { height: 46px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; flex: none; }
+.mobile .topbar > * { flex: none; }
+.mobile .tb-pres b { max-width: 90px; font-size: 13px; }
+.mobile .tb-item { padding: 0 7px; }
+.mobile .tb-item span { font-size: 10px; }
+.mobile .tb-item .ico { font-size: 15px; }
+.mobile .tb-home, .mobile .tb-mute { margin-left: 0; width: 42px; }
+
+.mobile .cab-grid { display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 4px; }
+.mobile .cab-grid > .col-left, .mobile .cab-grid > .desk, .mobile .cab-grid > .col-right { display: none; }
+.mobile .cab-grid[data-view='mesa'] > .desk { display: flex; flex: 1; }
+.mobile .cab-grid[data-view='mesa'] > .col-left { display: flex; flex: none; }
+.mobile .cab-grid[data-view='mesa'] > .col-left > :not(.advisor-card) { display: none; }
+.mobile .cab-grid[data-view='planalto'] > .col-left { display: flex; flex: 1; overflow-y: auto; }
+.mobile .cab-grid:not([data-view='mesa']):not([data-view='planalto']) > .col-right { display: flex; flex: 1; }
+.mobile .col-right .tabs { display: none; }
+.mobile .col-left .window-frame { align-self: center; }
+.mobile .scene { width: 440px; height: 256px; }
+
+/* conselheira vira uma faixa em cima da mesa */
+.mobile [data-view='mesa'] .advisor-card { flex-direction: row; align-items: center; gap: 8px; }
+.mobile [data-view='mesa'] .advisor-face::after { display: none; }
+.mobile [data-view='mesa'] .advisor-canvas { width: 44px; height: 44px; }
+.mobile [data-view='mesa'] .bubble { padding: 5px 8px; }
+.mobile [data-view='mesa'] .bubble::before { left: -10px; top: 14px; border-color: transparent var(--paper) transparent transparent; border-width: 6px 10px 6px 0; }
+.mobile [data-view='mesa'] .bubble-head { display: none; }
+.mobile [data-view='mesa'] .advisor-text { font-size: 15px; min-height: 0; -webkit-line-clamp: 2; }
+
+.mobile .mnav { display: grid; grid-template-columns: repeat(6, 1fr); flex: none; height: 58px; background: #0b0d16; border-top: 3px solid var(--line); }
+.mobile .mnav button { position: relative; background: none; border: 0; border-right: 2px solid #1d2133; font-size: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--muted); }
+.mobile .mnav button small { font-size: 11px; font-weight: 700; }
+.mobile .mnav button.active { color: var(--yellow); background: #1d2133; box-shadow: inset 0 3px 0 var(--yellow); }
+.mobile .cabinet { display: flex; flex-direction: column; }
+
+/* mesa */
+.mobile .desk { padding: 18px 8px 8px; }
+.mobile .nameplate { font-size: 11px; }
+.mobile .dossier { padding: 8px 10px 0; }
+.mobile .ev-title { font-size: 24px; }
+.mobile .options { grid-template-columns: 1fr 1fr; gap: 6px; }
+.mobile .option strong { font-size: 15px; }
+.mobile .preview { max-height: 88px; }
+.mobile .actions { grid-template-columns: 1fr 120px; }
+.mobile .pen { font-size: 16px; }
+.mobile .phone { font-size: 14px; padding: 0 8px; }
+.mobile .phone small { display: none; }
+.mobile .memo { padding: 10px 12px; }
+.mobile .memo .ev-title { font-size: 28px; }
+.mobile .memo-text { font-size: 19px; }
+.mobile .memo-option strong { font-size: 18px; }
+.mobile .memo-opt-icon { font-size: 30px; }
+.mobile .memo-result { flex-direction: column; align-items: stretch; }
+.mobile .memo-stamp { font-size: 24px; top: 50px; }
+.mobile .press-stage { flex-direction: column; align-items: center; }
+.mobile .press-question { font-size: 19px; }
+.mobile .press-answers { grid-template-columns: 1fr; min-height: 0; }
+.mobile .desk-trophies span { font-size: 18px; }
+
+/* painéis (abas) */
+.mobile .axis-tip { display: none; }
+.mobile .brazil-map { width: 300px; height: 272px; }
+
+/* telas por cima */
+.mobile .overlay { padding: 8px; }
+.mobile .newspaper, .mobile .lesson, .mobile .modal, .mobile .stf-card, .mobile .verdict, .mobile .gallery, .mobile .card-box { width: 100%; max-height: 100%; overflow-y: auto; }
+.mobile .newspaper { transform: none; padding: 12px 14px; }
+.mobile .np-name { font-size: 17px; }
+.mobile .newspaper h1 { font-size: 26px; }
+.mobile .np-cols { grid-template-columns: 1fr; }
+.mobile .np-photo { min-height: 70px; font-size: 44px; }
+.mobile .lesson { padding: 14px; }
+.mobile .lesson-grid { grid-template-columns: 1fr; gap: 10px; }
+.mobile .lesson h2 { font-size: 24px; }
+.mobile .lesson-actions { flex-wrap: wrap; justify-content: stretch; }
+.mobile .lesson-actions button { flex: 1 1 100%; }
+.mobile .ministers { grid-template-columns: repeat(3, 1fr); }
+.mobile .stf-text { font-size: 17px; }
+.mobile .verdict h2 { font-size: 32px; }
+.mobile .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+.mobile .card-canvas { width: 100%; height: auto; }
+.mobile .cinema-caption { width: calc(100% - 16px); font-size: 20px; }
+.mobile .cinema-bubble { font-size: 18px; max-width: 200px; }
+.mobile .urgent-banner { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 6px; top: 34%; }
+.mobile .urgent-banner b { font-size: 28px; }
+.mobile .trophy-toast { width: calc(100% - 24px); right: 12px; }
+.mobile .floater { font-size: 11px; }
+
+/* criação, posse, balanço */
+.mobile .creation { padding: 16px 12px; overflow-y: auto; }
+.mobile .creation-title h1 { font-size: 22px; }
+.mobile .creation-body { grid-template-columns: 1fr; }
+.mobile .avatar-big { width: 160px; height: 160px; }
+.mobile .avatar-panel { flex-direction: row; justify-content: center; gap: 14px; }
+.mobile .avatar-panel .panel-label { display: none; }
+.mobile .avatar-frame { margin: 0; }
+.mobile .avatar-nav { flex-direction: column; gap: 8px; }
+.mobile .bios { grid-template-columns: 1fr; }
+.mobile .bio { min-height: 0; }
+.mobile .countries { flex-direction: column; }
+.mobile .start-row { flex-wrap: wrap; }
+.mobile .start-row button { flex: 1 1 100%; }
+.mobile .inaug-text { font-size: 21px; padding: 0 16px; }
+.mobile .summary { overflow-y: auto; padding: 14px; }
+.mobile .sum-head { flex-direction: column; align-items: flex-start; }
+.mobile .sum-grid { grid-template-columns: 1fr; }
+.mobile .sum-head h1 { font-size: 28px; }
+
+/* home */
+.mobile .home { overflow-y: auto; }
+.mobile .home-title h1 { font-size: 36px; }
+.mobile .home-title p { font-size: 19px; }
+.mobile .home-head { flex-direction: column; gap: 10px; align-items: stretch; }
+.mobile .home-head .home-actions button { flex: 1 1 45%; font-size: 17px; }
+.mobile .home-grid { grid-template-columns: 1fr; padding: 0 10px 14px; }
+.mobile .home-mid { display: flex; flex-direction: column; }
+.mobile .home-side { overflow: visible; }
+.mobile .hp-axes-grid { grid-template-columns: 1fr; }
+.mobile .hp-world-grid { grid-template-columns: 1fr; justify-items: center; }
+.mobile [data-view='mesa'] .bubble { flex: 1; min-width: 0; }
+.mobile .home { display: block; }
+.mobile .home-grid { display: flex; flex-direction: column; flex: none; min-height: auto; gap: 10px; }
+.mobile .home-panel, .mobile .home-mid { min-height: auto; overflow: visible; }
+.mobile .home-bg { position: fixed; height: 100%; }
+.mobile .home-head .home-logo b { font-size: 16px; }
+.mobile .mnav { order: 10; }

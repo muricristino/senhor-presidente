@@ -19,6 +19,7 @@ function reporterAvatar(name: string): string {
 export async function runInterview(g: Gabinete, interview: Interview): Promise<GameState> {
   g.renderMonth();
   g.renderTimeline('🎤');
+  g.showDesk();
   g.setPlace('nacional', '🎤');
   g.setScene('speech');
   g.desk.innerHTML = `
