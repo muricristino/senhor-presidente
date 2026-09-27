@@ -14,6 +14,7 @@ import { runBigEvent } from './ui/bigEvent';
 import { playCinematic } from './ui/cinematic';
 import { creationScreen } from './ui/creation';
 import { runDispatch } from './ui/dispatch';
+import { runInterview } from './ui/interview';
 import { wait } from './ui/dom';
 import { inaugurationScreen } from './ui/inauguration';
 import { showVerdict } from './ui/overlays';
@@ -163,6 +164,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   }
   saveGame(countryId, g.state);
   let sinceBig = 1;
+  let sinceInterview = 2;
 
   for (;;) {
     ending = await politics();
@@ -180,8 +182,21 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
       if (!director.bigInFlight && !director.exhausted) director.requestBig(g.state);
     }
 
+    // Coletiva escrita pelo Claude sobre o que aconteceu: encomendada cedo, entra quando estiver pronta.
+    if (sinceInterview >= 2) director.prepareInterview(g.state);
+    if (sinceInterview >= 5) {
+      const interview = director.takeInterview();
+      if (interview) {
+        nextMonth();
+        await runInterview(g, interview);
+        sinceInterview = 0;
+        continue;
+      }
+    }
+
     const d = director.nextDispatch(g.state);
     if (d) {
+      sinceInterview++;
       nextMonth();
       await runDispatch(g, d);
       sinceBig++;

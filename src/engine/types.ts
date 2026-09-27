@@ -292,3 +292,26 @@ export interface Dispatch {
   generated?: boolean;
   region?: Place;
 }
+
+// ---------- Coletiva de imprensa ----------
+
+export interface InterviewAnswer {
+  icon: string;
+  label: string;
+  effects: Effects;
+  /** Manchete que sai se o presidente responder assim. */
+  headline: string;
+}
+
+export interface InterviewQuestion {
+  journalist: string;
+  outlet: string;
+  question: string;
+  answers: InterviewAnswer[];
+}
+
+export interface Interview {
+  id: string;
+  questions: InterviewQuestion[];
+  generated?: boolean;
+}

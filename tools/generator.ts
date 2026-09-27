@@ -129,6 +129,33 @@ const dispatchesSchema = (axes: string[], factions: string[]) => ({
   required: ['dispatches'],
 });
 
+const interviewSchema = (axes: string[], factions: string[]) => ({
+  type: 'object',
+  properties: {
+    questions: {
+      type: 'array',
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: 'object',
+        properties: {
+          journalist: str,
+          outlet: str,
+          question: str,
+          answers: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 3,
+            items: { type: 'object', properties: { icon: str, label: str, effects: effectsSchema(axes, factions), headline: str }, required: ['icon', 'label', 'effects', 'headline'] },
+          },
+        },
+        required: ['journalist', 'outlet', 'question', 'answers'],
+      },
+    },
+  },
+  required: ['questions'],
+});
+
 const spriteSchema = {
   type: 'object',
   properties: { id: str, palette: { type: 'object', additionalProperties: str }, rows: { type: 'array', items: str } },
@@ -210,6 +237,14 @@ Regras:
 - "post" opcional: reação de um perfil das redes. ${SOCIAL_RULE}
 - Varie os temas e conecte ao momento do país e às decisões recentes: consequências pequenas do que o jogador fez, pedidos de bancadas irritadas, oportunidades. Não repita o histórico.
 - "anim": a animação da Janela do Planalto que combina.
+Português do Brasil, com acentos.`;
+
+const INTERVIEW_SYSTEM = `Você escreve COLETIVAS DE IMPRENSA para "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
+Três jornalistas fictícios de veículos fictícios fazem 1 pergunta cada. As perguntas devem cobrar DECISÕES RECENTES do jogador e o estado do país (indicadores ruins, bancadas irritadas, liminares, relações externas). Uma delas pode ser leve ou bem-humorada.
+Regras:
+- Pergunta com até 150 caracteres, direta, no tom de repórter de Brasília.
+- 2 ou 3 respostas curtíssimas (até 40 caracteres), cada uma com uma postura diferente (franca, evasiva, agressiva, conciliadora...).
+- Cada resposta tem a manchete que sairia no dia seguinte (até 90 caracteres) e efeitos pequenos: eixos até ±8, aprovacao/coalizao até ±4, bancadas e relations até ±10.
 Português do Brasil, com acentos.`;
 
 const CUTSCENE_SYSTEM = `Você é o diretor de cena de "Senhor Presidente", um jogo em pixel art. Escreva o roteiro de uma cinemática curta (4 a 7 segundos) para a decisão descrita.
@@ -348,6 +383,11 @@ export function claudeDirector(): Plugin {
           if (req.url === '/api/dispatches' && req.method === 'POST') {
             const out = await runClaude(DISPATCH_SYSTEM, body.briefing, dispatchesSchema(body.axes, body.factions));
             console.log(`[claude] despachos gerados em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, out);
+          }
+          if (req.url === '/api/interview' && req.method === 'POST') {
+            const out = await runClaude(INTERVIEW_SYSTEM, body.briefing, interviewSchema(body.axes, body.factions));
+            console.log(`[claude] coletiva gerada em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, out);
           }
           if (req.url === '/api/event-details' && req.method === 'POST') {

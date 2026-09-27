@@ -2,8 +2,8 @@ import { ageOf, dateLabel, electionMonth, monthName } from './calendar';
 import { AXES, dispatchesFor, eventsFor } from './data';
 import { KPIS, formatKpi } from './kpis';
 import { dominantLeans, profileTitle } from './profile';
-import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent } from './sanitize';
-import type { Country, Cutscene, Dispatch, EventOption, GameEvent, GameState } from './types';
+import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
+import type { Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
 
 export { monthName } from './calendar';
 
@@ -218,6 +218,46 @@ export class Director {
     const d = this.dispatchQueue.shift() ?? this.authoredDispatches.find((x) => !this.usedDispatches.has(x.id)) ?? null;
     if (d) this.usedDispatches.add(d.id);
     return d;
+  }
+
+  // ---------- coletivas ----------
+
+  private interview: Promise<Interview | null> | null = null;
+  private readyInterview: Interview | null = null;
+
+  /**
+   * Encomenda a próxima coletiva. As perguntas são sempre escritas pelo Claude a partir do
+   * que o presidente fez: não existe coletiva de reserva.
+   */
+  prepareInterview(state: GameState) {
+    if (this.interview || this.readyInterview) return;
+    const job = claudeOnline().then((online) =>
+      online
+        ? post<{ questions: unknown[] }>(
+            '/api/interview',
+            {
+              briefing: briefing(state, this.country).replace('Escreva a próxima crise.', 'Escreva a próxima coletiva de imprensa.'),
+              axes: AXES.map((a) => a.id),
+              factions: this.country.factions.map((f) => f.id),
+              partners: (this.country.partners ?? []).map((p) => p.id),
+            },
+            120_000,
+          ).then((r) => (r ? sanitizeInterview(r, this.country) : null))
+        : null,
+    );
+    this.interview = job;
+    void job.then((iv) => {
+      if (this.interview !== job) return;
+      this.interview = null;
+      this.readyInterview = iv;
+    });
+  }
+
+  /** A coletiva, se o Claude já terminou de escrever. Nunca espera. */
+  takeInterview(): Interview | null {
+    const iv = this.readyInterview;
+    this.readyInterview = null;
+    return iv;
   }
 
   // ---------- cinemáticas ----------

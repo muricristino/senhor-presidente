@@ -35,6 +35,10 @@ export const NPCS: Record<string, AvatarPreset> = {
   general: { skin: '#d9a07a', skinShade: '#b98058', hair: '#3a3a3a', style: 'curto', suit: '#4a5a32', tie: '#3e4c2a', beret: '#2a3a1a' },
   tereza: { skin: '#a8714b', skinShade: '#86553a', hair: '#3a2012', style: 'longo', suit: '#4a6a2a', tie: '#e8d0a0', lipstick: true },
   caio: { skin: '#f3d0b4', skinShade: '#d9ab8c', hair: '#e05a9a', style: 'volume', suit: '#1a1a1a', tie: '#e0579f' },
+  reporter1: { skin: '#e8b48f', skinShade: '#c98f6b', hair: '#6a4a2a', style: 'longo', suit: '#3a3f4a', tie: '#f4c542', lipstick: true },
+  reporter2: { skin: '#8d5a3b', skinShade: '#6e4229', hair: '#1a1210', style: 'curto', suit: '#2a4a6a', tie: '#e0574f', glasses: true },
+  reporter3: { skin: '#f1c9a5', skinShade: '#d6a57f', hair: '#b8742e', style: 'coque', suit: '#5a3a5a', tie: '#4ab0c6', glasses: true, lipstick: true },
+  reporter4: { skin: '#c68e62', skinShade: '#a56f45', hair: '#2a1a12', style: 'lateral', suit: '#44403a', tie: '#7fb04a', beard: true },
 };
 
 const INK = '#1a1420';

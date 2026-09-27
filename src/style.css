@@ -785,3 +785,28 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .p-val.bad { color: var(--red); }
 .partner .f-bar { margin: 3px 0 0; }
 .tab { font-size: 15px; }
+
+/* ================= coletiva ================= */
+.pressroom { position: relative; flex: 1; display: flex; flex-direction: column; gap: 10px; background: #1b2238; color: var(--text); padding: 14px 18px; box-shadow: 4px 4px 0 #00000055, inset 0 0 0 3px #2a3452; animation: memo-in 0.5s cubic-bezier(0.3, 1.4, 0.6, 1); overflow: hidden; }
+.pressroom.out { animation: memo-out 0.35s forwards; }
+.press-kicker { color: #6fb6ff; }
+.pressroom .step { background: #6fb6ff; color: #0c0e17; }
+.press-stage { display: flex; gap: 14px; align-items: flex-start; }
+.press-stage.enter { animation: slide-up 0.5s; }
+.press-reporter { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 110px; flex: none; }
+.press-canvas { width: 88px; height: 88px; border: 3px solid #6fb6ff; box-shadow: 3px 3px 0 var(--shadow); }
+.press-name { font-size: 17px; text-align: center; }
+.press-outlet { font-size: 14px; color: var(--muted); text-align: center; }
+.press-bubble { position: relative; flex: 1; background: #fff; color: var(--ink); padding: 12px 14px; border: 3px solid #1a1420; box-shadow: 4px 4px 0 #07080d; min-height: 96px; }
+.press-bubble::before { content: ''; position: absolute; left: -14px; top: 22px; border-style: solid; border-color: transparent #1a1420 transparent transparent; border-width: 8px 14px 8px 0; }
+.press-question { margin: 0; font-size: 23px; line-height: 1.2; }
+.press-mics { text-align: center; font-size: 30px; letter-spacing: 8px; animation: slide-up 0.6s; }
+.press-timer { margin: 0; }
+.press-answers { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 10px; min-height: 104px; }
+.press-answers .memo-option strong { font-size: 19px; }
+.press-answers .press-done { grid-column: 1 / -1; justify-self: center; align-self: center; }
+.press-headlines { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.press-headline { background: #efe9d8; color: #1a1a1a; font-weight: 700; font-size: 18px; padding: 6px 10px; border-left: 6px solid var(--red); animation: paper-slide 0.4s cubic-bezier(0.3, 1.4, 0.6, 1); }
+@keyframes paper-slide { from { transform: translateX(-110%) rotate(-3deg); } }
+.camera-flash { position: absolute; inset: 0; background: #fff; pointer-events: none; animation: cam-flash 0.4s forwards; z-index: 5; }
+@keyframes cam-flash { from { opacity: 0.9; } to { opacity: 0; } }

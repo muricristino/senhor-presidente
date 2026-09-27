@@ -1,7 +1,7 @@
 import { BACKDROPS, CUSTOM_BACKDROP, CUT_ACTIONS, LIB_SPRITES, MAX_SPRITE, SCENE_ANIMS } from './catalog';
 import { AXES } from './data';
 import type {
-  AxisId, Country, CutAction, Dispatch, DispatchOption, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
+  AxisId, Country, CutAction, Dispatch, DispatchOption, Interview, InterviewQuestion, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
 } from './types';
 
 /* Tudo que o Claude gera passa por aqui: valores limitados, ids conferidos, textos cortados. */
@@ -295,4 +295,31 @@ export function sanitizeDispatch(raw: unknown, country: Country): Dispatch | nul
     generated: true,
     region: place(raw.region),
   };
+}
+
+/** Coletiva gerada: 3 perguntas com 2 ou 3 respostas curtas e efeitos pequenos. */
+export function sanitizeInterview(raw: unknown, country: Country): Interview | null {
+  if (!isObj(raw)) return null;
+  const questions = arr(raw.questions)
+    .filter(isObj)
+    .map((q): InterviewQuestion | null => {
+      const answers = arr(q.answers)
+        .filter(isObj)
+        .map((a) => {
+          const effects = sanitizeEffects(a.effects, country);
+          for (const k of Object.keys(effects.kpis ?? {}) as KpiId[]) effects.kpis![k] = Math.max(-KPI_LIMITS[k] / 3, Math.min(KPI_LIMITS[k] / 3, effects.kpis![k]!));
+          for (const k of Object.keys(effects.axes ?? {}) as AxisId[]) effects.axes![k] = Math.max(-8, Math.min(8, effects.axes![k]!));
+          for (const k of Object.keys(effects.factions ?? {})) effects.factions![k] = Math.max(-10, Math.min(10, effects.factions![k]));
+          for (const k of Object.keys(effects.relations ?? {})) effects.relations![k] = Math.max(-10, Math.min(10, effects.relations![k]));
+          return { icon: str(a.icon, 4, '💬') || '💬', label: str(a.label, 50), effects, headline: str(a.headline, 110) };
+        })
+        .filter((a) => a.label && a.headline)
+        .slice(0, 3);
+      const question = str(q.question, 200);
+      if (!question || answers.length < 2) return null;
+      return { journalist: str(q.journalist, 30, 'Repórter'), outlet: str(q.outlet, 30, 'Imprensa'), question, answers };
+    })
+    .filter((q): q is InterviewQuestion => !!q)
+    .slice(0, 3);
+  return questions.length >= 2 ? { id: `GENI_${Math.random().toString(36).slice(2, 8)}`, questions, generated: true } : null;
 }
