@@ -185,6 +185,8 @@ export interface GameState {
   impeachmentShieldUntil: number;
   /** Mandatos cuja eleição já aconteceu. */
   electionsHeld: number[];
+  /** Lealdade de cada ministro (-100 a +100), mexida nas reuniões ministeriais. */
+  ministerLoyalty?: Record<string, number>;
   /** Conquistas ganhas nesta partida (os troféus na mesa). */
   trophies?: string[];
   /** Indicadores mês a mês, para os gráficos da Home. */

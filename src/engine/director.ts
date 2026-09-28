@@ -1,11 +1,12 @@
 import { ageOf, dateLabel, electionMonth, monthName } from './calendar';
-import { AXES, dispatchesFor, eventsFor } from './data';
+import { AXES } from './data';
 import { KPIS, formatKpi } from './kpis';
 import { dominantLeans, profileTitle } from './profile';
 import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
 import type { Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
 
 export { monthName } from './calendar';
+export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao';
 
 const moodWord = (v: number) => (v >= 40 ? 'aliada fiel' : v >= 12 ? 'simpática' : v > -12 ? 'neutra' : v > -40 ? 'irritada' : 'em guerra com o governo');
 
@@ -93,18 +94,13 @@ export class Director {
   private big: BigJob | null = null;
   private dispatchQueue: Dispatch[] = [];
   private dispatchPending = false;
-  private usedDispatches = new Set<string>();
-  readonly authored: GameEvent[];
-  private authoredDispatches: Dispatch[];
-  /** true quando nem o Claude nem o banco escrito à mão têm mais eventos grandes. */
-  exhausted = false;
+  /** Tentativas seguidas de gerar o evento grande que falharam. */
+  failures = 0;
   /** Avisado quando um evento grande fica pronto (para anunciar no feed). */
   onBigReady?: (event: GameEvent) => void;
 
-  constructor(private country: Country) {
-    this.authored = eventsFor(country.country_id).sort((a, b) => a.month - b.month);
-    this.authoredDispatches = shuffle(dispatchesFor(country.country_id));
-  }
+  /** Todo conteúdo do mandato é escrito pelo Claude: não há banco fixo de eventos nem de despachos. */
+  constructor(private country: Country) {}
 
   // ---------- evento grande ----------
 
@@ -114,8 +110,8 @@ export class Director {
     this.big = job;
     void this.generate(state).then(async (event) => {
       if (this.big !== job) return;
-      job.event = event ?? this.fallback(state);
-      this.exhausted = !job.event;
+      job.event = event;
+      this.failures = event ? 0 : this.failures + 1;
       if (job.event) {
         this.prepareCutscenes(job.event, state);
         // Dá até 25s para as cenas ficarem prontas antes de lançar o evento.
@@ -175,11 +171,9 @@ export class Director {
     return event;
   }
 
-  /** Um evento escrito à mão ainda não jogado, sorteado para as partidas não começarem sempre iguais. */
-  private fallback(state: GameState): GameEvent | null {
-    const played = new Set(state.decisions.map((d) => d.split(':')[0]));
-    const left = this.authored.filter((e) => !played.has(e.id));
-    return left.length ? left[Math.floor(Math.random() * left.length)] : null;
+  /** Há um evento grande pronto para entrar. */
+  get bigReady(): boolean {
+    return !!this.big?.settled && !!this.big.event;
   }
 
   // ---------- despachos ----------
@@ -212,12 +206,14 @@ export class Director {
       .finally(() => (this.dispatchPending = false));
   }
 
-  /** Próximo despacho: primeiro os gerados (mais conectados ao momento), depois os escritos à mão. */
+  /** Próximo despacho escrito pelo Claude, se já houver um na fila. */
   nextDispatch(state: GameState): Dispatch | null {
     this.refillDispatches(state);
-    const d = this.dispatchQueue.shift() ?? this.authoredDispatches.find((x) => !this.usedDispatches.has(x.id)) ?? null;
-    if (d) this.usedDispatches.add(d.id);
-    return d;
+    return this.dispatchQueue.shift() ?? null;
+  }
+
+  get hasDispatch(): boolean {
+    return this.dispatchQueue.length > 0;
   }
 
   // ---------- boletim ----------
@@ -263,6 +259,40 @@ export class Director {
           ).then((r) => (r?.headline ? { headline: String(r.headline).slice(0, 90), epitaph: String(r.epitaph ?? '').slice(0, 420) } : null))
         : null,
     );
+  }
+
+  // ---------- cenas interativas ----------
+
+  private scenes = new Map<string, { promise: Promise<unknown>; ready: unknown | null; failed: boolean }>();
+
+  /** Encomenda o roteiro de uma cena interativa ao Claude, com o mandato de agora. */
+  prepareScene(kind: LabKindName, state: GameState) {
+    if (this.scenes.has(kind)) return;
+    const entry = { promise: Promise.resolve<unknown>(null), ready: null as unknown | null, failed: false };
+    entry.promise = import('../lab/scripts')
+      .then((m) => m.requestScript(kind, true, state))
+      .then((script) => (entry.ready = script))
+      .catch(() => {
+        entry.failed = true;
+        this.scenes.delete(kind);
+      });
+    this.scenes.set(kind, entry);
+  }
+
+  /** O roteiro, se já estiver pronto. Nunca espera. */
+  takeScene(kind: LabKindName): unknown | null {
+    const e = this.scenes.get(kind);
+    if (!e?.ready) return null;
+    this.scenes.delete(kind);
+    return e.ready;
+  }
+
+  /** Espera o roteiro por até `ms` (usado no debate da eleição, que não pode ser pulado à toa). */
+  async awaitScene(kind: LabKindName, ms: number): Promise<unknown | null> {
+    const e = this.scenes.get(kind);
+    if (!e) return null;
+    await Promise.race([e.promise, new Promise((r) => setTimeout(r, ms))]);
+    return this.takeScene(kind);
   }
 
   // ---------- coletivas ----------
@@ -339,11 +369,3 @@ function isStale(basis: GameState, now: GameState): boolean {
   return Math.abs(basis.kpis.aprovacao - now.kpis.aprovacao) > 15 || Math.abs(basis.kpis.coalizao - now.kpis.coalizao) > 15;
 }
 
-function shuffle<T>(list: T[]): T[] {
-  const a = [...list];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}

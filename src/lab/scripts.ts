@@ -11,7 +11,7 @@ export type Kpis = Partial<Record<'aprovacao' | 'coalizao' | 'inflacao' | 'desem
 export interface VoteScript {
   bill: { title: string; description: string; needed: number };
   capital: number;
-  groups: { name: string; seats: number; stance: 'a_favor' | 'indeciso' | 'contra'; leader: string; demand: string; offers: { label: string; cost: number; swing: number; effects: Kpis; reaction: string }[] }[];
+  groups: { name: string; faction?: string; seats: number; stance: 'a_favor' | 'indeciso' | 'contra'; leader: string; demand: string; offers: { label: string; cost: number; swing: number; effects: Kpis; reaction: string }[] }[];
 }
 
 export interface DebateScript {
@@ -57,6 +57,7 @@ export function sanitize(kind: LabKind, raw: any): unknown {
     case 'votacao': {
       const groups = (raw.groups ?? []).slice(0, 6).map((g: any) => ({
         name: s(g.name, 30),
+        faction: ['centrao', 'ruralistas', 'religiosos', 'seguranca', 'tecnologica'].includes(g.faction) ? g.faction : undefined,
         seats: Math.round(clamp(g.seats, 5, 200, 60)),
         stance: ['a_favor', 'indeciso', 'contra'].includes(g.stance) ? g.stance : 'indeciso',
         leader: s(g.leader, 30),
@@ -134,10 +135,10 @@ export function labState(): GameState {
 
 const cache = new Map<LabKind, Promise<unknown>>();
 
-/** Pede ao Claude o roteiro da cena (uma vez por tipo, ou de novo com `fresh`). */
-export function requestScript(kind: LabKind, fresh = false): Promise<unknown> {
-  if (!fresh && cache.has(kind)) return cache.get(kind)!;
-  const st = labState();
+/** Pede ao Claude o roteiro da cena (uma vez por tipo, ou de novo com `fresh`). No jogo, passa o mandato real. */
+export function requestScript(kind: LabKind, fresh = false, state?: GameState): Promise<unknown> {
+  if (!fresh && !state && cache.has(kind)) return cache.get(kind)!;
+  const st = state ?? labState();
   const job = claudeOnline().then(async (online) => {
     if (!online) throw new Error('O Claude não está disponível neste servidor.');
     const res = await fetch('/api/lab', {
@@ -148,7 +149,9 @@ export function requestScript(kind: LabKind, fresh = false): Promise<unknown> {
     if (!res.ok) throw new Error(`geração falhou (${res.status})`);
     return sanitize(kind, await res.json());
   });
-  cache.set(kind, job);
-  job.catch(() => cache.delete(kind));
+  if (!state) {
+    cache.set(kind, job);
+    job.catch(() => cache.delete(kind));
+  }
   return job;
 }

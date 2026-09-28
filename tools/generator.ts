@@ -346,6 +346,7 @@ ${JSON.stringify(schema)}`;
   });
 }
 
+/** Lê o corpo JSON; falha (em vez de esperar para sempre) se a conexão cair no meio. */
 function readBody(req: IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -357,6 +358,8 @@ function readBody(req: IncomingMessage): Promise<any> {
         reject(e);
       }
     });
+    req.on('error', reject);
+    req.on('close', () => reject(new Error('conexão encerrada antes do corpo')));
   });
 }
 
@@ -406,9 +409,19 @@ export function claudeDirector(): Plugin {
         const started = Date.now();
         if (req.url === '/api/health') return send(res, 200, { claude: claudeAvailable(), model: MODEL });
         if (!claudeAvailable()) return send(res, 503, { error: 'claude indisponível' });
-        if (!(await acquire())) return send(res, 429, { error: 'limite de gerações por hora atingido' });
+        // O corpo é lido antes de entrar na fila: um pedido abandonado nunca prende uma vaga.
+        let body: any;
         try {
-          const body = await readBody(req);
+          body = await readBody(req);
+        } catch {
+          return;
+        }
+        if (!(await acquire())) {
+          console.warn('[claude] limite de gerações por hora atingido');
+          return send(res, 429, { error: 'limite de gerações por hora atingido' });
+        }
+        if (res.destroyed || res.writableEnded) return release();
+        try {
           if (Array.isArray(body.partners)) PARTNERS = body.partners;
           if (req.url === '/api/event' && req.method === 'POST') {
             const { briefing, axes, factions, ministers } = body;

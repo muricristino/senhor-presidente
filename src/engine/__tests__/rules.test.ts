@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventsFor, getCountry } from '../data';
+import { getCountry } from '../data';
 import { profileTitle } from '../profile';
 import { applyEffects, createState } from '../rules';
 
@@ -28,14 +28,6 @@ describe('applyEffects', () => {
     expect(deltas.kpis.coalizao).toBeGreaterThan(0);
   });
 
-  it('toda opção do evento inicial referencia eixos, KPIs e bancadas válidos', () => {
-    const event = eventsFor('BR')[0];
-    for (const opt of [...event.options, event.omission]) {
-      const { state } = applyEffects(createState(br, player), opt.effects, br);
-      for (const v of Object.values(state.axes)) expect(Number.isFinite(v)).toBe(true);
-      for (const id of Object.keys(opt.effects.factions ?? {})) expect(br.factions.some((f) => f.id === id)).toBe(true);
-    }
-  });
 });
 
 describe('profileTitle', () => {

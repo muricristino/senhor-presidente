@@ -35,6 +35,7 @@ Cena: ARTICULAÇÃO DA VOTAÇÃO. O governo precisa aprovar um projeto na Câmar
             type: 'object',
             properties: {
               name: str,
+              faction: { enum: ['centrao', 'ruralistas', 'religiosos', 'seguranca', 'tecnologica', 'oposicao'], description: 'bancada do jogo a que o grupo corresponde' },
               seats: num,
               stance: { enum: ['a_favor', 'indeciso', 'contra'] },
               leader: str,
@@ -46,7 +47,7 @@ Cena: ARTICULAÇÃO DA VOTAÇÃO. O governo precisa aprovar um projeto na Câmar
                 items: { type: 'object', properties: { label: str, cost: num, swing: num, effects: kpiEffects, reaction: str }, required: ['label', 'cost', 'swing', 'effects', 'reaction'] },
               },
             },
-            required: ['name', 'seats', 'stance', 'leader', 'demand', 'offers'],
+            required: ['name', 'faction', 'seats', 'stance', 'leader', 'demand', 'offers'],
           },
         },
       },

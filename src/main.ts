@@ -3,20 +3,25 @@ import './fonts.css';
 import './style.css';
 import { dateLabel, monthName, yearOf } from './engine/calendar';
 import { checkAchievements, type Milestones } from './engine/achievements';
-import { Director } from './engine/director';
+import { claudeOnline, Director } from './engine/director';
 import { getCountry } from './engine/data';
 import {
   campaignEvent, electionCutscene, electionDue, electionResult, impeachmentCutscene, impeachmentDue, impeachmentEvent, impeachmentVote,
 } from './engine/politics';
 import { advanceMonth, applyEffects, createState } from './engine/rules';
 import { clearSave, loadGame, saveGame } from './engine/save';
-import type { GameEvent, GameState, Player } from './engine/types';
+import type { Effects, GameEvent, GameState, Player } from './engine/types';
 import { music } from './audio/music';
 import { runBigEvent } from './ui/bigEvent';
 import { playCinematic } from './ui/cinematic';
 import { creationScreen } from './ui/creation';
 import { runDispatch } from './ui/dispatch';
 import { runInterview } from './ui/interview';
+import { DEMOS } from './lab/demos';
+import { ministerMood } from './engine/ministers';
+import { electionMonth } from './engine/calendar';
+import { playScene } from './ui/sceneOverlay';
+import type { LabKindName } from './engine/director';
 import { wait } from './ui/dom';
 import { showLab } from './lab/lab';
 import { showHome } from './ui/home';
@@ -44,11 +49,27 @@ function fit() {
   stage.style.height = `${h}px`;
   stage.style.transform = `translate(${(vw - w * scale) / 2}px, ${(vh - h * scale) / 2}px) scale(${scale})`;
 }
+// Garantia extra: se algo tentar rolar o palco (foco num botão fora da área), volta para o lugar.
+stage.addEventListener('scroll', () => {
+  stage.scrollLeft = 0;
+  stage.scrollTop = 0;
+});
 window.addEventListener('resize', fit);
 window.addEventListener('orientationchange', () => setTimeout(fit, 200));
 fit();
 
 let lastPlayer: Partial<Player> = {};
+
+/** Uma cena interativa soma várias escolhas; o total tem teto para não virar a economia num telefonema. */
+function capSceneEffects(e: Effects): Effects {
+  const cap = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+  const limits: Record<string, number> = { aprovacao: 10, coalizao: 10, inflacao: 0.5, desemprego: 0.4 };
+  return {
+    kpis: Object.fromEntries(Object.entries(e.kpis ?? {}).map(([k, v]) => [k, cap(v ?? 0, limits[k] ?? 1)])),
+    factions: Object.fromEntries(Object.entries(e.factions ?? {}).map(([k, v]) => [k, cap(v, 20)])),
+    relations: Object.fromEntries(Object.entries(e.relations ?? {}).map(([k, v]) => [k, cap(v, 35)])),
+  };
+}
 
 /** Tela inicial: título do jogo ou, se houver mandato salvo, o painel do país. */
 function startHome() {
@@ -94,8 +115,12 @@ function startCreation() {
   creationScreen(
     stage,
     lastPlayer,
-    (player, countryId) => {
+    async (player, countryId) => {
       lastPlayer = player;
+      if (!(await claudeOnline())) {
+        alert('O Senhor Presidente precisa do Claude para escrever o mandato, e ele não está disponível neste servidor.');
+        return;
+      }
       clearSave();
       const country = getCountry(countryId);
       const state = createState(country, player);
@@ -188,6 +213,41 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     });
   };
 
+  /** Roda uma cena interativa e aplica o que aconteceu nela ao mandato. */
+  const runScene = async (kind: LabKindName, script: unknown) => {
+    const demo = DEMOS.find((d) => d.script === kind)!;
+    const prevMood = music.current;
+    music.play(kind === 'debate' ? 'epic' : 'tense');
+    const r = await playScene(g.screen, demo, script, g.state);
+    music.play(prevMood);
+    if (!r) return;
+    const result = applyEffects(g.state, capSceneEffects(r.effects), country);
+    g.state = {
+      ...result.state,
+      decisions: [...result.state.decisions, `CENA_${kind}_${g.state.month}:${r.icon}`],
+      history: [...result.state.history, { month: g.state.month, event: demo.title, choice: r.choice, headline: r.headline, icon: r.icon }],
+      ministerLoyalty: r.loyalty ? { ...(g.state.ministerLoyalty ?? {}), ...r.loyalty } : g.state.ministerLoyalty,
+    };
+    g.render();
+    void g.animateKpis(result.deltas);
+    g.feed.push({ who: 'Bastidores de Brasília', at: 'bastidores.df', text: r.headline, likes: 6000, tone: 'press' });
+    for (const id of r.resigned ?? []) {
+      const m = country.ministers.find((x) => x.id === id);
+      if (m) g.feed.push({ who: 'Economia Hoje', at: 'economiahoje', text: `${m.name} deixa o ministério (${m.role}) depois de bate-boca na reunião.`, likes: 9000, tone: 'press' });
+    }
+    saveGame(countryId, g.state);
+  };
+
+  /** Qual cena interativa faz sentido agora: a relação externa mais tensa, um ministro insatisfeito ou uma votação. */
+  let lastScene: LabKindName | null = null;
+  const pickScene = (): LabKindName => {
+    const tense = (country.partners ?? []).some((p) => (g.state.relations?.[p.id] ?? 0) <= -25);
+    const unhappy = country.ministers.some((m) => ministerMood(m.id, g.state) <= -40 || (g.state.ministerLoyalty?.[m.id] ?? 30) <= 0);
+    const wanted: LabKindName = tense && lastScene !== 'telefonema' ? 'telefonema' : unhappy && lastScene !== 'reuniao' ? 'reuniao' : 'votacao';
+    return wanted === lastScene ? (['votacao', 'telefonema', 'reuniao'] as LabKindName[]).find((k) => k !== lastScene)! : wanted;
+  };
+  let sceneKind: LabKindName | null = null;
+
   const nextMonth = () => {
     g.state = advanceMonth(g.state, country);
     g.renderRelations();
@@ -218,6 +278,9 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     }
 
     if (electionDue(g.state, country)) {
+      // Debate na TV antes da reta final: o roteiro começou a ser escrito meses antes.
+      const debate = await director.awaitScene('debate', 90_000);
+      if (debate) await runScene('debate', debate);
       await playBig(campaignEvent(g.state), false);
       const result = electionResult(g.state);
       music.play(result.won ? 'epic' : 'sad');
@@ -263,6 +326,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   saveGame(countryId, g.state);
   let sinceBig = 1;
   let sinceInterview = 2;
+  let sinceScene = 0;
 
   for (;;) {
     trophies();
@@ -279,7 +343,27 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
         sinceBig = 0;
         continue;
       }
-      if (!director.bigInFlight && !director.exhausted) director.requestBig(g.state);
+      if (!director.bigInFlight && !director.bigReady) director.requestBig(g.state);
+    }
+
+    // Debate da eleição: encomendado alguns meses antes da campanha.
+    if (g.state.term < country.calendar.max_terms && g.state.month >= electionMonth(g.state, g.state.term, country.calendar.election_month) - 5) director.prepareScene('debate', g.state);
+
+    // Cena interativa (votação, telefonema ou reunião): escolhida pelo momento, encomendada cedo, entra quando pronta.
+    if (sinceScene >= 3 && !sceneKind) {
+      sceneKind = pickScene();
+      director.prepareScene(sceneKind, g.state);
+    }
+    if (sinceScene >= 6 && sceneKind) {
+      const script = director.takeScene(sceneKind);
+      if (script) {
+        nextMonth();
+        await runScene(sceneKind, script);
+        lastScene = sceneKind;
+        sceneKind = null;
+        sinceScene = 0;
+        continue;
+      }
     }
 
     // Coletiva escrita pelo Claude sobre o que aconteceu: encomendada cedo, entra quando estiver pronta.
@@ -299,19 +383,28 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     const d = director.nextDispatch(g.state);
     if (d) {
       sinceInterview++;
+      sinceScene++;
       nextMonth();
       await runDispatch(g, d);
       sinceBig++;
       continue;
     }
 
-    // Mesa vazia: espera o evento grande que está sendo escrito.
-    if (director.exhausted || !director.bigInFlight) {
+    // Mesa vazia: espera o Claude terminar o próximo despacho ou o próximo evento grande.
+    g.desk.innerHTML = '<div class="desk-waiting"><div>📂</div>A assessoria monta o próximo dossiê…</div>';
+    while (!director.hasDispatch && !director.bigReady && director.failures < 3) {
+      if (!director.bigInFlight && !director.bigReady) director.requestBig(g.state);
+      director.refillDispatches(g.state);
+      await wait(1000);
+    }
+    if (!director.hasDispatch && !director.bigReady) {
+      await showVerdict(g.screen, {
+        icon: '📡', kicker: 'SEM CONEXÃO COM O CLAUDE', title: 'O mandato está em pausa', good: false, button: 'VER O BALANÇO ➔',
+        text: 'Todos os acontecimentos do jogo são escritos pelo Claude, e ele não respondeu. O mandato foi salvo: dá para continuar de onde parou.',
+      });
       ending = 'pausa';
       break;
     }
-    g.desk.innerHTML = '<div class="desk-waiting"><div>📂</div>A assessoria monta o próximo dossiê…</div>';
-    while (director.bigInFlight) await wait(1000);
     sinceBig = 1;
   }
 

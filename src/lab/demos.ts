@@ -1,7 +1,7 @@
 import { buildLibrary, npcPerson } from '../art/sprites';
 import { sfx } from '../audio/sfx';
 import { getCountry } from '../engine/data';
-import type { PixelSprite } from '../engine/types';
+import type { Effects, GameState, PixelSprite } from '../engine/types';
 import { el, esc } from '../ui/dom';
 import { cabinetRoom, chamberFloor, desk, meetingTable, officeRoom, plenary, podium, splitCall, tvStudio } from './backdrops';
 import { Actor, ease, LW, type Stage } from './engine';
@@ -17,10 +17,26 @@ export interface Demo {
   /** O mecanismo político que a cena ensina. */
   teaches: string[];
   help: string;
-  run: (stage: Stage, hud: HTMLElement, script?: unknown) => Promise<void>;
+  run: (stage: Stage, hud: HTMLElement, script: unknown, ctx: SceneContext) => Promise<SceneResult | void>;
 }
 
-const lib = () => buildLibrary(labState().player.avatar);
+/** O mandato em que a cena acontece (o real, no jogo; o de exemplo, no laboratório). */
+export interface SceneContext {
+  state: GameState;
+}
+
+/** O que a cena devolve para o jogo aplicar no mandato. */
+export interface SceneResult {
+  effects: Effects;
+  /** Resumo de uma linha para o histórico (e para o Claude dar continuidade). */
+  headline: string;
+  choice: string;
+  icon: string;
+  loyalty?: Record<string, number>;
+  resigned?: string[];
+}
+
+const lib = (st: GameState = labState()) => buildLibrary(st.player.avatar);
 const sprite = (l: Map<string, PixelSprite>, id: string) => l.get(id)!;
 const MINISTER_NPC: Record<string, string> = { fazenda: 'helena', justica: 'otavio', casacivil: 'rui', defesa: 'general', agricultura: 'tereza', comunicacao: 'caio' };
 
@@ -178,10 +194,12 @@ const votacao: Demo = {
   script: 'votacao',
   teaches: ['Presidencialismo de coalizão: votos têm preço', 'Maioria simples (257) × PEC (308)', 'Cada concessão tem custo em outra frente'],
   help: 'Toque num grupo para ir negociar com o líder. Gaste o capital político e abra a votação quando achar que tem os votos.',
-  async run(stage, hud, raw) {
+  async run(stage, hud, raw, ctx) {
     const sc = raw as VoteScript;
-    const L = lib();
+    const L = lib(ctx.state);
     const WORLD = 560;
+    const factionMood: Record<string, number> = {};
+    let talked = 0;
     stage.background.push(...chamberFloor(WORLD));
     stage.camera.bounds = { minX: 0, maxX: WORLD - LW };
     const pres = stage.add(new Actor(sprite(L, 'presidente'), WORLD / 2, 168, 'Presidente'));
@@ -268,6 +286,8 @@ const votacao: Demo = {
         const o = b.data.offers[i];
         capital -= o.cost;
         costs = addKpis(costs, o.effects);
+        talked++;
+        if (b.data.faction) factionMood[b.data.faction] = (factionMood[b.data.faction] ?? 0) + 8;
         const moving = Math.round((b.undecided + b.no) * o.swing);
         const fromUndecided = Math.min(b.undecided, moving);
         b.undecided -= fromUndecided;
@@ -282,10 +302,14 @@ const votacao: Demo = {
       } else {
         stage.emote(b.leader, '😒');
         b.done = true;
+        if (b.data.faction && b.data.stance !== 'a_favor') factionMood[b.data.faction] = (factionMood[b.data.faction] ?? 0) - 4;
       }
       renderHud();
       busy = false;
     };
+
+    let finished: (r: SceneResult) => void = () => {};
+    const done = new Promise<SceneResult>((r) => (finished = r));
 
     async function vote() {
       if (voting || busy) return;
@@ -320,7 +344,15 @@ const votacao: Demo = {
       }
       hud.insertAdjacentHTML('beforeend', `<div class="lab-hud-line lab-costs">Conta política: ${effectLine(costs)}</div>`);
       await stage.banner(passed ? 'APROVADO' : 'REJEITADO', `${yes} a ${no} · eram necessários ${sc.bill.needed}`, 4);
+      const outcome: Kpis = passed ? { aprovacao: 3, coalizao: 3 } : { aprovacao: -3, coalizao: -6 };
+      finished({
+        effects: { kpis: addKpis(costs, outcome), factions: factionMood },
+        headline: `${sc.bill.title}: ${passed ? 'aprovado' : 'rejeitado'} por ${yes} a ${no}`,
+        choice: `Articulou ${talked} bancada(s) e ${passed ? 'venceu' : 'perdeu'} no plenário`,
+        icon: passed ? '✅' : '❌',
+      });
     }
+    return done;
   },
 };
 
@@ -336,12 +368,12 @@ const debate: Demo = {
   script: 'debate',
   teaches: ['O eleitorado não é um bloco só', 'Checagem de fatos: estilo × verdade', 'O seu histórico vira munição do adversário'],
   help: 'O adversário ataca com as suas decisões. Escolha a réplica: cada setor da plateia reage de um jeito, e a checagem aparece na hora.',
-  async run(stage, hud, raw) {
+  async run(stage, hud, raw, ctx) {
     const sc = raw as DebateScript;
-    const L = lib();
+    const L = lib(ctx.state);
     stage.background.push(...tvStudio());
-    const opp = stage.add(new Actor(sprite(L, 'empresario'), 70, 120, sc.opponent.name));
-    const pres = stage.add(new Actor(sprite(L, 'presidente'), 250, 120, 'Presidente'));
+    const opp = stage.add(new Actor(sprite(L, 'empresario'), 70, 108, sc.opponent.name));
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), 250, 108, 'Presidente'));
     pres.facing = -1;
     const mod = stage.add(new Actor(sprite(L, 'jornalista'), 160, 108, sc.moderator));
     stage.foreground.push((ctx) => {
@@ -354,7 +386,7 @@ const debate: Demo = {
       { key: 'indecisos' as const, label: 'Indecisos', color: '#9aa0b4', x: 115 },
       { key: 'conservadores' as const, label: 'Conservadores', color: '#ff9f5a', x: 220 },
     ];
-    const start = Math.round(labState().kpis.aprovacao);
+    const start = Math.round(ctx.state.kpis.aprovacao);
     const score: Record<string, number> = { progressistas: start, indecisos: start, conservadores: start };
     const cheer: Record<string, number> = {};
     stage.foreground.push((ctx, t) => {
@@ -415,6 +447,13 @@ const debate: Demo = {
       stage.particles.emit(250, 80, { colors: ['#f4c542', '#4fc27f', '#6fb6ff'], count: 40, speed: 90, gravity: 110 });
     } else opp.jump();
     await stage.banner(poll >= 50 ? 'VENCEU O DEBATE' : 'PERDEU O DEBATE', `Pesquisa pós-debate: ${poll}% × ${100 - poll}%`, 4);
+    const moved = score.progressistas * 0.3 + score.indecisos * 0.4 + score.conservadores * 0.3 - start;
+    return {
+      effects: { kpis: { aprovacao: Math.round(moved * 0.6) } },
+      headline: `Debate contra ${sc.opponent.name}: pesquisa pós-debate ${poll}% × ${100 - poll}%`,
+      choice: poll >= 50 ? 'Venceu o debate na TV' : 'Perdeu o debate na TV',
+      icon: '📺',
+    };
   },
 };
 
@@ -430,9 +469,9 @@ const telefonema: Demo = {
   script: 'telefonema',
   teaches: ['Diplomacia é troca: nada sai de graça', 'Relações externas mexem na economia', 'Pragmatismo × alinhamento'],
   help: 'Negocie ao telefone. Cada resposta muda a relação com o país e soma pontos de acordo: 5 pontos fecham o acordo.',
-  async run(stage, hud, raw) {
+  async run(stage, hud, raw, ctx) {
     const sc = raw as CallScript;
-    const L = lib();
+    const L = lib(ctx.state);
     const partner = getCountry('BR').partners.find((p) => p.id === sc.partner)!;
     stage.background.push(...splitCall(sc.partner));
     const pres = stage.add(new Actor(sprite(L, 'presidente'), 95, 128, 'Presidente'));
@@ -445,7 +484,8 @@ const telefonema: Demo = {
       ctx.fillRect(Math.round(pres.x + 5), Math.round(pres.y - 17), 3, 5);
       ctx.fillRect(Math.round(leader.x - 8), Math.round(leader.y - 17), 3, 5);
     });
-    let relation = Math.round(labState().relations?.[sc.partner] ?? 0);
+    const startRelation = Math.round(ctx.state.relations?.[sc.partner] ?? 0);
+    let relation = startRelation;
     let points = 0;
     let costs: Kpis = {};
     const renderHud = () => {
@@ -484,6 +524,12 @@ const telefonema: Demo = {
       sfx.fanfare();
     } else sfx.down();
     await stage.banner(deal ? 'ACORDO FECHADO' : 'SEM ACORDO', `Relação com ${partner.name}: ${relation > 0 ? '+' : ''}${relation}`, 4);
+    return {
+      effects: { kpis: addKpis(costs, deal ? { desemprego: -0.2 } : {}), relations: { [sc.partner]: relation - startRelation + (deal ? 10 : 0) } },
+      headline: `Telefonema com ${sc.leader.title} ${sc.leader.name}: ${deal ? 'acordo fechado' : 'sem acordo'}`,
+      choice: deal ? `Fechou acordo com ${partner.name}` : `Negociou com ${partner.name}, sem acordo`,
+      icon: deal ? '🤝' : '☎️',
+    };
   },
 };
 
@@ -499,17 +545,17 @@ const reuniao: Demo = {
   script: 'reuniao',
   teaches: ['Ministros têm agendas próprias', 'Arbitrar conflitos custa lealdade', 'Governo dividido vira manchete'],
   help: 'Dois ministros brigam na sua frente. Decida quem apoiar: a lealdade de cada um muda e, se cair demais, ele pede demissão.',
-  async run(stage, hud, raw) {
+  async run(stage, hud, raw, ctx) {
     const sc = raw as MeetingScript;
     const country = getCountry('BR');
-    const L = lib();
+    const L = lib(ctx.state);
     stage.background.push(...cabinetRoom());
     const pres = stage.add(new Actor(sprite(L, 'presidente'), 30, 150, 'Presidente'));
     const seats = [80, 120, 160, 200, 240, 272];
     const mins = country.ministers.map((m, i) => {
       const a = stage.add(new Actor(npcPerson(MINISTER_NPC[m.id] ?? 'rui'), seats[i], 128, m.name));
       a.facing = -1;
-      return { id: m.id, m, a, loyalty: 30, gone: false };
+      return { id: m.id, m, a, loyalty: ctx.state.ministerLoyalty?.[m.id] ?? 30, gone: false };
     });
     stage.foreground.push((ctx) => {
       ctx.fillStyle = '#5a3a22';
@@ -569,9 +615,19 @@ const reuniao: Demo = {
         await stage.banner('PEDIU DEMISSÃO', `${x.m.name} deixa o ${x.m.role}`, 2);
       }
     }
-    const lost = mins.filter((x) => x.gone).length;
+    const lost = mins.filter((x) => x.gone);
     pres.jump();
-    await stage.banner(lost ? 'GOVERNO RACHADO' : 'MINISTÉRIO UNIDO', lost ? `${lost} ministro(s) saíram batendo a porta` : 'Ninguém saiu, mas nem todo mundo saiu feliz', 4);
+    await stage.banner(lost.length ? 'GOVERNO RACHADO' : 'MINISTÉRIO UNIDO', lost.length ? `${lost.length} ministro(s) saíram batendo a porta` : 'Ninguém saiu, mas nem todo mundo saiu feliz', 4);
+    const exits: Kpis = { coalizao: -3 * lost.length, aprovacao: -2 * lost.length };
+    return {
+      effects: { kpis: addKpis(costs, exits) },
+      headline: lost.length ? `Reunião ministerial termina com demissão: ${lost.map((x) => x.m.name).join(', ')}` : `Reunião ministerial sobre ${sc.agenda.slice(0, 60)}`,
+      choice: lost.length ? `Perdeu ${lost.map((x) => x.m.role).join(', ')}` : 'Segurou o ministério unido',
+      icon: '👔',
+      // quem sai é substituído por um nome novo, que começa neutro
+      loyalty: Object.fromEntries(mins.map((x) => [x.id, x.gone ? 20 : x.loyalty])),
+      resigned: lost.map((x) => x.id),
+    };
   },
 };
 

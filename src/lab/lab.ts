@@ -3,7 +3,7 @@ import { sfx } from '../audio/sfx';
 import { el, esc } from '../ui/dom';
 import { DEMOS, type Demo } from './demos';
 import { Stage } from './engine';
-import { requestScript } from './scripts';
+import { labState, requestScript } from './scripts';
 
 /** Laboratório de animação: vitrine do motor novo, com demos jogáveis. */
 export function showLab(root: HTMLElement, onBack: () => void) {
@@ -87,7 +87,7 @@ export function showLab(root: HTMLElement, onBack: () => void) {
       wait.remove();
       if (stage !== st) return;
     }
-    void d.run(st, hud, script);
+    void d.run(st, hud, script, { state: labState() });
   };
 
   screen.querySelectorAll<HTMLElement>('.lab-card').forEach((c) =>
