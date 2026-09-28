@@ -122,11 +122,19 @@ async function post<T>(url: string, body: unknown, timeoutMs: number): Promise<T
 }
 
 let health: Promise<boolean> | null = null;
+/**
+ * O Claude responde? Só a resposta positiva fica guardada: uma falha (túnel oscilando, servidor
+ * reiniciando) é conferida de novo em 10s, em vez de deixar a partida inteira sem Claude.
+ */
 export function claudeOnline(): Promise<boolean> {
   health ??= fetch('/api/health')
     .then((r) => (r.ok ? r.json() : { claude: false }))
     .then((j) => !!j.claude)
-    .catch(() => false);
+    .catch(() => false)
+    .then((ok) => {
+      if (!ok) setTimeout(() => (health = null), 10_000);
+      return ok;
+    });
   return health;
 }
 
@@ -188,6 +196,7 @@ export class Director {
       this.requestBig(state);
       return null;
     }
+    this.gotFresh();
     return job.event;
   }
 
@@ -334,7 +343,22 @@ export class Director {
    */
   nextDispatch(state: GameState): Dispatch | null {
     this.refillDispatches(state);
-    return this.dispatchQueue.shift() ?? this.fromPool(state);
+    const fresh = this.dispatchQueue.shift();
+    if (fresh) {
+      this.poolStreak = 0;
+      return fresh;
+    }
+    // O acervo só cobre a espera: sem nada novo do Claude por vários despachos, a mesa espera por ele.
+    if (this.poolStreak >= 4) return null;
+    this.poolStreak++;
+    return this.fromPool(state);
+  }
+
+  /** Despachos do acervo seguidos, sem nada escrito pelo Claude no meio. */
+  private poolStreak = 0;
+  /** Chegou algo novo do Claude (evento, cena, coletiva): o acervo pode voltar a cobrir esperas. */
+  gotFresh() {
+    this.poolStreak = 0;
   }
 
   private fromPool(state: GameState): Dispatch | null {
@@ -483,6 +507,7 @@ export class Director {
     const e = this.scenes.get(key);
     if (!e?.ready) return null;
     this.scenes.delete(key);
+    this.gotFresh();
     return e.ready;
   }
 
@@ -547,6 +572,7 @@ Legenda: a manchete histórica do dia.`;
   takeInterview(): Interview | null {
     const iv = this.readyInterview;
     this.readyInterview = null;
+    if (iv) this.gotFresh();
     return iv;
   }
 

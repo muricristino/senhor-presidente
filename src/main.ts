@@ -758,7 +758,9 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
 
     // Mesa vazia: espera o Claude terminar o próximo despacho ou o próximo evento grande.
     g.desk.innerHTML = '<div class="desk-waiting"><div>📂</div>A assessoria monta o próximo dossiê…</div>';
-    while (!director.hasDispatch && !director.bigReady && director.failures < 3) {
+    const waitStart = Date.now();
+    // só desiste depois de um minuto: o túnel pode oscilar e o Claude voltar
+    while (!director.hasDispatch && !director.bigReady && (director.failures < 3 || Date.now() - waitStart < 60_000)) {
       if (!director.bigInFlight && !director.bigReady) director.requestBig(g.state);
       director.refillDispatches(g.state);
       await wait(1000);
