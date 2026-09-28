@@ -53,6 +53,8 @@ export class Gabinete {
   onKeyUp: ((e: KeyboardEvent) => void) | null = null;
   /** Botão 🏠: abre a Home por cima do gabinete. */
   onHome: (() => void) | null = null;
+  /** Botão 📜: propor um projeto ao Congresso. */
+  onPropose: (() => void) | null = null;
   private tab: Tab = 'redes';
   private advisorTalking = false;
   private timers: number[] = [];
@@ -72,6 +74,7 @@ export class Gabinete {
           </div>`,
         ).join('')}
         <div class="tb-item stf" title="Supremo Tribunal Federal"><i class="ico">⚖️</i><div><span>${esc(country.institutions.supreme_court)}</span><b class="stf-status"></b></div></div>
+        <button class="tb-bill" title="Propor ao Congresso">📜</button>
         <button class="tb-home" title="Início: painel do país (pausa o jogo)">🏠</button>
         <button class="tb-mute" title="Som (M)">🔊</button>
       </div>
@@ -79,6 +82,7 @@ export class Gabinete {
       <div class="cab-grid">
         <aside class="col-left">
           <div class="window-frame"><div class="window-label">JANELA DO PLANALTO</div></div>
+          <div class="bill-strip"></div>
           <div class="advisor-card">
             <div class="advisor-face"></div>
             <div class="bubble">
@@ -250,6 +254,12 @@ export class Gabinete {
       }
     });
 
+    const propose = () => {
+      sfx.click();
+      this.onPropose?.();
+    };
+    this.$('.tb-bill').addEventListener('click', propose);
+    this.$('.bill-strip').addEventListener('click', (e) => (e.target as HTMLElement).closest('.bs-propose') && propose());
     this.$('.tb-home').addEventListener('click', () => {
       sfx.click();
       this.onHome?.();
@@ -302,6 +312,7 @@ export class Gabinete {
     this.renderFactions();
     this.renderRelations();
     this.renderTrophies();
+    this.renderBill();
     this.renderProfile();
     this.renderMonth();
     this.renderTimeline();
@@ -309,6 +320,7 @@ export class Gabinete {
   }
 
   renderMonth() {
+    this.renderBill();
     const m = this.state.month;
     const num = this.$('.tb-month-num');
     const label = monthName(m).slice(0, 3).toUpperCase();
@@ -342,6 +354,23 @@ export class Gabinete {
       fill.classList.toggle('neg', v < 0);
       row.querySelector('.f-face')!.textContent = factionFace(v);
     }
+  }
+
+  /** Pauta do governo: o projeto em tramitação e as leis em vigor. */
+  renderBill() {
+    const { bill, laws, month } = this.state;
+    const active = (laws ?? []).filter((l) => l.until >= month);
+    const lawsLine = active.length ? `<small class="bs-laws" title="${esc(active.map((l) => l.title).join(' · '))}">⚖️ ${active.length} lei(s) em vigor: ${active.map((l) => l.icon).join('')}</small>` : '';
+    if (!bill) {
+      this.$('.bill-strip').innerHTML = `<button class="bs-propose">📜 PROPOR AO CONGRESSO</button>${lawsLine}`;
+      this.$('.tb-bill').classList.remove('busy');
+      return;
+    }
+    const total = Math.max(1, bill.voteMonth - bill.proposedMonth);
+    const done = Math.min(1, (month - bill.proposedMonth) / total);
+    this.$('.bill-strip').innerHTML = `
+      <div class="bs-bill"><span>${bill.icon}</span><div><b>${esc(bill.title)}</b><small>${bill.instrument === 'mp' ? '⚡ MP em vigor' : bill.instrument === 'pec' ? '📘 PEC' : '📄 Projeto de lei'} · vota em ${esc(shortDate(this.state, bill.voteMonth))}</small><i><em style="width:${done * 100}%"></em></i></div></div>${lawsLine}`;
+    this.$('.tb-bill').classList.add('busy');
   }
 
   /** Troféus da partida em cima da mesa. */

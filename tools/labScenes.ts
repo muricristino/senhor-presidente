@@ -18,7 +18,7 @@ export const LAB_KINDS: Record<string, { system: string; schema: object }> = {
   votacao: {
     system: `${COMMON}
 Cena: ARTICULAÇÃO DA VOTAÇÃO. O governo precisa aprovar um projeto na Câmara. O presidente tem um estoque de capital político e vai de grupo em grupo no plenário negociando votos.
-- bill: título e descrição do projeto (coerente com o momento do governo); "needed" = 257 (lei) ou 308 (PEC).
+- bill: título e descrição do projeto. Se o briefing traz um projeto do governo em tramitação, a votação é sobre ELE (mesmo título; needed = 308 se for PEC, senão 257). Senão, crie um coerente com o momento.
 - capital: entre 8 e 12 pontos.
 - groups: 6 grupos (bancadas temáticas, Centrão, oposição, independentes...), somando cerca de 513 deputados. stance inicial realista para o projeto. Cada grupo tem um líder fictício, que é deputado ou deputada federal (nunca senador), a exigência dele numa frase, e 2 ou 3 ofertas possíveis com custo (1 a 5 pontos), fração de votos que vira a favor (0 a 1), efeito colateral nos indicadores e a reação do líder.
 - Pelo menos um grupo deve ser caro e um deve exigir algo polêmico (cargo, emenda, pauta de costumes).`,

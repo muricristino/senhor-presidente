@@ -8,7 +8,10 @@ import { getCountry } from './engine/data';
 import {
   campaignEvent, electionCutscene, electionDue, electionResult, impeachmentCutscene, impeachmentDue, impeachmentEvent, impeachmentVote,
 } from './engine/politics';
-import { advanceMonth, applyEffects, createState } from './engine/rules';
+import { advanceMonth, applyEffects, concludeBill, createState, INSTRUMENTS, proposeBill } from './engine/rules';
+import { chamberCount } from './art/hemicycle';
+import { chooseBill } from './ui/bills';
+import type { VoteScript } from './lab/scripts';
 import { clearSave, loadGame, saveGame } from './engine/save';
 import type { Effects, GameEvent, GameState, Player } from './engine/types';
 import { music } from './audio/music';
@@ -242,10 +245,89 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   const pickScene = (): LabKindName => {
     const tense = (country.partners ?? []).some((p) => (g.state.relations?.[p.id] ?? 0) <= -25);
     const unhappy = country.ministers.some((m) => ministerMood(m.id, g.state) <= -40 || (g.state.ministerLoyalty?.[m.id] ?? 30) <= 0);
-    const wanted: LabKindName = tense && lastScene !== 'telefonema' ? 'telefonema' : unhappy && lastScene !== 'reuniao' ? 'reuniao' : 'votacao';
-    return wanted === lastScene ? (['votacao', 'telefonema', 'reuniao'] as LabKindName[]).find((k) => k !== lastScene)! : wanted;
+    if (tense && lastScene !== 'telefonema') return 'telefonema';
+    if (unhappy && lastScene !== 'reuniao') return 'reuniao';
+    return lastScene === 'telefonema' ? 'reuniao' : 'telefonema';
   };
   let sceneKind: LabKindName | null = null;
+
+  // ---------- legislar ----------
+
+  g.onPropose = async () => {
+    if (g.state.bill) {
+      void g.say(`Presidente, “${g.state.bill.title}” ainda está no Congresso. Um projeto por vez.`);
+      return;
+    }
+    const pick = await chooseBill(g.screen, country, g.state, () => director.takeBills());
+    if (!pick) return;
+    const r = proposeBill(g.state, pick.proposal, pick.instrument, country);
+    const label = INSTRUMENTS[pick.instrument].label;
+    g.state = {
+      ...r.state,
+      history: [...r.state.history, { month: g.state.month, event: 'Projeto enviado ao Congresso', choice: `${label}: ${pick.proposal.title}`, headline: pick.proposal.summary, icon: pick.proposal.icon }],
+    };
+    g.render();
+    if (pick.instrument === 'mp') {
+      void g.animateKpis(r.deltas);
+      void g.animateAxes(r.deltas, false);
+      void g.animateFactions(r.deltas, false);
+    }
+    g.feed.push({ who: 'Bastidores de Brasília', at: 'bastidores.df', text: `${pick.instrument === 'mp' ? '⚡ Governo edita MP' : '📜 Governo envia ao Congresso'}: “${pick.proposal.title}”.`, likes: 7000, tone: 'press' });
+    void g.say(pick.instrument === 'mp' ? 'A MP já vale. Agora o Congresso tem quatro meses para não deixar cair.' : 'Enviado. Até a votação, cada decisão sua mexe nos votos que teremos no plenário.');
+    saveGame(countryId, g.state);
+  };
+
+  /** Dia da votação do projeto do governo: articulação no plenário (ou voto direto, se pular). */
+  const billVote = async () => {
+    const bill = g.state.bill!;
+    const needed = INSTRUMENTS[bill.instrument].needed;
+    let script = director.takeScene('votacao');
+    if (!script) {
+      g.desk.innerHTML = '<div class="desk-waiting"><div>🏛️</div>O plenário se prepara para votar o seu projeto…</div>';
+      script = await director.awaitScene('votacao', 60_000);
+    }
+    let passed: boolean | undefined;
+    let costs = {};
+    if (script) {
+      const sc = script as VoteScript;
+      sc.bill = { title: bill.title, description: bill.summary, needed };
+      const demo = DEMOS.find((d) => d.script === 'votacao')!;
+      const prevMood = music.current;
+      music.play('tense');
+      const r = await playScene(g.screen, demo, sc, g.state);
+      music.play(prevMood);
+      passed = r?.passed;
+      costs = r?.costs ?? {};
+    }
+    // pulou a cena (ou ela não veio): o plenário vota com a base que o governo tem
+    passed ??= chamberCount(g.state, country).total.base >= needed;
+    const withCosts = applyEffects(g.state, capSceneEffects(costs), country).state;
+    const r = concludeBill(withCosts, passed, country);
+    const mp = bill.instrument === 'mp';
+    const title = mp ? (passed ? 'MP virou lei' : 'MP derrubada') : passed ? 'Aprovado!' : 'Rejeitado';
+    g.state = {
+      ...r.state,
+      history: [...r.state.history, { month: g.state.month, event: `Votação: ${bill.title}`, choice: title, headline: `${bill.title}: ${title.toLowerCase()} no Congresso`, icon: passed ? '✅' : '❌' }],
+    };
+    g.render();
+    void g.animateKpis(r.deltas);
+    void g.animateAxes(r.deltas, false);
+    void g.animateFactions(r.deltas, false);
+    await showVerdict(g.screen, {
+      icon: passed ? '✅' : '❌',
+      kicker: `CONGRESSO NACIONAL · ${INSTRUMENTS[bill.instrument].label.toUpperCase()}`,
+      title: `${bill.title}: ${title}`,
+      good: passed,
+      text: passed
+        ? `${mp ? 'A medida provisória foi convertida em lei.' : `A lei entra em vigor e faz efeito pelos próximos ${Math.round(bill.months * INSTRUMENTS[bill.instrument].power)} meses.`} ${bill.lesson}`
+        : mp
+          ? 'O Congresso derrubou a MP: ela perde a validade, parte do efeito se desfaz e o governo sai enfraquecido.'
+          : 'Derrota do governo no plenário. A base não segurou, e a oposição comemora.',
+    });
+    g.feed.push({ who: 'Economia Hoje', at: 'economiahoje', text: `${bill.title}: ${title.toLowerCase()} no Congresso.`, likes: 9000, tone: 'press' });
+    saveGame(countryId, g.state);
+    director.prepareBills(g.state);
+  };
 
   const nextMonth = () => {
     g.state = advanceMonth(g.state, country);
@@ -338,6 +420,14 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
         continue;
       }
       if (!director.bigInFlight && !director.bigReady) director.requestBig(g.state);
+    }
+
+    // Projeto do governo: propostas prontas para quando o jogador quiser; votação na data marcada.
+    if (!g.state.bill) director.prepareBills(g.state);
+    if (g.state.bill && g.state.month >= g.state.bill.voteMonth - 1) director.prepareScene('votacao', g.state);
+    if (g.state.bill && g.state.month >= g.state.bill.voteMonth) {
+      await billVote();
+      continue;
     }
 
     // Debate da eleição: encomendado alguns meses antes da campanha.

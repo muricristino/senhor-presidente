@@ -1,7 +1,7 @@
 import { BACKDROPS, CUSTOM_BACKDROP, CUT_ACTIONS, LIB_SPRITES, MAX_SPRITE, SCENE_ANIMS } from './catalog';
 import { AXES } from './data';
 import type {
-  AxisId, Country, CutAction, Dispatch, DispatchOption, Interview, InterviewQuestion, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
+  AxisId, BillProposal, Country, CutAction, Dispatch, DispatchOption, Interview, InterviewQuestion, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
 } from './types';
 
 /* Tudo que o Claude gera passa por aqui: valores limitados, ids conferidos, textos cortados. */
@@ -322,4 +322,36 @@ export function sanitizeInterview(raw: unknown, country: Country): Interview | n
     .filter((q): q is InterviewQuestion => !!q)
     .slice(0, 3);
   return questions.length >= 2 ? { id: `GENI_${Math.random().toString(36).slice(2, 8)}`, questions, generated: true } : null;
+}
+
+/** Propostas de lei: efeitos no dia da aprovação e efeito mensal pequeno, com teto. */
+export function sanitizeBills(raw: unknown, country: Country): BillProposal[] {
+  if (!isObj(raw)) return [];
+  const monthlyCap: Partial<Record<KpiId, number>> = { aprovacao: 0.5, inflacao: 0.08, desemprego: 0.08, seguranca: 0.05, educacao: 0.05, selic: 0.05 };
+  return arr(raw.proposals)
+    .filter(isObj)
+    .map((p, i): BillProposal | null => {
+      const title = str(p.title, 60);
+      if (!title) return null;
+      const effects = sanitizeEffects(p.effects, country);
+      for (const k of Object.keys(effects.kpis ?? {}) as KpiId[]) effects.kpis![k] = Math.max(-8, Math.min(8, effects.kpis![k]!));
+      const m = isObj(p.monthly) ? p.monthly : {};
+      const monthly = Object.fromEntries(
+        (Object.entries(monthlyCap) as [KpiId, number][]).map(([k, cap]) => [k, num(m[k], -cap, cap, 0)]).filter(([, v]) => v),
+      ) as Partial<Record<KpiId, number>>;
+      return {
+        id: `BILL_${Date.now().toString(36)}_${i}`,
+        icon: str(p.icon, 4, '📜') || '📜',
+        title,
+        summary: str(p.summary, 200),
+        area: str(p.area, 20),
+        needsPec: p.needsPec === true,
+        effects,
+        monthly,
+        months: Math.round(num(p.months, 6, 24, 12)),
+        lesson: str(p.lesson, 240),
+      };
+    })
+    .filter((b): b is BillProposal => !!b)
+    .slice(0, 4);
 }

@@ -28,8 +28,8 @@ function markSeen(title: string) {
 }
 import { KPIS, formatKpi } from './kpis';
 import { dominantLeans, profileTitle } from './profile';
-import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
-import type { Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
+import { mergeDetails, sanitizeBills, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
+import type { BillProposal, Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
 
 export { monthName } from './calendar';
 export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva';
@@ -74,6 +74,7 @@ ${factions}
 Relações internacionais (-100 a +100):
 ${relations}
 
+${state.bill ? `Projeto do governo em tramitação: "${state.bill.title}" (${state.bill.instrument === 'mp' ? 'medida provisória, já valendo' : state.bill.instrument === 'pec' ? 'PEC' : 'projeto de lei'}), votação prevista para ${dateLabel(state, state.bill.voteMonth)}. ${state.bill.summary}\n` : ''}${(state.laws ?? []).length ? `Leis do governo em vigor: ${(state.laws ?? []).map((l) => l.title).join('; ')}.\n` : ''}
 Decisões anteriores, da mais antiga à mais recente:
 ${history}
 
@@ -313,6 +314,44 @@ export class Director {
           ).then((r) => (r?.headline ? { headline: String(r.headline).slice(0, 90), epitaph: String(r.epitaph ?? '').slice(0, 420) } : null))
         : null,
     );
+  }
+
+  // ---------- propostas de lei ----------
+
+  private bills: Promise<BillProposal[]> | null = null;
+  billsReady: BillProposal[] | null = null;
+
+  /** Encomenda 4 propostas de lei para o momento do governo (abrem na hora quando o jogador pedir). */
+  prepareBills(state: GameState) {
+    if (this.bills || this.billsReady) return;
+    this.bills = claudeOnline()
+      .then((online) =>
+        online
+          ? post<{ proposals: unknown[] }>(
+              '/api/bills',
+              {
+                briefing: briefing(state, this.country).replace('Escreva a próxima crise.', 'Proponha os projetos.'),
+                axes: AXES.map((a) => a.id),
+                factions: this.country.factions.map((f) => f.id),
+                partners: (this.country.partners ?? []).map((p) => p.id),
+              },
+              120_000,
+            )
+          : null,
+      )
+      .then((r) => sanitizeBills(r, this.country));
+    void this.bills.then((b) => {
+      this.billsReady = b.length ? b : null;
+      this.bills = null;
+    });
+  }
+
+  /** Entrega as propostas prontas (ou espera as que estão sendo escritas) e encomenda as próximas depois. */
+  async takeBills(): Promise<BillProposal[]> {
+    if (!this.billsReady && this.bills) await this.bills;
+    const b = this.billsReady ?? [];
+    this.billsReady = null;
+    return b;
   }
 
   // ---------- cenas interativas ----------

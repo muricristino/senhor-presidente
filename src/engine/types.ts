@@ -185,6 +185,10 @@ export interface GameState {
   impeachmentShieldUntil: number;
   /** Mandatos cuja eleição já aconteceu. */
   electionsHeld: number[];
+  /** Projeto do governo em tramitação (um por vez). */
+  bill?: Bill | null;
+  /** Leis aprovadas com efeito mensal. */
+  laws?: Law[];
   /** Lealdade de cada ministro (-100 a +100), mexida nas reuniões ministeriais. */
   ministerLoyalty?: Record<string, number>;
   /** Conquistas ganhas nesta partida (os troféus na mesa). */
@@ -324,4 +328,39 @@ export interface Interview {
   id: string;
   questions: InterviewQuestion[];
   generated?: boolean;
+}
+
+// ---------- Legislar: projetos do presidente ----------
+
+export type Instrument = 'lei' | 'pec' | 'mp';
+
+/** Proposta que o Claude escreve para o presidente enviar ao Congresso. */
+export interface BillProposal {
+  id: string;
+  icon: string;
+  title: string;
+  summary: string;
+  area: string;
+  /** Mexe na Constituição: só pode ir como PEC. */
+  needsPec: boolean;
+  /** Efeito na aprovação da lei. */
+  effects: Effects;
+  /** O que a lei faz todo mês enquanto vale. */
+  monthly: Partial<Record<KpiId, number>>;
+  months: number;
+  lesson: string;
+}
+
+export interface Bill extends BillProposal {
+  instrument: Instrument;
+  proposedMonth: number;
+  voteMonth: number;
+}
+
+/** Lei em vigor: efeito mensal até `until`. */
+export interface Law {
+  title: string;
+  icon: string;
+  monthly: Partial<Record<KpiId, number>>;
+  until: number;
 }

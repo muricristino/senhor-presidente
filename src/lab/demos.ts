@@ -36,6 +36,10 @@ export interface SceneResult {
   icon: string;
   loyalty?: Record<string, number>;
   resigned?: string[];
+  /** Votação: se o projeto passou (ausente quando a cena foi pulada). */
+  passed?: boolean;
+  /** Votação: só o custo das negociações, sem o resultado do plenário. */
+  costs?: Effects;
 }
 
 const lib = (st: GameState = labState()) => buildLibrary(st.player.avatar);
@@ -359,6 +363,8 @@ const votacao: Demo = {
       await stage.banner(passed ? 'APROVADO' : 'REJEITADO', `${yes} a ${no} · eram necessários ${sc.bill.needed}`, 4);
       const outcome: Kpis = passed ? { aprovacao: 3, coalizao: 3 } : { aprovacao: -3, coalizao: -6 };
       finished({
+        passed,
+        costs: { kpis: costs, factions: factionMood },
         effects: { kpis: addKpis(costs, outcome), factions: factionMood },
         headline: `${sc.bill.title}: ${passed ? 'aprovado' : 'rejeitado'} por ${yes} a ${no}`,
         choice: `Articulou ${talked} bancada(s) e ${passed ? 'venceu' : 'perdeu'} no plenário`,

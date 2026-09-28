@@ -157,6 +157,33 @@ const interviewSchema = (axes: string[], factions: string[]) => ({
   required: ['questions'],
 });
 
+const billsSchema = (axes: string[], factions: string[]) => ({
+  type: 'object',
+  properties: {
+    proposals: {
+      type: 'array',
+      minItems: 4,
+      maxItems: 4,
+      items: {
+        type: 'object',
+        properties: {
+          icon: str,
+          title: str,
+          summary: str,
+          area: str,
+          needsPec: { type: 'boolean' },
+          effects: effectsSchema(axes, factions),
+          monthly: { type: 'object', properties: Object.fromEntries(['aprovacao', 'inflacao', 'desemprego', 'seguranca', 'educacao', 'selic'].map((k) => [k, num])), additionalProperties: false },
+          months: num,
+          lesson: str,
+        },
+        required: ['icon', 'title', 'summary', 'area', 'needsPec', 'effects', 'monthly', 'months', 'lesson'],
+      },
+    },
+  },
+  required: ['proposals'],
+});
+
 const spriteSchema = {
   type: 'object',
   properties: { id: str, palette: { type: 'object', additionalProperties: str }, rows: { type: 'array', items: str } },
@@ -258,6 +285,16 @@ const BULLETIN_SYSTEM = `Você escreve o BOLETIM DO PLANALTO de "Senhor Presiden
 Com base no estado do país e nas decisões recentes, escreva:
 - editorial: 2 frases (até 240 caracteres) sobre o momento do governo, como a abertura de um telejornal.
 - ministers: para cada ministro, UMA frase em primeira pessoa (até 90 caracteres) dizendo como ele vê a própria área agora, com personalidade e coerente com os números. Ministros: fazenda (Helena Queiroz, economia), justica (Otávio Brandão, STF e direitos), casacivil (Rui Paranhos, Congresso), defesa (Gen. Augusto Vilela, Forças Armadas e fronteiras), agricultura (Tereza Lins, agro e comércio), comunicacao (Caio Nunes, redes e imagem).
+Português do Brasil, com acentos.`;
+
+const BILLS_SYSTEM = `Você é o assessor legislativo de "Senhor Presidente", simulador político no Brasil real (instituições reais, pessoas fictícias).
+Proponha 4 projetos que o presidente pode enviar ao Congresso AGORA, coerentes com os problemas do país e as decisões recentes do briefing.
+Regras:
+- 4 áreas diferentes. Pelo menos um projeto deve ir CONTRA o perfil ideológico atual do presidente (escolha real). Pelo menos um deve exigir mudar a Constituição (needsPec = true).
+- title até 50 caracteres, summary até 160 (o que a lei faz, em linguagem simples), icon um emoji, area uma palavra.
+- effects: impacto no dia da aprovação. Eixos até ±25, aprovacao e coalizao até ±8, bancadas até ±20, relations até ±15.
+- monthly: o que a lei faz TODO MÊS enquanto vale (pequeno: inflacao e desemprego até ±0.08, aprovacao até ±0.5, seguranca e educacao até ±0.05, selic até ±0.05). months: por quantos meses vale (6 a 24).
+- lesson: uma frase (até 200 caracteres) explicando o mecanismo político ou econômico da lei.
 Português do Brasil, com acentos.`;
 
 const CUTSCENE_SYSTEM = `Você é o diretor de cena de "Senhor Presidente", um jogo em pixel art. Escreva o roteiro de uma cinemática curta (4 a 7 segundos) para a decisão descrita.
@@ -432,6 +469,11 @@ export function claudeDirector(): Plugin {
           if (req.url === '/api/dispatches' && req.method === 'POST') {
             const out = await runClaude(DISPATCH_SYSTEM, body.briefing, dispatchesSchema(body.axes, body.factions));
             console.log(`[claude] despachos gerados em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, out);
+          }
+          if (req.url === '/api/bills' && req.method === 'POST') {
+            const out = await runClaude(BILLS_SYSTEM, body.briefing, billsSchema(body.axes, body.factions));
+            console.log(`[claude] propostas de lei geradas em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, out);
           }
           if (req.url === '/api/interview' && req.method === 'POST') {

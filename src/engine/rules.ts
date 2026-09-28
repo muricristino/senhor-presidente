@@ -1,6 +1,6 @@
 import { AXES } from './data';
 import { KPIS } from './kpis';
-import type { AxisId, Country, Deltas, Effects, GameState, KpiId, Player } from './types';
+import type { AxisId, Bill, BillProposal, Country, Deltas, Effects, GameState, Instrument, KpiId, Law, Player } from './types';
 
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -127,7 +127,64 @@ export function advanceMonth(state: GameState, country: Country, months = 1): Ga
     }
   }
   next.relations = relations;
+  // Leis em vigor fazem efeito todo mês.
+  for (const law of state.laws ?? []) {
+    if (next.month > law.until) continue;
+    for (const [k, v] of Object.entries(law.monthly) as [KpiId, number][]) {
+      const def = KPIS.find((d) => d.id === k);
+      if (def) next.kpis[k] = round(clamp(next.kpis[k] + v * months, def.min, def.max), 2);
+    }
+  }
   next.series = [...(state.series ?? [{ month: state.month, kpis: { ...state.kpis } }]), { month: next.month, kpis: { ...next.kpis } }].slice(-120);
   next = { ...next };
   return next;
+}
+
+/** Regras de cada instrumento legislativo. */
+export const INSTRUMENTS: Record<Instrument, { label: string; needed: number; months: number; power: number; note: string }> = {
+  lei: { label: 'Projeto de lei', needed: 257, months: 3, power: 1, note: 'Maioria simples. Vai ao plenário em 3 meses.' },
+  pec: { label: 'PEC', needed: 308, months: 5, power: 1.3, note: '3/5 da Câmara. Demora mais, efeito maior e mais duradouro.' },
+  mp: { label: 'Medida provisória', needed: 257, months: 4, power: 1, note: 'Vale na hora. Se o Congresso rejeitar em 4 meses, cai e parte do efeito se desfaz.' },
+};
+
+/** Multiplica um efeito (usado para o peso de PEC e para desfazer MP rejeitada). */
+export function scaleEffects(e: Effects, k: number): Effects {
+  const m = (o?: Record<string, number | undefined>) => Object.fromEntries(Object.entries(o ?? {}).map(([id, v]) => [id, (v ?? 0) * k]));
+  return { axes: m(e.axes), kpis: m(e.kpis), factions: m(e.factions), relations: m(e.relations) };
+}
+
+/** Envia o projeto: MP já vale e começa a fazer efeito; lei e PEC só depois da votação. */
+export function proposeBill(state: GameState, p: BillProposal, instrument: Instrument, country: Country): { state: GameState; deltas: Deltas } {
+  const rule = INSTRUMENTS[instrument];
+  const bill: Bill = { ...p, instrument, proposedMonth: state.month, voteMonth: state.month + rule.months };
+  if (instrument !== 'mp') return { state: { ...state, bill }, deltas: { kpis: {}, axes: {}, factions: {}, relations: {} } };
+  const r = applyEffects(state, p.effects, country);
+  const law: Law = { title: p.title, icon: p.icon, monthly: p.monthly, until: state.month + p.months };
+  return { state: { ...r.state, bill, laws: [...(state.laws ?? []), law] }, deltas: r.deltas };
+}
+
+/** Resultado da votação no plenário. */
+export function concludeBill(state: GameState, passed: boolean, country: Country): { state: GameState; deltas: Deltas } {
+  const bill = state.bill;
+  if (!bill) return { state, deltas: { kpis: {}, axes: {}, factions: {}, relations: {} } };
+  const rule = INSTRUMENTS[bill.instrument];
+  let next: GameState = { ...state, bill: null };
+  let r;
+  if (passed && bill.instrument !== 'mp') {
+    r = applyEffects(next, scaleEffects(bill.effects, rule.power), country);
+    const law: Law = { title: bill.title, icon: bill.icon, monthly: scaleEffects({ kpis: bill.monthly }, rule.power).kpis ?? {}, until: state.month + Math.round(bill.months * rule.power) };
+    next = { ...r.state, laws: [...(r.state.laws ?? []), law] };
+  } else if (passed) {
+    // MP convertida em lei: o efeito já estava valendo
+    r = applyEffects(next, { kpis: { coalizao: 2 } }, country);
+    next = r.state;
+  } else if (bill.instrument === 'mp') {
+    // MP derrubada: cai a lei, desfaz parte do efeito e o governo sai derrotado
+    r = applyEffects(next, { ...scaleEffects(bill.effects, -0.6), kpis: { ...(scaleEffects(bill.effects, -0.6).kpis ?? {}), coalizao: -4 } }, country);
+    next = { ...r.state, laws: (r.state.laws ?? []).filter((l) => l.title !== bill.title) };
+  } else {
+    r = applyEffects(next, { kpis: { coalizao: -5, aprovacao: -2 } }, country);
+    next = r.state;
+  }
+  return { state: next, deltas: r.deltas };
 }
