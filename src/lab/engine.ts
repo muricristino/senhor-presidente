@@ -316,6 +316,8 @@ export class Stage {
   }
 
   start() {
+    // o foco não pode ficar num botão de fora: Enter e espaço pertencem à cena
+    (document.activeElement as HTMLElement | null)?.blur?.();
     const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop);
       const real = Math.min(0.05, (now - (this.last || now)) / 1000);
@@ -467,7 +469,12 @@ export class Stage {
         this.bubbles = this.bubbles.filter((b) => b !== entry);
         resolve();
       };
-      const onKey = (e: KeyboardEvent) => (e.key === 'Enter' || e.code === 'Space') && finish();
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key !== 'Enter' && e.code !== 'Space') return;
+        // sem isso, o Enter também "clica" o último botão focado fora da cena
+        e.preventDefault();
+        finish();
+      };
       setTimeout(() => {
         this.root.addEventListener('pointerdown', finish);
         document.addEventListener('keydown', onKey);
