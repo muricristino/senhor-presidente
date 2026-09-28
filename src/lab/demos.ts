@@ -1,9 +1,9 @@
-import { buildLibrary, npcPerson } from '../art/sprites';
+import { buildLibrary, drawSprite as drawSpriteAt, npcPerson } from '../art/sprites';
 import { sfx } from '../audio/sfx';
 import { getCountry } from '../engine/data';
-import type { Effects, GameState, PixelSprite } from '../engine/types';
+import type { Effects, GameState, Interview, InterviewAnswer, PixelSprite } from '../engine/types';
 import { el, esc } from '../ui/dom';
-import { cabinetRoom, chamberFloor, desk, meetingTable, officeRoom, plenary, podium, splitCall, tvStudio } from './backdrops';
+import { cabinetRoom, chamberFloor, desk, meetingTable, officeRoom, plenary, podium, pressChairs, pressPodium, pressRoom, splitCall, tvStudio } from './backdrops';
 import { Actor, ease, LW, type Stage } from './engine';
 import { labState, type CallScript, type DebateScript, type Kpis, type LabKind, type MeetingScript, type VoteScript } from './scripts';
 
@@ -18,6 +18,8 @@ export interface Demo {
   teaches: string[];
   help: string;
   run: (stage: Stage, hud: HTMLElement, script: unknown, ctx: SceneContext) => Promise<SceneResult | void>;
+  /** O que acontece se o jogador pular a cena: fugir também é uma escolha, com custo pequeno. */
+  skip?: (script: unknown, ctx: SceneContext) => SceneResult;
 }
 
 /** O mandato em que a cena acontece (o real, no jogo; o de exemplo, no laboratório). */
@@ -50,6 +52,16 @@ function effectLine(total: Kpis): string {
   };
   return [fmt('aprovacao', 'Aprovação'), fmt('coalizao', 'Coalizão'), fmt('inflacao', 'Inflação', false), fmt('desemprego', 'Desemprego', false)].filter(Boolean).join(' · ') || '<span>sem custo ainda</span>';
 }
+/** Soma efeitos completos (indicadores, eixos, bancadas e relações). */
+function sumEffects(a: Effects, b: Effects): Effects {
+  const merge = <T extends Record<string, number | undefined>>(x: T | undefined, y: T | undefined) => {
+    const out: Record<string, number> = { ...(x as Record<string, number>) };
+    for (const [k, v] of Object.entries(y ?? {})) out[k] = (out[k] ?? 0) + (v ?? 0);
+    return out;
+  };
+  return { kpis: merge(a.kpis, b.kpis), axes: merge(a.axes, b.axes), factions: merge(a.factions, b.factions), relations: merge(a.relations, b.relations) };
+}
+
 function addKpis(a: Kpis, b: Kpis): Kpis {
   const out: Kpis = { ...a };
   for (const [k, v] of Object.entries(b) as [keyof Kpis, number][]) out[k] = (out[k] ?? 0) + v;
@@ -194,6 +206,7 @@ const votacao: Demo = {
   script: 'votacao',
   teaches: ['Presidencialismo de coalizão: votos têm preço', 'Maioria simples (257) × PEC (308)', 'Cada concessão tem custo em outra frente'],
   help: 'Toque num grupo para ir negociar com o líder. Gaste o capital político e abra a votação quando achar que tem os votos.',
+  skip: (raw) => ({ effects: { kpis: { coalizao: -3 } }, headline: `Governo retira “${(raw as VoteScript).bill.title}” de pauta sem votar`, choice: 'Retirou o projeto de pauta', icon: '🗂️' }),
   async run(stage, hud, raw, ctx) {
     const sc = raw as VoteScript;
     const L = lib(ctx.state);
@@ -368,6 +381,7 @@ const debate: Demo = {
   script: 'debate',
   teaches: ['O eleitorado não é um bloco só', 'Checagem de fatos: estilo × verdade', 'O seu histórico vira munição do adversário'],
   help: 'O adversário ataca com as suas decisões. Escolha a réplica: cada setor da plateia reage de um jeito, e a checagem aparece na hora.',
+  skip: (raw) => ({ effects: { kpis: { aprovacao: -3 } }, headline: `Presidente falta ao debate com ${(raw as DebateScript).opponent.name}: a cadeira vazia vira meme`, choice: 'Faltou ao debate', icon: '🪑' }),
   async run(stage, hud, raw, ctx) {
     const sc = raw as DebateScript;
     const L = lib(ctx.state);
@@ -469,6 +483,10 @@ const telefonema: Demo = {
   script: 'telefonema',
   teaches: ['Diplomacia é troca: nada sai de graça', 'Relações externas mexem na economia', 'Pragmatismo × alinhamento'],
   help: 'Negocie ao telefone. Cada resposta muda a relação com o país e soma pontos de acordo: 5 pontos fecham o acordo.',
+  skip: (raw) => {
+    const sc = raw as CallScript;
+    return { effects: { relations: { [sc.partner]: -5 } }, headline: `Presidente não atende ligação de ${sc.leader.title} ${sc.leader.name}`, choice: 'Não atendeu o telefonema', icon: '📵' };
+  },
   async run(stage, hud, raw, ctx) {
     const sc = raw as CallScript;
     const L = lib(ctx.state);
@@ -545,6 +563,17 @@ const reuniao: Demo = {
   script: 'reuniao',
   teaches: ['Ministros têm agendas próprias', 'Arbitrar conflitos custa lealdade', 'Governo dividido vira manchete'],
   help: 'Dois ministros brigam na sua frente. Decida quem apoiar: a lealdade de cada um muda e, se cair demais, ele pede demissão.',
+  skip: (raw, ctx) => {
+    const sc = raw as MeetingScript;
+    const loyalty = ctx.state.ministerLoyalty ?? {};
+    return {
+      effects: { kpis: { coalizao: -1 } },
+      headline: `Presidente adia reunião e deixa briga entre ministros sem solução`,
+      choice: 'Adiou a reunião ministerial',
+      icon: '⏸️',
+      loyalty: { [sc.clash.a]: (loyalty[sc.clash.a] ?? 30) - 10, [sc.clash.b]: (loyalty[sc.clash.b] ?? 30) - 10 },
+    };
+  },
   async run(stage, hud, raw, ctx) {
     const sc = raw as MeetingScript;
     const country = getCountry('BR');
@@ -631,4 +660,97 @@ const reuniao: Demo = {
   },
 };
 
-export const DEMOS: Demo[] = [votacao, debate, telefonema, reuniao, centrao];
+// ======================================================================
+// Coletiva de imprensa: repórteres cobram o seu histórico; o silêncio também vira manchete
+// ======================================================================
+
+const SILENCE: InterviewAnswer = { icon: '🤐', label: '…', effects: { kpis: { aprovacao: -1 } }, headline: 'Presidente fica em silêncio e deixa repórter sem resposta' };
+
+const coletiva: Demo = {
+  id: 'coletiva',
+  icon: '🎤',
+  title: 'Coletiva de imprensa',
+  kind: 'Imprensa · cada frase vira manchete',
+  script: 'coletiva',
+  teaches: ['Cada frase vira manchete', 'Fugir da pergunta também é resposta', 'A imprensa cobra o seu histórico'],
+  help: 'Os repórteres perguntam sobre as suas decisões. Responda antes do tempo acabar: o silêncio também vira manchete.',
+  skip: () => ({ effects: { kpis: { aprovacao: -1 } }, headline: 'Presidente cancela coletiva e sai pela porta dos fundos', choice: 'Cancelou a coletiva', icon: '🚪' }),
+  async run(stage, hud, raw, ctx) {
+    const iv = raw as Interview;
+    const L = lib(ctx.state);
+    stage.background.push(...pressRoom(), (c) => pressChairs(c));
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), 160, 104, 'Presidente'));
+    stage.foreground.push((c) => pressPodium(c));
+    const cam = sprite(L, 'camera');
+    stage.foreground.push((c) => {
+      for (const x of [22, 298]) {
+        c.fillStyle = '#2a2a32';
+        c.fillRect(x - 1, 132, 1, 16);
+        c.fillRect(x - 5, 147, 9, 1);
+      }
+      drawCam(c, cam, 22, 132, false);
+      drawCam(c, cam, 298, 132, true);
+    });
+    const seats = [34, 60, 86, 234, 260, 286, 47, 73, 247, 273];
+    const kinds = ['jornalista', 'cidada', 'assessor', 'jornalista', 'cidadao', 'deputada', 'jornalista', 'cidada', 'assessor', 'cidadao'];
+    const reporters = seats.map((x, i) => {
+      const a = stage.add(new Actor(sprite(L, kinds[i]), x, i < 6 ? 162 : 178));
+      a.facing = x < 160 ? 1 : -1;
+      return a;
+    });
+    const burst = (n = 6) => {
+      for (let k = 0; k < n; k++) {
+        const r = reporters[Math.floor(Math.random() * reporters.length)];
+        stage.particles.emit(r.x, r.y - 18, { colors: ['#ffffff', '#fffbe0'], count: 4, speed: 30, gravity: 0, life: 0.2, size: 3 });
+      }
+      stage.flash('#ffffff', 0.25);
+      sfx.stamp();
+    };
+    let total: Effects = {};
+    const headlines: string[] = [];
+    const renderHud = () => {
+      hud.innerHTML = `<div class="lab-hud-line">🎤 Pergunta ${Math.min(headlines.length + 1, iv.questions.length)}/${iv.questions.length}</div>${headlines.map((h) => `<div class="lab-hud-line lab-headline">📰 ${esc(h)}</div>`).join('')}`;
+    };
+    renderHud();
+    await stage.banner('COLETIVA DE IMPRENSA', 'Palácio do Planalto', 1.4);
+    burst(10);
+    for (const [qi, q] of iv.questions.entries()) {
+      const rep = reporters[(qi * 3 + 1) % reporters.length];
+      rep.jump();
+      stage.emote(rep, '✋', 1.2);
+      reporters.forEach((r) => r !== rep && Math.random() < 0.4 && stage.emote(r, '✋', 0.8));
+      await stage.say(rep, q.question);
+      const i = await stage.choose('Sua resposta:', q.answers.map((a) => ({ label: `${a.icon} ${a.label}` })), `${q.journalist} · ${q.outlet}`, { seconds: 12 });
+      const answer = i < 0 ? SILENCE : q.answers[i];
+      if (i < 0) {
+        stage.emote(pres, '🤐', 2);
+        stage.camera.shake(2, 0.3);
+      } else {
+        await stage.say(pres, answer.label, { hold: 2.2 });
+      }
+      burst();
+      reporters.forEach((r) => stage.emote(r, '✍️', 1.2));
+      total = sumEffects(total, answer.effects);
+      headlines.push(answer.headline);
+      renderHud();
+      const paper = el('div', 'lab-paper', `<small>MANCHETE</small><b>${esc(answer.headline)}</b>`);
+      stage.ui.append(paper);
+      await stage.wait(2.2);
+      paper.remove();
+    }
+    pres.jump();
+    await stage.banner('COLETIVA ENCERRADA', headlines[0] ?? '', 2.5);
+    return { effects: total, headline: headlines.join(' / '), choice: 'Deu coletiva de imprensa', icon: '🎤' };
+  },
+};
+
+function drawCam(c: CanvasRenderingContext2D, cam: PixelSprite, x: number, y: number, flip: boolean) {
+  c.save();
+  c.translate(x, y);
+  if (flip) c.scale(-1, 1);
+  c.translate(-x, -y);
+  drawSpriteAt(c, cam, x, y);
+  c.restore();
+}
+
+export const DEMOS: Demo[] = [votacao, debate, telefonema, reuniao, coletiva, centrao];

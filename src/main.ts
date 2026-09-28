@@ -16,7 +16,6 @@ import { runBigEvent } from './ui/bigEvent';
 import { playCinematic } from './ui/cinematic';
 import { creationScreen } from './ui/creation';
 import { runDispatch } from './ui/dispatch';
-import { runInterview } from './ui/interview';
 import { DEMOS } from './lab/demos';
 import { ministerMood } from './engine/ministers';
 import { electionMonth } from './engine/calendar';
@@ -217,7 +216,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   const runScene = async (kind: LabKindName, script: unknown) => {
     const demo = DEMOS.find((d) => d.script === kind)!;
     const prevMood = music.current;
-    music.play(kind === 'debate' ? 'epic' : 'tense');
+    music.play(kind === 'debate' ? 'epic' : kind === 'coletiva' ? 'press' : 'tense');
     const r = await playScene(g.screen, demo, script, g.state);
     music.play(prevMood);
     if (!r) return;
@@ -372,9 +371,7 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
       const interview = director.takeInterview();
       if (interview) {
         nextMonth();
-        music.play('press');
-        await runInterview(g, interview);
-        music.play('calm');
+        await runScene('coletiva', interview);
         sinceInterview = 0;
         continue;
       }

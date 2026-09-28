@@ -6,7 +6,7 @@ import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, saniti
 import type { Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
 
 export { monthName } from './calendar';
-export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao';
+export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva';
 
 const moodWord = (v: number) => (v >= 40 ? 'aliada fiel' : v >= 12 ? 'simpática' : v > -12 ? 'neutra' : v > -40 ? 'irritada' : 'em guerra com o governo');
 

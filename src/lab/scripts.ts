@@ -1,4 +1,5 @@
-import { getCountry } from '../engine/data';
+import { AXES, getCountry } from '../engine/data';
+import { sanitizeInterview } from '../engine/sanitize';
 import { briefing, claudeOnline } from '../engine/director';
 import { advanceMonth, applyEffects, createState } from '../engine/rules';
 import { loadGame } from '../engine/save';
@@ -37,7 +38,7 @@ export interface MeetingScript {
   resignation: Record<string, string>;
 }
 
-export type LabKind = 'votacao' | 'debate' | 'telefonema' | 'reuniao';
+export type LabKind = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva';
 
 const clamp = (v: unknown, min: number, max: number, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
 const kpis = (e: unknown): Kpis => {
@@ -54,6 +55,8 @@ const s = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) 
 /** Valida o roteiro; lança erro se faltar o essencial (a cena mostra a falha em vez de inventar texto). */
 export function sanitize(kind: LabKind, raw: any): unknown {
   switch (kind) {
+    case 'coletiva':
+      return raw;
     case 'votacao': {
       const groups = (raw.groups ?? []).slice(0, 6).map((g: any) => ({
         name: s(g.name, 30),
@@ -141,6 +144,24 @@ export function requestScript(kind: LabKind, fresh = false, state?: GameState): 
   const st = state ?? labState();
   const job = claudeOnline().then(async (online) => {
     if (!online) throw new Error('O Claude não está disponível neste servidor.');
+    const country = getCountry('BR');
+    if (kind === 'coletiva') {
+      // A coletiva usa o mesmo gerador do jogo.
+      const r = await fetch('/api/interview', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          briefing: briefing(st, country).replace('Escreva a próxima crise.', 'Escreva a próxima coletiva de imprensa.'),
+          axes: AXES.map((a) => a.id),
+          factions: country.factions.map((f) => f.id),
+          partners: country.partners.map((p) => p.id),
+        }),
+      });
+      if (!r.ok) throw new Error(`geração falhou (${r.status})`);
+      const iv = sanitizeInterview(await r.json(), country);
+      if (!iv) throw new Error('coletiva incompleta');
+      return iv;
+    }
     const res = await fetch('/api/lab', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

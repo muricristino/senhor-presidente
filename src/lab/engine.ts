@@ -476,8 +476,11 @@ export class Stage {
     });
   }
 
-  /** Caixa de diálogo com escolhas dentro da cena (teclas 1-4 ou toque). */
-  choose(prompt: string, choices: Choice[], speaker?: string): Promise<number> {
+  /**
+   * Caixa de diálogo com escolhas dentro da cena (teclas 1-4 ou toque).
+   * Com `seconds`, uma barra de tempo corre e, se acabar, devolve -1 (silêncio).
+   */
+  choose(prompt: string, choices: Choice[], speaker?: string, opts: { seconds?: number } = {}): Promise<number> {
     const box = el(
       'div',
       'lab-choice',
@@ -486,9 +489,28 @@ export class Stage {
          .map((c, i) => `<button data-i="${i}"><span>${i + 1}</span>${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</button>`)
          .join('')}</div>`,
     );
+    if (opts.seconds) box.insertAdjacentHTML('beforeend', '<div class="lab-choice-timer"><i></i></div>');
     this.ui.append(box);
     return new Promise((resolve) => {
+      let timer = 0;
+      if (opts.seconds) {
+        const bar = box.querySelector<HTMLElement>('.lab-choice-timer i')!;
+        const start = this.t;
+        timer = window.setInterval(() => {
+          const left = 1 - (this.t - start) / opts.seconds!;
+          bar.style.width = `${Math.max(0, left) * 100}%`;
+          bar.classList.toggle('danger', left < 0.35);
+          if (left <= 0 || !this.root.isConnected) {
+            clearInterval(timer);
+            document.removeEventListener('keydown', onKey);
+            box.classList.add('out');
+            setTimeout(() => box.remove(), 200);
+            resolve(-1);
+          }
+        }, 100);
+      }
       const pick = (i: number) => {
+        clearInterval(timer);
         document.removeEventListener('keydown', onKey);
         box.querySelectorAll('button')[i]?.classList.add('picked');
         setTimeout(() => {

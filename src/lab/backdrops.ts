@@ -289,3 +289,51 @@ export function cabinetRoom() {
     },
   ];
 }
+
+/** Sala de imprensa do Planalto: parede azul com brasão, bandeiras, púlpito e fileiras de cadeiras. */
+export function pressRoom() {
+  return [
+    (ctx: Ctx, _cam: Camera, t: number) => {
+      const g = ctx.createLinearGradient(0, 0, 0, 120);
+      g.addColorStop(0, '#1f3a6b');
+      g.addColorStop(1, '#2a4a80');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, LW, 120);
+      for (let x = 0; x < LW; x += 20) r(ctx, x, 0, 1, 120, '#1a3360');
+      // brasão da República
+      r(ctx, 148, 16, 24, 24, '#f4c542');
+      r(ctx, 151, 19, 18, 18, '#1f4fa0');
+      r(ctx, 156, 24, 8, 8, '#2e8b57');
+      for (let i = 0; i < 5; i++) r(ctx, 152 + i * 4, 20, 1, 1, '#f4f1ea');
+      text(ctx, 'PRESIDENCIA DA REPUBLICA', 114, 46, '#d8c070');
+      flag(ctx, 110, 30, t);
+      flag(ctx, 196, 30, t);
+      r(ctx, 0, 120, LW, 60, '#2a2a3a');
+      for (let x = 0; x < LW; x += 16) r(ctx, x, 120, 1, 60, '#24243a');
+    },
+  ];
+}
+
+export function pressPodium(ctx: Ctx) {
+  r(ctx, 146, 96, 28, 30, '#6a4a2a');
+  r(ctx, 146, 96, 28, 3, '#9a6a3a');
+  r(ctx, 154, 104, 12, 12, '#f4c542');
+  r(ctx, 157, 107, 6, 6, '#1f4fa0');
+  // microfones
+  for (const dx of [-6, 0, 6]) {
+    r(ctx, 160 + dx, 88, 1, 9, '#2a2a2a');
+    r(ctx, 159 + dx, 86, 3, 3, '#4a4a52');
+  }
+}
+
+export function pressChairs(ctx: Ctx) {
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 12; i++) {
+      const x = 12 + i * 26 + (row ? 13 : 0);
+      if (x > 120 && x < 200) continue;
+      r(ctx, x, 152 + row * 16, 12, 3, '#8a2a2a');
+      r(ctx, x + 1, 155 + row * 16, 1, 6, '#3a1a1a');
+      r(ctx, x + 10, 155 + row * 16, 1, 6, '#3a1a1a');
+    }
+  }
+}

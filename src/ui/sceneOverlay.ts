@@ -36,7 +36,7 @@ export async function playScene(host: HTMLElement, demo: Demo, script: unknown, 
     'div',
     'overlay scene-overlay',
     `<div class="scene-box">
-      <div class="scene-head"><span>${demo.icon}</span><b>${esc(demo.title)}</b><em>${demo.teaches.map((t) => `<i>✓ ${esc(t)}</i>`).join('')}</em></div>
+      <div class="scene-head"><span>${demo.icon}</span><b>${esc(demo.title)}</b><em>${demo.teaches.map((t) => `<i>✓ ${esc(t)}</i>`).join('')}</em>${demo.skip ? '<button class="scene-skip" title="Pular (Esc)">⏭ PULAR</button>' : ''}</div>
       <div class="lab-frame scene-frame"><div class="lab-hud"></div></div>
       <p class="scene-help">${esc(demo.help)}</p>
     </div>`,
@@ -49,7 +49,29 @@ export async function playScene(host: HTMLElement, demo: Demo, script: unknown, 
   new ResizeObserver(() => frame.style.setProperty('--hud-h', `${hud.offsetHeight}px`)).observe(hud);
   stage.start();
   sfx.ring();
-  const result = (await demo.run(stage, hud, script, { state })) ?? null;
+  // Pular é uma escolha como outra qualquer: devolve o custo de fugir da situação.
+  const skipBtn = overlay.querySelector<HTMLButtonElement>('.scene-skip');
+  const skipped = new Promise<'skip'>((resolve) => {
+    if (!skipBtn) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && go();
+    const go = () => {
+      document.removeEventListener('keydown', onKey);
+      resolve('skip');
+    };
+    skipBtn.addEventListener('click', go, { once: true });
+    document.addEventListener('keydown', onKey);
+  });
+  const outcome = await Promise.race([demo.run(stage, hud, script, { state }).then((r) => ({ r: r ?? null })), skipped]);
+  let result: SceneResult | null;
+  if (outcome === 'skip') {
+    sfx.down();
+    skipBtn?.remove();
+    stage.ui.replaceChildren();
+    result = demo.skip?.(script, { state }) ?? null;
+  } else {
+    skipBtn?.remove();
+    result = outcome.r;
+  }
   if (result) {
     const card = el(
       'div',

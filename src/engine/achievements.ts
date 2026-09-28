@@ -39,7 +39,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'muro', icon: '🧱', name: 'Em cima do muro', desc: 'Um ano de governo sem sair do centro em nenhum eixo.', check: (s) => s.month >= 13 && Object.values(s.axes).every((v) => Math.abs(v) <= 15) },
   { id: 'autoritario', icon: '👑', name: 'Tentação autoritária', desc: 'Eixo Poder acima de +70.', check: (s) => s.axes.poder >= 70 },
   { id: 'guardiao', icon: '🕊️', name: 'Guardião da democracia', desc: 'Eixo Poder abaixo de -50.', check: (s) => s.axes.poder <= -50 },
-  { id: 'coletivas', icon: '🎤', name: 'Encarou a imprensa', desc: 'Deu 3 coletivas.', check: (s) => count(s, (d) => d.endsWith(':coletiva')) >= 3 },
+  { id: 'coletivas', icon: '🎤', name: 'Encarou a imprensa', desc: 'Deu 3 coletivas.', check: (s) => count(s, (d) => d.endsWith(':coletiva') || d.startsWith('CENA_coletiva')) >= 3 },
   { id: 'fantasma', icon: '👻', name: 'Presidente fantasma', desc: 'Deixou 3 decisões sem resposta.', check: (s) => count(s, (d) => d.endsWith(':omissao') || d.endsWith(':arquivado')) >= 3 },
   { id: 'milagre', icon: '📈', name: 'Milagre econômico', desc: 'Desemprego até 5% e inflação até 3% ao mesmo tempo.', check: (s) => s.kpis.desemprego <= 5 && s.kpis.inflacao <= 3 },
   { id: 'paz', icon: '🚓', name: 'Paz nas ruas', desc: 'Segurança 9 ou mais.', check: (s) => s.kpis.seguranca >= 9 },
