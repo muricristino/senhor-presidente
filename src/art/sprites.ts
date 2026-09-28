@@ -141,6 +141,38 @@ function shade(hex: string): string {
 
 const SKIN = ['#e8b48f', '#8d5a3b', '#c68e62', '#5e3a24', '#f1c9a5', '#a8714b'];
 
+const CIENTISTA: PersonSpec = { skin: SKIN[4], hair: '#b8742e', style: 'bun', outfit: 'coat', main: '#f0ece0', accent: '#3a6fd8', glasses: true };
+
+/** Robô cinza e quadrado, com olhos ciano (tecnocracia). */
+const ROBO: PixelSprite = {
+  id: 'robo',
+  palette: { r: '#e0574f', a: '#8a8a92', g: '#b8bcc4', l: '#d0d4dc', d: '#6a6e78', k: '#2a2a32', c: '#4ff0f0', y: '#f4c542' },
+  rows: [
+    '.....rr.....',
+    '.....aa.....',
+    '..gggggggg..',
+    '..glllllld..',
+    '..gkcckccd..',
+    '..glllllld..',
+    '..gkkkkkkd..',
+    '..dddddddd..',
+    '....dddd....',
+    '..gggggggg..',
+    'aaglccllldaa',
+    'aaglllllldaa',
+    'aaglrlylldaa',
+    'aaglllllldaa',
+    'kkgddddddgkk',
+    '..dddddddd..',
+    '...aa..aa...',
+    '...aa..aa...',
+    '...aa..aa...',
+    '...aa..aa...',
+    '..kkk..kkk..',
+    '..kkk..kkk..',
+  ],
+};
+
 const PROPS: PixelSprite[] = [
   { id: 'martelo', palette: { b: '#5a3a1a', B: '#9a6a3a', h: '#b8844a' }, rows: ['bBBBBBb', 'bBBBBBb', 'bbbbbbb', '...h...', '...h...', '...h...', '...h...'] },
   { id: 'microfone', palette: { g: '#4a4a52', G: '#8a8a92', b: '#1a1a1a' }, rows: ['.GG.', 'GggG', '.GG.', '.b..', '.b..', '.b..', '.b..', '.b..', '.b..', 'bbbb'] },
@@ -197,7 +229,7 @@ export function buildLibrary(playerAvatar: number): Map<string, PixelSprite> {
     person('pastor', { skin: SKIN[1], hair: '#1a1210', style: 'short', outfit: 'suit', main: '#2b2b33', accent: '#f4f1ea', face: 'happy' }),
     person('caminhoneiro', { skin: SKIN[2], hair: '#2a1a12', style: 'cap', outfit: 'vest', main: '#8a5a3a', accent: '#e8b030' }),
     person('agricultor', { skin: SKIN[5], hair: '#3a2a1a', style: 'hat', outfit: 'overalls', main: '#e8e2d0', accent: '#d8b86a' }),
-    person('cientista', { skin: SKIN[4], hair: '#b8742e', style: 'bun', outfit: 'coat', main: '#f0ece0', accent: '#3a6fd8', glasses: true }),
+    person('cientista', CIENTISTA),
   ];
   return new Map([...people, ...PROPS].map((s) => [s.id, s]));
 }
@@ -228,7 +260,11 @@ export function drawSprite(ctx: Ctx, s: PixelSprite, x: number, y: number, opts:
 
 /** Corpo inteiro de um personagem fixo (ministros, conselheira), a partir do retrato dele. */
 export function npcPerson(key: string, face: 'neutral' | 'angry' | 'happy' = 'neutral'): PixelSprite {
+  if (key === 'robo') return ROBO;
+  if (key === 'cientista') return person('cientista', { ...CIENTISTA, face });
   const a = NPCS[key] ?? AVATARS[0];
   const style: Hair = a.beret ? 'beret' : a.style === 'careca' ? 'bald' : a.style === 'longo' || a.style === 'volume' ? 'long' : a.style === 'coque' ? 'bun' : 'short';
-  return person(key, { skin: a.skin, hair: a.hair, style, outfit: a.beret ? 'uniform' : 'suit', main: a.suit, accent: a.beret ?? a.tie, glasses: a.glasses, face });
+  // clérigos usam túnica longa; militares, farda
+  const outfit: Outfit = key.startsWith('clerigo') ? 'coat' : a.beret ? 'uniform' : 'suit';
+  return person(key, { skin: a.skin, hair: a.hair, style, outfit, main: a.suit, accent: a.beret ?? a.tie, glasses: a.glasses, face });
 }

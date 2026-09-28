@@ -1,9 +1,23 @@
 import { sfx } from '../audio/sfx';
 import { getCountry } from '../engine/data';
-import type { GameState } from '../engine/types';
+import type { Effects, GameState } from '../engine/types';
 import type { Demo, SceneResult } from '../lab/demos';
 import { Stage } from '../lab/engine';
 import { el, esc } from './dom';
+
+/** Uma cena interativa soma várias escolhas; o total tem teto para não virar a economia num telefonema. */
+export function capSceneEffects(e: Effects): Effects {
+  const cap = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+  const limits: Record<string, number> = { aprovacao: 10, coalizao: 10, inflacao: 0.5, desemprego: 0.4 };
+  const each = (o: Record<string, number | undefined> | undefined, m: (k: string) => number) => Object.fromEntries(Object.entries(o ?? {}).map(([k, v]) => [k, cap(v ?? 0, m(k))]));
+  return {
+    kpis: each(e.kpis, (k) => limits[k] ?? 1),
+    factions: each(e.factions, () => 20),
+    relations: each(e.relations, () => 35),
+    axes: each(e.axes, () => 15),
+    institutions: each(e.institutions, () => 15),
+  };
+}
 
 function effectChips(r: SceneResult, state: GameState): string {
   const country = getCountry(state.countryId);
@@ -36,7 +50,7 @@ export async function playScene(host: HTMLElement, demo: Demo, script: unknown, 
     'div',
     'overlay scene-overlay',
     `<div class="scene-box">
-      <div class="scene-head"><span>${demo.icon}</span><b>${esc(demo.title)}</b><em>${demo.teaches.map((t) => `<i>✓ ${esc(t)}</i>`).join('')}</em>${demo.skip ? '<button class="scene-skip" title="Pular (Esc)">⏭ PULAR</button>' : ''}</div>
+      <div class="scene-head"><span>${demo.icon}</span><b>${esc(demo.titleFor?.(state) ?? demo.title)}</b><em>${demo.teaches.map((t) => `<i>✓ ${esc(t)}</i>`).join('')}</em>${demo.skip ? '<button class="scene-skip" title="Pular (Esc)">⏭ PULAR</button>' : ''}</div>
       <div class="lab-frame scene-frame"><div class="lab-hud"></div></div>
       <p class="scene-help">${esc(demo.help)}</p>
     </div>`,
@@ -73,6 +87,7 @@ export async function playScene(host: HTMLElement, demo: Demo, script: unknown, 
     result = outcome.r;
   }
   if (result) {
+    result = { ...result, effects: capSceneEffects(result.effects) };
     const card = el(
       'div',
       'scene-result',

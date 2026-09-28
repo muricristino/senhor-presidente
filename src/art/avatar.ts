@@ -39,6 +39,13 @@ export const NPCS: Record<string, AvatarPreset> = {
   reporter2: { skin: '#8d5a3b', skinShade: '#6e4229', hair: '#1a1210', style: 'curto', suit: '#2a4a6a', tie: '#e0574f', glasses: true },
   reporter3: { skin: '#f1c9a5', skinShade: '#d6a57f', hair: '#b8742e', style: 'coque', suit: '#5a3a5a', tie: '#4ab0c6', glasses: true, lipstick: true },
   reporter4: { skin: '#c68e62', skinShade: '#a56f45', hair: '#2a1a12', style: 'lateral', suit: '#44403a', tie: '#7fb04a', beard: true },
+  rei: { skin: '#f1c9a5', skinShade: '#d6a57f', hair: '#eeeeee', style: 'careca', suit: '#4a2a6a', tie: '#f4c542', beard: true },
+  almirante: { skin: '#c68e62', skinShade: '#a56f45', hair: '#2a2a2a', style: 'curto', suit: '#1a2a4a', tie: '#f4f1ea', beret: '#f4f1ea' },
+  brigadeiro: { skin: '#e8b48f', skinShade: '#c98f6b', hair: '#6a6a6a', style: 'curto', suit: '#5a6a82', tie: '#3a4a62', beret: '#2a3a5a' },
+  espiao: { skin: '#f3d0b4', skinShade: '#d9ab8c', hair: '#101010', style: 'lateral', suit: '#15151a', tie: '#2a2a30', glasses: true },
+  clerigo1: { skin: '#5e3a24', skinShade: '#472a18', hair: '#1a1210', style: 'careca', suit: '#3a2418', tie: '#d8b040', beard: true },
+  clerigo2: { skin: '#f1c9a5', skinShade: '#d6a57f', hair: '#9a9a9a', style: 'curto', suit: '#141418', tie: '#f4f1ea', beard: true },
+  clerigo3: { skin: '#a8714b', skinShade: '#86553a', hair: '#2a1a12', style: 'curto', suit: '#1f3a2a', tie: '#d8b040', beard: true, glasses: true },
 };
 
 const INK = '#1a1420';

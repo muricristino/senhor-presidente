@@ -5,6 +5,8 @@ import type { Effects, GameState, Interview, InterviewAnswer, PixelSprite } from
 import { el, esc } from '../ui/dom';
 import { cabinetRoom, chamberFloor, desk, meetingTable, officeRoom, plenary, podium, pressChairs, pressPodium, pressRoom, splitCall, tvStudio } from './backdrops';
 import { Actor, ease, LW, type Stage } from './engine';
+import { conselho, ruptura } from './regimeScenes';
+import { institutionsOf, regimeOf } from '../engine/regime';
 import { labState, type CallScript, type DebateScript, type Kpis, type LabKind, type MeetingScript, type VoteScript } from './scripts';
 
 export interface Demo {
@@ -20,6 +22,8 @@ export interface Demo {
   run: (stage: Stage, hud: HTMLElement, script: unknown, ctx: SceneContext) => Promise<SceneResult | void>;
   /** O que acontece se o jogador pular a cena: fugir também é uma escolha, com custo pequeno. */
   skip?: (script: unknown, ctx: SceneContext) => SceneResult;
+  /** Título adaptado ao regime (ex.: a coletiva vira entrevista à TV estatal numa ditadura). */
+  titleFor?: (state: GameState) => string;
 }
 
 /** O mandato em que a cena acontece (o real, no jogo; o de exemplo, no laboratório). */
@@ -40,6 +44,10 @@ export interface SceneResult {
   passed?: boolean;
   /** Votação: só o custo das negociações, sem o resultado do plenário. */
   costs?: Effects;
+  /** Noite da ruptura: como terminou. */
+  rupture?: 'sucesso' | 'fracasso' | 'recuo';
+  /** Conselho do regime: quantos membros passaram a conspirar. */
+  conspirators?: number;
 }
 
 const lib = (st: GameState = labState()) => buildLibrary(st.player.avatar);
@@ -47,7 +55,7 @@ const sprite = (l: Map<string, PixelSprite>, id: string) => l.get(id)!;
 const MINISTER_NPC: Record<string, string> = { fazenda: 'helena', justica: 'otavio', casacivil: 'rui', defesa: 'general', agricultura: 'tereza', comunicacao: 'caio' };
 
 /** Soma efeitos nos indicadores e mostra o saldo no HUD. */
-function effectLine(total: Kpis): string {
+export function effectLine(total: Kpis): string {
   const fmt = (k: keyof Kpis, label: string, pct = true) => {
     const v = total[k] ?? 0;
     if (!v) return '';
@@ -66,7 +74,7 @@ function sumEffects(a: Effects, b: Effects): Effects {
   return { kpis: merge(a.kpis, b.kpis), axes: merge(a.axes, b.axes), factions: merge(a.factions, b.factions), relations: merge(a.relations, b.relations) };
 }
 
-function addKpis(a: Kpis, b: Kpis): Kpis {
+export function addKpis(a: Kpis, b: Kpis): Kpis {
   const out: Kpis = { ...a };
   for (const [k, v] of Object.entries(b) as [keyof Kpis, number][]) out[k] = (out[k] ?? 0) + v;
   return out;
@@ -387,6 +395,7 @@ const debate: Demo = {
   script: 'debate',
   teaches: ['O eleitorado não é um bloco só', 'Checagem de fatos: estilo × verdade', 'O seu histórico vira munição do adversário'],
   help: 'O adversário ataca com as suas decisões. Escolha a réplica: cada setor da plateia reage de um jeito, e a checagem aparece na hora.',
+  titleFor: (st) => (regimeOf(st).debate === 'sessao' ? 'Debate dos líderes' : 'Debate na TV'),
   skip: (raw) => ({ effects: { kpis: { aprovacao: -3 } }, headline: `Presidente falta ao debate com ${(raw as DebateScript).opponent.name}: a cadeira vazia vira meme`, choice: 'Faltou ao debate', icon: '🪑' }),
   async run(stage, hud, raw, ctx) {
     const sc = raw as DebateScript;
@@ -680,6 +689,7 @@ const coletiva: Demo = {
   script: 'coletiva',
   teaches: ['Cada frase vira manchete', 'Fugir da pergunta também é resposta', 'A imprensa cobra o seu histórico'],
   help: 'Os repórteres perguntam sobre as suas decisões. Responda antes do tempo acabar: o silêncio também vira manchete.',
+  titleFor: (st) => (institutionsOf(st).imprensa < 35 ? 'Entrevista à TV estatal' : 'Coletiva de imprensa'),
   skip: () => ({ effects: { kpis: { aprovacao: -1 } }, headline: 'Presidente cancela coletiva e sai pela porta dos fundos', choice: 'Cancelou a coletiva', icon: '🚪' }),
   async run(stage, hud, raw, ctx) {
     const iv = raw as Interview;
@@ -759,4 +769,4 @@ function drawCam(c: CanvasRenderingContext2D, cam: PixelSprite, x: number, y: nu
   c.restore();
 }
 
-export const DEMOS: Demo[] = [votacao, debate, telefonema, reuniao, coletiva, centrao];
+export const DEMOS: Demo[] = [votacao, debate, telefonema, reuniao, coletiva, ruptura, conselho, centrao];
