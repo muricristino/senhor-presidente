@@ -1194,21 +1194,6 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .mobile .lab-paper b { font-size: 17px; }
 
 /* ================= legislar ================= */
-.tb-bill { background: none; border: 0; border-left: 2px solid #1d2133; width: 50px; font-size: 20px; margin-left: auto; }
-.tb-bill:hover { background: #1d2133; }
-.tb-bill.busy { opacity: 0.5; }
-.tb-home { margin-left: 0 !important; }
-.bill-strip { display: flex; flex-direction: column; gap: 4px; }
-.bs-propose { font-weight: 700; font-size: 17px; padding: 7px 10px; background: #1b2a6b; border: 3px solid #4a6ae0; color: #fff; box-shadow: 3px 3px 0 var(--shadow); }
-.bs-propose:hover { filter: brightness(1.2); transform: translateY(-1px); }
-.bs-bill { display: flex; gap: 8px; align-items: center; background: #0c0e17; border: 2px solid #4a6ae0; padding: 5px 8px; animation: slide-up 0.4s; }
-.bs-bill span { font-size: 24px; }
-.bs-bill div { flex: 1; min-width: 0; }
-.bs-bill b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bs-bill small { font-size: 13px; color: var(--muted); }
-.bs-bill i { display: block; height: 5px; margin-top: 3px; background: #1d2133; }
-.bs-bill em { display: block; height: 100%; background: #6fb6ff; transition: width 0.6s; }
-.bs-laws { font-size: 13px; color: var(--green-2); }
 .bills-box { position: relative; width: 1180px; max-height: 680px; overflow-y: auto; background: var(--panel); border: 4px solid #4a6ae0; box-shadow: 10px 10px 0 var(--shadow); padding: 14px 18px; animation: slam 0.3s ease-out; }
 .bills-loading { font-size: 22px; text-align: center; margin: 60px 0; }
 .bills-intro { margin: 6px 0 10px; font-size: 17px; color: var(--muted); }
@@ -1236,3 +1221,66 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .col-left .advisor-card { overflow: hidden; min-height: 0; }
 .col-left .bubble { max-width: 100%; }
 .col-left .advisor-text { -webkit-line-clamp: 4; }
+
+/* coluna esquerda enxuta: janela, conselheira compacta e o mandato */
+.col-left .advisor-card { flex: none; flex-direction: row; align-items: flex-start; gap: 8px; }
+.col-left .advisor-face::after { display: none; }
+.col-left .advisor-canvas { width: 56px; height: 56px; }
+.col-left .bubble { flex: 1; min-width: 0; height: 104px; overflow: hidden; }
+.col-left .bubble::before { left: -10px; top: 18px; border-color: transparent var(--paper) transparent transparent; border-width: 6px 10px 6px 0; }
+.col-left .advisor-text { font-size: 16px; -webkit-line-clamp: 4; min-height: 0; }
+.timeline { margin-top: auto; }
+.tl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.tl-head .panel-label { margin: 0; }
+.tl-head b { font-size: 17px; color: var(--axis-b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-step.next .tl-dot { border: 3px dashed #6fb6ff; background: #16203a; }
+.tl-step.next small { color: #6fb6ff; }
+.pi-age { color: var(--muted); }
+.mobile [data-view='mesa'] .col-left .bubble { height: auto; }
+/* pauta do governo na mesa */
+.pauta { gap: 6px; }
+.pauta-intro { margin: 4px 0 6px; font-size: 16px; line-height: 1.2; }
+.pauta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; }
+.pauta-card { display: flex; flex-direction: column; gap: 4px; background: #fff; border: 3px solid #b8a67a; box-shadow: 3px 3px 0 #b8a67a; padding: 7px 9px; animation: slide-up 0.35s backwards; animation-delay: calc(var(--i) * 90ms); }
+.pauta-card .bill-top b { font-size: 17px; }
+.pauta-card .bill-icon { font-size: 26px; }
+.pauta-card p { margin: 0; font-size: 14px; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pauta-card .chips { gap: 3px; }
+.pauta-card .chip { background: #fbf5e2; font-size: 11px; padding: 0 5px; }
+.pauta-card .chip.up { color: #1e7a45; border-color: #1e7a45; }
+.pauta-card .chip.down { color: #b8302a; border-color: #b8302a; }
+.pauta-card .bill-actions { flex-direction: column; gap: 4px; }
+.pauta-card .bill-send { padding: 4px 8px; }
+.pauta-card .bill-send b { font-size: 15px; }
+.pauta-card .bill-send small { font-size: 12px; }
+.pauta-skip { align-self: center; margin-top: 4px; font-weight: 700; font-size: 16px; padding: 6px 14px; background: none; border: 2px solid #b8a67a; color: #6a5a3a; }
+.pauta-skip:hover { border-color: var(--ink); color: var(--ink); }
+.mobile .pauta-grid { grid-template-columns: 1fr; }
+.hp-pauta { display: flex; flex-direction: column; gap: 4px; }
+.hp-bill, .hp-law { font-size: 15px; background: #0c0e17; border: 2px solid var(--line); padding: 4px 7px; }
+.hp-bill { border-color: #4a6ae0; }
+.hp-bill small, .hp-law small { color: var(--muted); }
+.hp-law.muted { color: var(--muted); }
+/* pauta em linhas: cabe inteira na mesa */
+.pauta-grid { grid-template-columns: 1fr; gap: 6px; overflow: visible; }
+.pauta-card { display: grid; grid-template-columns: 1fr 150px; grid-template-rows: auto auto auto; column-gap: 10px; row-gap: 3px; padding: 6px 8px; }
+.pauta-card .bill-top { grid-column: 1; }
+.pauta-card p { grid-column: 1; -webkit-line-clamp: 2; font-size: 13.5px; }
+.pauta-card .chips { grid-column: 1; }
+.pauta-card .chips .chip:nth-child(n + 6):not(.hidden-kpi) { display: none; }
+.pauta-card .bill-actions { grid-column: 2; grid-row: 1 / 4; align-self: center; margin: 0; }
+.pauta-card .bill-top b { font-size: 16px; }
+.pauta-card .bill-icon { font-size: 22px; }
+.pauta-intro { font-size: 14.5px; margin: 2px 0 4px; }
+.mobile .pauta-card { grid-template-columns: 1fr; }
+.mobile .pauta-card .bill-actions { grid-column: 1; grid-row: auto; flex-direction: row; }
+.pauta-intro { display: none; }
+.pauta-card .chips { max-height: 20px; overflow: hidden; }
+.pauta-card .bill-send { padding: 3px 8px; }
+.pauta-card .bill-send small { font-size: 11px; }
+.pauta-card .bill-actions { gap: 3px; }
+.pauta-card p { -webkit-line-clamp: 1; }
+.mobile .pauta-card p { -webkit-line-clamp: 2; }
+.mobile .pauta-card .chips { max-height: none; }
+.pauta-card p { max-height: 1.2em; line-height: 1.2; }
+.mobile .pauta-card p { max-height: 2.4em; }

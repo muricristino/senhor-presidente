@@ -10,7 +10,7 @@ import {
 } from './engine/politics';
 import { advanceMonth, applyEffects, concludeBill, createState, INSTRUMENTS, proposeBill } from './engine/rules';
 import { chamberCount } from './art/hemicycle';
-import { chooseBill } from './ui/bills';
+import { runLegislativeWindow } from './ui/bills';
 import type { VoteScript } from './lab/scripts';
 import { clearSave, loadGame, saveGame } from './engine/save';
 import type { Effects, GameEvent, GameState, Player } from './engine/types';
@@ -253,13 +253,23 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
 
   // ---------- legislar ----------
 
-  g.onPropose = async () => {
-    if (g.state.bill) {
-      void g.say(`Presidente, “${g.state.bill.title}” ainda está no Congresso. Um projeto por vez.`);
+  /** A pauta do governo abre em fevereiro e agosto (volta do Congresso), se não houver projeto andando. */
+  let pautaOffered = '';
+  const pautaOpen = () => {
+    const m = (g.state.month - 1) % 12;
+    if (g.state.bill || !(m === 1 || m === 2 || m === 7 || m === 8)) return false;
+    const key = `${Math.ceil(g.state.month / 12)}-${m < 6 ? 1 : 2}`;
+    return key !== pautaOffered ? key : false;
+  };
+  const runPauta = async (key: string) => {
+    pautaOffered = key;
+    const proposals = await director.takeBills();
+    if (!proposals.length) return;
+    const pick = await runLegislativeWindow(g, proposals);
+    if (!pick) {
+      void g.say('Tudo bem. A próxima janela é no outro semestre.');
       return;
     }
-    const pick = await chooseBill(g.screen, country, g.state, () => director.takeBills());
-    if (!pick) return;
     const r = proposeBill(g.state, pick.proposal, pick.instrument, country);
     const label = INSTRUMENTS[pick.instrument].label;
     g.state = {
@@ -427,6 +437,12 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
     if (g.state.bill && g.state.month >= g.state.bill.voteMonth - 1) director.prepareScene('votacao', g.state);
     if (g.state.bill && g.state.month >= g.state.bill.voteMonth) {
       await billVote();
+      continue;
+    }
+    const pauta = pautaOpen();
+    if (pauta && director.billsReady) {
+      nextMonth();
+      await runPauta(pauta);
       continue;
     }
 

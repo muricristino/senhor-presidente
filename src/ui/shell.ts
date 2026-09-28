@@ -53,8 +53,6 @@ export class Gabinete {
   onKeyUp: ((e: KeyboardEvent) => void) | null = null;
   /** Botão 🏠: abre a Home por cima do gabinete. */
   onHome: (() => void) | null = null;
-  /** Botão 📜: propor um projeto ao Congresso. */
-  onPropose: (() => void) | null = null;
   private tab: Tab = 'redes';
   private advisorTalking = false;
   private timers: number[] = [];
@@ -65,7 +63,7 @@ export class Gabinete {
     const s = this.screen;
     s.innerHTML = `
       <div class="topbar">
-        <div class="tb-pres"><span class="tb-avatar"></span><div><small>PRESIDENTE</small><b>${esc(state.player.name)}</b></div></div>
+        <div class="tb-pres"><span class="tb-avatar"></span><div><small>PRESIDENTE · <span class="pi-age"></span></small><b>${esc(state.player.name)}</b></div></div>
         <div class="tb-month"><small class="tb-term"></small><b class="tb-month-num"></b><span class="tb-month-name"></span></div>
         ${KPIS.map(
           (k) => `<div class="tb-item kpi" data-kpi="${k.id}" title="${esc(k.label)}">
@@ -74,7 +72,6 @@ export class Gabinete {
           </div>`,
         ).join('')}
         <div class="tb-item stf" title="Supremo Tribunal Federal"><i class="ico">⚖️</i><div><span>${esc(country.institutions.supreme_court)}</span><b class="stf-status"></b></div></div>
-        <button class="tb-bill" title="Propor ao Congresso">📜</button>
         <button class="tb-home" title="Início: painel do país (pausa o jogo)">🏠</button>
         <button class="tb-mute" title="Som (M)">🔊</button>
       </div>
@@ -82,7 +79,6 @@ export class Gabinete {
       <div class="cab-grid">
         <aside class="col-left">
           <div class="window-frame"><div class="window-label">JANELA DO PLANALTO</div></div>
-          <div class="bill-strip"></div>
           <div class="advisor-card">
             <div class="advisor-face"></div>
             <div class="bubble">
@@ -91,16 +87,8 @@ export class Gabinete {
             </div>
           </div>
           <div class="timeline">
-            <div class="panel-label">LINHA DO TEMPO DO MANDATO</div>
+            <div class="tl-head"><span class="panel-label">SEU MANDATO</span><b class="profile-title"></b></div>
             <div class="tl-track"></div>
-          </div>
-          <div class="portrait-card">
-            <div class="portrait"></div>
-            <div class="portrait-info">
-              <div class="pi-title">${esc(country.head_of_state_title)}</div>
-              <div class="pi-name">${esc(state.player.name)} <small class="pi-age"></small></div>
-              <div class="pi-profile"><span>SEU PERFIL</span><b class="profile-title"></b></div>
-            </div>
           </div>
         </aside>
 
@@ -177,17 +165,13 @@ export class Gabinete {
     this.scene.set('calm', state.kpis.aprovacao);
     this.scene.start();
 
-    const portrait = makeCanvas(32, 32, 'portrait-canvas');
     const mini = makeCanvas(32, 32, 'mini-canvas');
     const advisor = makeCanvas(32, 32, 'advisor-canvas');
-    this.$('.portrait').append(portrait);
     this.$('.tb-avatar').append(mini);
     this.$('.advisor-face').append(advisor);
     drawAvatar(mini.getContext('2d')!, state.player.avatar);
-    const pctx = portrait.getContext('2d')!;
     const actx = advisor.getContext('2d')!;
     this.every(150, () => {
-      drawAvatar(pctx, this.state.player.avatar, { blink: Math.random() < 0.1 });
       drawAvatar(actx, country.advisor.avatar, { sash: false, blink: Math.random() < 0.08, talk: this.advisorTalking && Math.random() < 0.6 });
     });
 
@@ -254,12 +238,6 @@ export class Gabinete {
       }
     });
 
-    const propose = () => {
-      sfx.click();
-      this.onPropose?.();
-    };
-    this.$('.tb-bill').addEventListener('click', propose);
-    this.$('.bill-strip').addEventListener('click', (e) => (e.target as HTMLElement).closest('.bs-propose') && propose());
     this.$('.tb-home').addEventListener('click', () => {
       sfx.click();
       this.onHome?.();
@@ -312,7 +290,6 @@ export class Gabinete {
     this.renderFactions();
     this.renderRelations();
     this.renderTrophies();
-    this.renderBill();
     this.renderProfile();
     this.renderMonth();
     this.renderTimeline();
@@ -320,7 +297,6 @@ export class Gabinete {
   }
 
   renderMonth() {
-    this.renderBill();
     const m = this.state.month;
     const num = this.$('.tb-month-num');
     const label = monthName(m).slice(0, 3).toUpperCase();
@@ -328,7 +304,7 @@ export class Gabinete {
     num.textContent = label;
     this.$('.tb-month-name').textContent = String(yearOf(this.state, m));
     this.$('.tb-term').textContent = `${this.state.term}º MANDATO`;
-    this.$('.pi-age').textContent = `${ageOf(this.state, m)} anos`;
+    this.$('.pi-age').textContent = `${ageOf(this.state, m)} ANOS`;
     if (changed) shake(this.$('.tb-month'));
   }
 
@@ -336,7 +312,10 @@ export class Gabinete {
     this.$('.tl-track').innerHTML = [
       ...this.state.history.slice(current ? -3 : -4).map((h) => `<div class="tl-step done" title="${esc(h.choice)}"><span class="tl-dot">${h.icon}</span><small>${esc(shortDate(this.state, h.month))}</small></div>`),
       current ? `<div class="tl-step now"><span class="tl-dot">${current}</span><small>${esc(shortDate(this.state, this.state.month))}</small></div>` : '',
-      '<div class="tl-step"><span class="tl-dot">?</span><small>…</small></div>',
+      // o próximo ponto conhecido: a votação do projeto do governo, se houver
+      this.state.bill
+        ? `<div class="tl-step next" title="${esc(this.state.bill.title)}: votação no Congresso"><span class="tl-dot">${this.state.bill.icon}</span><small>📜 ${esc(shortDate(this.state, this.state.bill.voteMonth))}</small></div>`
+        : '<div class="tl-step"><span class="tl-dot">?</span><small>…</small></div>',
     ].join('');
   }
 
@@ -354,23 +333,6 @@ export class Gabinete {
       fill.classList.toggle('neg', v < 0);
       row.querySelector('.f-face')!.textContent = factionFace(v);
     }
-  }
-
-  /** Pauta do governo: o projeto em tramitação e as leis em vigor. */
-  renderBill() {
-    const { bill, laws, month } = this.state;
-    const active = (laws ?? []).filter((l) => l.until >= month);
-    const lawsLine = active.length ? `<small class="bs-laws" title="${esc(active.map((l) => l.title).join(' · '))}">⚖️ ${active.length} lei(s) em vigor: ${active.map((l) => l.icon).join('')}</small>` : '';
-    if (!bill) {
-      this.$('.bill-strip').innerHTML = `<button class="bs-propose">📜 PROPOR AO CONGRESSO</button>${lawsLine}`;
-      this.$('.tb-bill').classList.remove('busy');
-      return;
-    }
-    const total = Math.max(1, bill.voteMonth - bill.proposedMonth);
-    const done = Math.min(1, (month - bill.proposedMonth) / total);
-    this.$('.bill-strip').innerHTML = `
-      <div class="bs-bill"><span>${bill.icon}</span><div><b>${esc(bill.title)}</b><small>${bill.instrument === 'mp' ? '⚡ MP em vigor' : bill.instrument === 'pec' ? '📘 PEC' : '📄 Projeto de lei'} · vota em ${esc(shortDate(this.state, bill.voteMonth))}</small><i><em style="width:${done * 100}%"></em></i></div></div>${lawsLine}`;
-    this.$('.tb-bill').classList.add('busy');
   }
 
   /** Troféus da partida em cima da mesa. */

@@ -5,7 +5,7 @@ import { makeCanvas } from '../art/pixel';
 import { PlanaltoScene } from '../art/scene';
 import { sfx } from '../audio/sfx';
 import { ACHIEVEMENTS, loadUnlocked } from '../engine/achievements';
-import { ageOf, dateLabel } from '../engine/calendar';
+import { ageOf, dateLabel, shortDate } from '../engine/calendar';
 import { AXES } from '../engine/data';
 import { formatKpi, KPIS } from '../engine/kpis';
 import { ministerMood, moodFace } from '../engine/ministers';
@@ -140,6 +140,12 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
         <section class="home-panel home-side">
           <div class="panel-label">📺 BOLETIM DO PLANALTO</div>
           <p class="hp-editorial"></p>
+          <div class="panel-label mt">📜 PAUTA DO GOVERNO</div>
+          <div class="hp-pauta">
+            ${s.bill ? `<div class="hp-bill">${s.bill.icon} <b>${esc(s.bill.title)}</b> <small>vota em ${esc(shortDate(s, s.bill.voteMonth))}</small></div>` : ''}
+            ${(s.laws ?? []).filter((l) => l.until >= s.month).map((l) => `<div class="hp-law">⚖️ ${l.icon} ${esc(l.title)} <small>até ${esc(shortDate(s, l.until))}</small></div>`).join('')}
+            ${!s.bill && !(s.laws ?? []).some((l) => l.until >= s.month) ? '<div class="hp-law muted">Nenhum projeto do governo ainda. A pauta abre em fevereiro e agosto.</div>' : ''}
+          </div>
           <div class="panel-label mt">👔 MINISTÉRIO</div>
           <div class="hp-ministers">
             ${c.ministers
