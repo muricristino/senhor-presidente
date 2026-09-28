@@ -11,8 +11,10 @@ const kpiEffects = { type: 'object', properties: Object.fromEntries(KPIS.map((k)
 const COMMON = `Você escreve cenas interativas de "Senhor Presidente", simulador político no Brasil real (instituições reais, pessoas fictícias; nunca cite políticos, juízes ou partidos reais).
 A cena é jogada dentro de uma animação: falas curtas (até 110 caracteres), escolhas curtas (até 45 caracteres), tom de Brasília com humor e tensão.
 Conecte a cena ao estado do país e às decisões anteriores do jogador descritas no briefing. Toda escolha tem custo; nenhuma é "a certa".
-Cada escolha deve ensinar algo real sobre política (presidencialismo de coalizão, federalismo, diplomacia, Constituição).
+Cada escolha deve ensinar algo real sobre política (presidencialismo de coalizão, federalismo, diplomacia, Constituição, como regimes nascem e caem).
+O briefing diz o regime em vigor: escreva na lógica dele (numa ditadura não há imprensa livre nem oposição legal; num parlamentarismo o chefe de governo é o primeiro-ministro).
 Português do Brasil, com acentos.`;
+const RUPTURE_ACTORS = ['generais', 'congresso', 'stf', 'governadores', 'exterior', 'rua', 'clero', 'mercado', 'movimentos'];
 
 export const LAB_KINDS: Record<string, { system: string; schema: object }> = {
   votacao: {
@@ -56,7 +58,7 @@ Cena: ARTICULAÇÃO DA VOTAÇÃO. O governo precisa aprovar um projeto na Câmar
   },
   debate: {
     system: `${COMMON}
-Cena: DEBATE NA TV contra o principal candidato de oposição (fictício), às vésperas da eleição.
+Cena: DEBATE NA TV contra o principal candidato de oposição (fictício), às vésperas da eleição. No parlamentarismo ou na monarquia, é o debate entre o primeiro-ministro e o líder da oposição antes da eleição do Parlamento.
 - opponent: nome e estilo. moderator: nome.
 - rounds: 3 rodadas. Em cada uma, um tema e o ATAQUE do adversário, que usa decisões reais do histórico do jogador. O jogador escolhe entre 3 réplicas de estilos diferentes (dados, emoção, contra-ataque, evasiva).
 - Cada réplica tem o efeito na plateia por segmento (progressistas, indecisos, conservadores, de -10 a +10) e uma checagem de fatos: veredito (verdadeiro, exagerado, falso) e uma nota curta explicando.
@@ -181,6 +183,83 @@ Ministros: fazenda (Helena Queiroz), justica (Otávio Brandão), casacivil (Rui 
         resignation: { type: 'object', additionalProperties: str },
       },
       required: ['agenda', 'clash', 'rounds', 'resignation'],
+    },
+  },
+  ruptura: {
+    system: `${COMMON}
+Cena: A NOITE DA RUPTURA. O governante tenta mudar o regime numa única noite, por golpe ou revolução (o briefing diz qual, o regime de destino e quem são os atores, com a posição inicial de cada um de -100 a +100).
+Isto é um simulador educativo: mostre o que acontece de verdade numa noite dessas (telefonemas, tanques, notas oficiais, juízes, embaixadas, multidões), sem glamourizar. Todo apoio tem preço.
+- codename: nome da operação. conspirator: quem trouxe o plano (nome e cargo fictícios). intro: a fala dele abrindo a noite (até 110 caracteres).
+- actors: exatamente os atores listados no briefing, na mesma ordem. Para cada um: name e title fictícios, opening (o que ele diz ao atender, coerente com a posição inicial) e 3 offers: label (o que o governante oferece, ameaça ou promete), hours (1 a 3, quanto da noite consome), swing (-40 a +40, quanto muda a posição do ator), effects nos indicadores (aprovacao, coalizao, inflacao, desemprego) e reaction.
+- Pelo menos uma oferta por ator é arriscada (swing pode ser negativo: ameaçar um juiz pode endurecê-lo).
+- dawn_success: manchete do amanhecer se der certo. dawn_fail: manchete se fracassar. retreat: o pronunciamento de recuo, se o governante desistir no meio da noite.`,
+    schema: {
+      type: 'object',
+      properties: {
+        codename: str,
+        conspirator: { type: 'object', properties: { name: str, title: str }, required: ['name', 'title'] },
+        intro: str,
+        actors: {
+          type: 'array',
+          minItems: 4,
+          maxItems: 6,
+          items: {
+            type: 'object',
+            properties: {
+              id: { enum: RUPTURE_ACTORS },
+              name: str,
+              title: str,
+              opening: str,
+              offers: {
+                type: 'array',
+                minItems: 3,
+                maxItems: 3,
+                items: { type: 'object', properties: { label: str, hours: num, swing: num, effects: kpiEffects, reaction: str }, required: ['label', 'hours', 'swing', 'effects', 'reaction'] },
+              },
+            },
+            required: ['id', 'name', 'title', 'opening', 'offers'],
+          },
+        },
+        dawn_success: str,
+        dawn_fail: str,
+        retreat: str,
+      },
+      required: ['codename', 'conspirator', 'intro', 'actors', 'dawn_success', 'dawn_fail', 'retreat'],
+    },
+  },
+  conselho: {
+    system: `${COMMON}
+Cena: O CONSELHO DO REGIME. Numa autocracia (ou na audiência com o monarca), o governante enfrenta o círculo que o sustenta: a Junta, o Politburo, o Conselho de Líderes Religiosos, o Conselho Técnico... O briefing traz o nome do conselho e os papéis dos membros.
+- agenda: a pauta, nascida do momento do país. members: um por papel do briefing, na mesma ordem, com name fictício e stance (o que ele defende hoje).
+- rounds: 3 rodadas. Em cada uma, um membro (speaker = o papel) fala, e o governante escolhe entre 3 respostas. Cada resposta: variação de lealdade de cada membro afetado (loyalty, chave = papel, -30 a +30), efeitos nos indicadores e a reação de quem falou.
+- Nas autocracias, quem perde a lealdade não pede demissão: CONSPIRA. Escreva "conspiracy": para cada papel, a frase que ele diz aos cochichos quando decide conspirar.`,
+    schema: {
+      type: 'object',
+      properties: {
+        agenda: str,
+        members: { type: 'array', minItems: 3, maxItems: 5, items: { type: 'object', properties: { role: str, name: str, stance: str }, required: ['role', 'name', 'stance'] } },
+        rounds: {
+          type: 'array',
+          minItems: 3,
+          maxItems: 3,
+          items: {
+            type: 'object',
+            properties: {
+              speaker: str,
+              line: str,
+              options: {
+                type: 'array',
+                minItems: 3,
+                maxItems: 3,
+                items: { type: 'object', properties: { label: str, loyalty: { type: 'object', additionalProperties: num }, effects: kpiEffects, reaction: str }, required: ['label', 'loyalty', 'effects', 'reaction'] },
+              },
+            },
+            required: ['speaker', 'line', 'options'],
+          },
+        },
+        conspiracy: { type: 'object', additionalProperties: str },
+      },
+      required: ['agenda', 'members', 'rounds', 'conspiracy'],
     },
   },
 };

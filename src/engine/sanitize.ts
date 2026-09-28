@@ -1,7 +1,7 @@
 import { BACKDROPS, CUSTOM_BACKDROP, CUT_ACTIONS, LIB_SPRITES, MAX_SPRITE, SCENE_ANIMS } from './catalog';
 import { AXES } from './data';
 import type {
-  AxisId, BillProposal, Country, CutAction, Dispatch, DispatchOption, Interview, InterviewQuestion, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
+  AxisId, BillProposal, BillSpecial, InstitutionId, Country, CutAction, Dispatch, DispatchOption, Interview, InterviewQuestion, Place, CutActor, CutStep, Cutscene, Effects, EventOption, GameEvent, KpiId, PixelSprite, PostTone, SceneAnim, SocialPost, SocialWave,
 } from './types';
 
 /* Tudo que o Claude gera passa por aqui: valores limitados, ids conferidos, textos cortados. */
@@ -19,6 +19,7 @@ export const KPI_LIMITS: Record<KpiId, number> = {
   aprovacao: 12, coalizao: 12, selic: 1.5, inflacao: 1.2, desemprego: 0.8, seguranca: 1, educacao: 0.6,
 };
 const AXIS_LIMIT = 30;
+const INSTITUTION_LIMIT = 15;
 const FACTION_LIMIT = 25;
 
 const PLACES: Place[] = ['norte', 'nordeste', 'centro_oeste', 'sudeste', 'sul', 'nacional', 'exterior'];
@@ -46,6 +47,11 @@ export function sanitizeEffects(raw: unknown, country: Country): Effects {
   for (const p of country.partners ?? []) {
     const v = num(relations[p.id], -FACTION_LIMIT, FACTION_LIMIT, 0);
     if (v) out.relations![p.id] = Math.round(v);
+  }
+  const inst = isObj(raw.institutions) ? raw.institutions : {};
+  for (const id of ['stf', 'congresso', 'imprensa', 'eleicoes'] as InstitutionId[]) {
+    const v = num(inst[id], -INSTITUTION_LIMIT, INSTITUTION_LIMIT, 0);
+    if (v) (out.institutions ??= {})[id] = Math.round(v);
   }
   return out;
 }
@@ -195,7 +201,22 @@ function sanitizeOption(raw: unknown, country: Country, id: string): EventOption
     lesson: { title: str(lesson.title, 80, 'O peso da caneta'), text: str(lesson.text, 800) },
     social: sanitizeWave(raw.social),
     cutscene_idea: str(raw.cutscene_idea, 300) || undefined,
+    role: str(raw.role, 20) || undefined,
   };
+}
+
+/**
+ * Momento decisivo: cada papel pedido precisa aparecer uma vez (é ele que decide a mecânica).
+ * Opções com papel repetido ou desconhecido são descartadas; se faltar papel, o evento não serve.
+ */
+export function sanitizeCrisis(raw: unknown, country: Country, month: number, monthName: string, roles: string[]): GameEvent | null {
+  const event = sanitizeEvent(raw, country, month, monthName);
+  if (!event || !isObj(raw)) return null;
+  const all = arr(raw.options).map((o, i) => sanitizeOption(o, country, `op${i + 1}`)).filter((o): o is EventOption => !!o);
+  const byRole = roles.map((r) => all.find((o) => o.role === r));
+  if (byRole.some((o) => !o)) return null;
+  event.options = byRole.map((o, i) => ({ ...o!, id: roles[i] }));
+  return event;
 }
 
 /** Junta lições e reações das redes (geradas depois) às opções de um evento. */
@@ -324,6 +345,8 @@ export function sanitizeInterview(raw: unknown, country: Country): Interview | n
   return questions.length >= 2 ? { id: `GENI_${Math.random().toString(36).slice(2, 8)}`, questions, generated: true } : null;
 }
 
+const SPECIALS: BillSpecial[] = ['reeleicao', 'stf', 'imprensa', 'eleicoes', 'fortalecer'];
+
 /** Propostas de lei: efeitos no dia da aprovação e efeito mensal pequeno, com teto. */
 export function sanitizeBills(raw: unknown, country: Country): BillProposal[] {
   if (!isObj(raw)) return [];
@@ -345,11 +368,12 @@ export function sanitizeBills(raw: unknown, country: Country): BillProposal[] {
         title,
         summary: str(p.summary, 200),
         area: str(p.area, 20),
-        needsPec: p.needsPec === true,
+        needsPec: p.needsPec === true || ['reeleicao', 'stf', 'eleicoes'].includes(String(p.special)),
         effects,
         monthly,
         months: Math.round(num(p.months, 6, 24, 12)),
         lesson: str(p.lesson, 240),
+        special: SPECIALS.includes(p.special as BillSpecial) ? (p.special as BillSpecial) : undefined,
       };
     })
     .filter((b): b is BillProposal => !!b)

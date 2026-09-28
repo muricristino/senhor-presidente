@@ -1,4 +1,4 @@
-import { ageOf, dateLabel, electionMonth, monthName } from './calendar';
+import { ageOf, dateLabel, monthName } from './calendar';
 import { AXES } from './data';
 
 /*
@@ -28,11 +28,31 @@ function markSeen(title: string) {
 }
 import { KPIS, formatKpi } from './kpis';
 import { dominantLeans, profileTitle } from './profile';
-import { mergeDetails, sanitizeBills, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
-import type { BillProposal, Country, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
+import { lastTerm, nextElectionMonth } from './politics';
+import { CRISES, democracyIndex, democracyLabel, getRegime, INSTITUTIONS, institutionsOf, regimeOf, threats } from './regime';
+import { mergeDetails, sanitizeBills, sanitizeCrisis, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
+import type { BillProposal, Country, CrisisKind, RegimeId, Cutscene, Dispatch, EventOption, GameEvent, GameState, Interview } from './types';
 
 export { monthName } from './calendar';
-export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva';
+export type LabKindName = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva' | 'ruptura' | 'conselho';
+
+/** O regime em texto: regras, freios, ameaças e quem sustenta o governante. */
+export function regimeBriefing(state: GameState, country: Country): string {
+  const r = regimeOf(state);
+  const inst = institutionsOf(state);
+  const idx = democracyIndex(state);
+  const since = (state.regimeHistory ?? []).slice(-1)[0];
+  const t = threats(state);
+  const threatText = (Object.entries(t) as [CrisisKind, number][]).map(([k, v]) => `${CRISES[k].name} ${v}/100`).join(', ');
+  const pillar = r.pillar ? `Quem sustenta o governante: ${r.pillar.label} (${country.factions.find((f) => f.id === r.pillar!.faction)?.name}: ${Math.round(state.factions[r.pillar.faction] ?? 0)}).\n` : '';
+  const special = (state.extraTerms ?? 0) > 0 ? `A reeleição foi estendida por PEC: ${2 + (state.extraTerms ?? 0)} mandatos seguidos permitidos.\n` : '';
+  return `REGIME EM VIGOR: ${r.name} (${r.family}). O jogador governa como ${r.headTitle}${since ? ` desde ${dateLabel(state, since.month)}, por ${since.via}` : ''}.
+${r.summary}
+Congresso: ${r.congress === 'independente' ? 'independente, vota os projetos' : r.congress === 'carimbo' ? 'de fachada, só carimba' : 'fechado'}. Eleições para o cargo: ${r.elections}.
+Instituições (independência de 0 a 100): ${INSTITUTIONS.map((i) => `${i.name} ${Math.round(inst[i.id])}`).join(', ')}. Índice de democracia: ${idx} (${democracyLabel(idx).label}).
+Ameaças ao mandato (em 100 a crise explode): ${threatText || 'nenhuma'}.
+${pillar}${special}${(state.regimeHistory ?? []).length ? `Trocas de regime: ${(state.regimeHistory ?? []).map((h) => `${dateLabel(state, h.month)} → ${h.regime} (${h.via})`).join('; ')}.\n` : ''}`;
+}
 
 const moodWord = (v: number) => (v >= 40 ? 'aliada fiel' : v >= 12 ? 'simpática' : v > -12 ? 'neutra' : v > -40 ? 'irritada' : 'em guerra com o governo');
 
@@ -53,13 +73,19 @@ export function briefing(state: GameState, country: Country): string {
     .map((p) => `- ${p.name}: ${Math.round(state.relations?.[p.id] ?? 0)} → ${moodWord(state.relations?.[p.id] ?? 0)}`)
     .join('\n');
   const leans = dominantLeans(state.axes, 3).map((l) => `${l.pole} (${Math.abs(l.value)})`).join(', ') || 'nenhum';
-  const nextElection = state.term < country.calendar.max_terms ? electionMonth(state, state.term, country.calendar.election_month) : null;
+  const nextElection = nextElectionMonth(state, country);
+  const r = regimeOf(state);
   const calendar = nextElection
-    ? `Faltam ${Math.max(0, nextElection - state.month)} meses para a eleição de ${dateLabel(state, nextElection)}, em que o presidente tenta a reeleição.`
-    : 'É o segundo e último mandato: não há mais reeleição. O presidente pensa no legado.';
-  return `País: ${country.country_name}. Data: ${dateLabel(state, state.month)} (${state.term}º mandato, mês ${state.month - (state.term - 1) * state.termMonths} de ${state.termMonths}).
+    ? `Faltam ${Math.max(0, nextElection - state.month)} meses para a eleição de ${dateLabel(state, nextElection)}, em que o ${r.headTitle.toLowerCase()} tenta continuar no cargo.`
+    : r.elections === 'nenhuma'
+      ? 'Não há eleição para o cargo: o governante fica enquanto sustentar o regime.'
+      : lastTerm(state, country)
+        ? 'É o último mandato permitido: não há mais reeleição. O presidente pensa no legado (ou em como ficar).'
+        : 'Sem eleição marcada.';
+  return `País: ${country.country_name}. Data: ${dateLabel(state, state.month)}${r.family === 'autocracia' ? '' : ` (${state.term}º mandato, mês ${state.month - (state.term - 1) * state.termMonths} de ${state.termMonths})`}.
 ${calendar}
-Presidente: ${state.player.name}, ${ageOf(state, state.month)} anos (origem: ${bio}). Perfil ideológico: ${profileTitle(state.axes)}. Polos mais fortes: ${leans}.
+${regimeBriefing(state, country)}
+${r.headTitle}: ${state.player.name}, ${ageOf(state, state.month)} anos (origem: ${bio}). Perfil ideológico: ${profileTitle(state.axes)}. Polos mais fortes: ${leans}.
 Relação com o STF: ${state.stf === 'LIMINAR' ? 'o STF já barrou o governo antes; clima tenso' : 'normal'}.
 
 Indicadores:
@@ -121,6 +147,7 @@ export class Director {
   private big: BigJob | null = null;
   private dispatchQueue: Dispatch[] = [];
   private dispatchPending = false;
+  private dispatchFailedAt = 0;
   /** Tentativas seguidas de gerar o evento grande que falharam. */
   failures = 0;
   /** Avisado quando um evento grande fica pronto (para anunciar no feed). */
@@ -203,11 +230,78 @@ export class Director {
     return !!this.big?.settled && !!this.big.event;
   }
 
+  // ---------- momentos decisivos (crises terminais e campanha) ----------
+
+  /** Pedidos que falharam há pouco: não repete antes de 90s (o servidor pode estar no limite por hora). */
+  private failedAt = new Map<string, number>();
+  private coolingDown(key: string): boolean {
+    return Date.now() - (this.failedAt.get(key) ?? 0) < 90_000;
+  }
+
+  private crises = new Map<string, { promise: Promise<GameEvent | null>; ready: GameEvent | null }>();
+
+  /**
+   * Encomenda o momento decisivo assim que a ameaça fica séria, para ele estar pronto quando explodir.
+   * `roles` são as saídas que o jogo sabe resolver; o Claude escreve cada uma no contexto do país.
+   */
+  prepareCrisis(key: string, state: GameState, situation: string, roles: { id: string; hint: string }[]) {
+    if (this.crises.has(key) || this.coolingDown(key)) return;
+    const entry = { promise: Promise.resolve<GameEvent | null>(null), ready: null as GameEvent | null };
+    entry.promise = claudeOnline()
+      .then((online) =>
+        online
+          ? post<{ event: unknown }>(
+              '/api/crisis',
+              {
+                briefing: `${briefing(state, this.country).replace('Escreva a próxima crise.', '')}\nMOMENTO DECISIVO: ${situation}\nPapéis das 4 opções, nesta ordem:\n${roles.map((r) => `- ${r.id}: ${r.hint}`).join('\n')}`,
+                axes: AXES.map((a) => a.id),
+                factions: this.country.factions.map((f) => f.id),
+                partners: (this.country.partners ?? []).map((p) => p.id),
+                ministers: this.country.ministers.map((m) => m.id),
+                roles: roles.map((r) => r.id),
+              },
+              260_000,
+            )
+          : null,
+      )
+      .then((r) => {
+        const ev = r?.event ? sanitizeCrisis(r.event, this.country, state.month, monthName(state.month), roles.map((x) => x.id)) : null;
+        if (ev) {
+          const opts = [...ev.options, ev.omission].map((o, i) => `${i < ev.options.length ? `Opção ${i + 1}` : 'Omissão'}: "${o.title}" — ${o.summary}`).join('\n');
+          ev.ready = post<{ details: unknown }>('/api/event-details', { briefing: `Contexto do país:\n${briefing(state, this.country).replace('Escreva a próxima crise.', '')}\nMomento decisivo: ${ev.title}. ${ev.dossier.join(' ')}\n${opts}` }, 200_000).then((d) => {
+            if (d) mergeDetails(ev, d.details);
+          });
+          this.prepareCutscenes(ev, state);
+        }
+        entry.ready = ev;
+        if (!ev) {
+          this.crises.delete(key);
+          this.failedAt.set(key, Date.now());
+        }
+        return ev;
+      });
+    this.crises.set(key, entry);
+  }
+
+  /** O momento decisivo, se pronto. Com `ms`, espera até esse tempo. */
+  async takeCrisis(key: string, ms = 0): Promise<GameEvent | null> {
+    const e = this.crises.get(key);
+    if (!e) return null;
+    if (!e.ready && ms) await Promise.race([e.promise, new Promise((r) => setTimeout(r, ms))]);
+    if (!e.ready) return null;
+    this.crises.delete(key);
+    return e.ready;
+  }
+
+  hasCrisis(key: string): boolean {
+    return this.crises.has(key);
+  }
+
   // ---------- despachos ----------
 
   /** Mantém a fila de despachos gerados abastecida (lotes de 4). */
   refillDispatches(state: GameState) {
-    if (this.dispatchPending || this.dispatchQueue.length >= 3) return;
+    if (this.dispatchPending || this.dispatchQueue.length >= 3 || Date.now() - this.dispatchFailedAt < 30_000) return;
     this.dispatchPending = true;
     void claudeOnline()
       .then((online) =>
@@ -225,6 +319,7 @@ export class Director {
           : null,
       )
       .then((r) => {
+        if (!r) this.dispatchFailedAt = Date.now();
         for (const raw of r?.dispatches ?? []) {
           const d = sanitizeDispatch(raw, this.country);
           if (d) this.dispatchQueue.push(d);
@@ -300,10 +395,20 @@ export class Director {
   legacy(state: GameState, ending: string): Promise<{ headline: string; epitaph: string } | null> {
     const how: Record<string, string> = {
       impeachment: 'Terminou afastado por impeachment.',
-      derrota: 'Terminou derrotado ao tentar a reeleição.',
+      derrota: 'Terminou derrotado nas urnas.',
       renuncia: 'Terminou renunciando.',
-      fim: 'Completou os dois mandatos.',
+      fim: 'Completou todo o tempo que as regras permitiam.',
       pausa: 'O governo ainda está em curso.',
+      desconfianca: 'Caiu numa moção de desconfiança do Parlamento.',
+      queda: 'Caiu derrubado por uma revolta popular.',
+      exilio: 'Fugiu do país e terminou no exílio.',
+      deposto: 'Foi deposto por um golpe militar.',
+      preso: 'Tentou um golpe, fracassou e foi preso.',
+      cassado: 'Teve a chapa cassada pelo TSE por abuso de poder na campanha.',
+      expurgo: 'Foi expurgado pelo próprio partido.',
+      destituido: 'Foi destituído pelo conselho que sustentava o regime.',
+      morte: 'Morreu no poder, de velhice, sem nunca ter largado o cargo.',
+      abertura: 'Negociou a abertura e devolveu o país à democracia.',
     };
     return claudeOnline().then((online) =>
       online
@@ -358,34 +463,51 @@ export class Director {
 
   private scenes = new Map<string, { promise: Promise<unknown>; ready: unknown | null; failed: boolean }>();
 
-  /** Encomenda o roteiro de uma cena interativa ao Claude, com o mandato de agora. */
-  prepareScene(kind: LabKindName, state: GameState) {
-    if (this.scenes.has(kind)) return;
+  /** Encomenda o roteiro de uma cena interativa ao Claude, com o mandato de agora (e instruções extras da cena). */
+  prepareScene(kind: LabKindName, state: GameState, extra = '', key: string = kind) {
+    if (this.scenes.has(key) || this.coolingDown(key)) return;
     const entry = { promise: Promise.resolve<unknown>(null), ready: null as unknown | null, failed: false };
     entry.promise = import('../lab/scripts')
-      .then((m) => m.requestScript(kind, true, state))
+      .then((m) => m.requestScript(kind, true, state, extra))
       .then((script) => (entry.ready = script))
       .catch(() => {
         entry.failed = true;
-        this.scenes.delete(kind);
+        this.scenes.delete(key);
+        this.failedAt.set(key, Date.now());
       });
-    this.scenes.set(kind, entry);
+    this.scenes.set(key, entry);
   }
 
   /** O roteiro, se já estiver pronto. Nunca espera. */
-  takeScene(kind: LabKindName): unknown | null {
-    const e = this.scenes.get(kind);
+  takeScene(key: string): unknown | null {
+    const e = this.scenes.get(key);
     if (!e?.ready) return null;
-    this.scenes.delete(kind);
+    this.scenes.delete(key);
     return e.ready;
   }
 
+  sceneReady(key: string): boolean {
+    return !!this.scenes.get(key)?.ready;
+  }
+
   /** Espera o roteiro por até `ms` (usado no debate da eleição, que não pode ser pulado à toa). */
-  async awaitScene(kind: LabKindName, ms: number): Promise<unknown | null> {
-    const e = this.scenes.get(kind);
+  async awaitScene(key: string, ms: number): Promise<unknown | null> {
+    const e = this.scenes.get(key);
     if (!e) return null;
     await Promise.race([e.promise, new Promise((r) => setTimeout(r, ms))]);
-    return this.takeScene(kind);
+    return this.takeScene(key);
+  }
+
+  /** A cinemática da troca de regime (a posse da Junta, a coroação, o desfile da revolução), dirigida pelo Claude. */
+  regimeCutscene(state: GameState, to: RegimeId, via: string): Promise<Cutscene | null> {
+    const r = getRegime(to);
+    const brief = `Mudança de regime no Brasil: o país deixa de ser ${regimeOf(state).name} e passa a ser ${r.name}, por ${via}.
+Governante: ${state.player.name}, agora ${r.headTitle}. Perfil: ${profileTitle(state.axes)}. Aprovação: ${Math.round(state.kpis.aprovacao)}%.
+Faça a cena do marco histórico: ${r.family === 'autocracia' ? 'a tomada do poder e a primeira aparição do novo regime (tanques, bandeiras, multidão, desfile, discurso na sacada)' : 'a posse do novo sistema (juramento, votação histórica, festa ou protesto)'}. Desenhe o que não existir na biblioteca (bandeiras novas, coroa, trono, robôs, templo...).
+Legenda: a manchete histórica do dia.`;
+    return claudeOnline().then((online) =>
+      online ? post<{ cutscene: unknown }>('/api/cutscene', { briefing: brief }, 200_000).then((x) => (x ? sanitizeCutscene(x.cutscene, `O Brasil agora é: ${r.name}`) : null)) : null,
+    );
   }
 
   // ---------- coletivas ----------

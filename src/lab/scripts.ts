@@ -2,6 +2,7 @@ import { AXES, getCountry } from '../engine/data';
 import { sanitizeInterview } from '../engine/sanitize';
 import { briefing, claudeOnline } from '../engine/director';
 import { advanceMonth, applyEffects, createState } from '../engine/rules';
+import { getRegime, regimeOf, ruptureBrief, ruptureSetup } from '../engine/regime';
 import { loadGame } from '../engine/save';
 import type { GameState } from '../engine/types';
 
@@ -38,7 +39,27 @@ export interface MeetingScript {
   resignation: Record<string, string>;
 }
 
-export type LabKind = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva';
+export type RuptureActorId = 'generais' | 'congresso' | 'stf' | 'governadores' | 'exterior' | 'rua' | 'clero' | 'mercado' | 'movimentos';
+
+export interface RuptureScript {
+  codename: string;
+  conspirator: { name: string; title: string };
+  intro: string;
+  actors: { id: RuptureActorId; name: string; title: string; opening: string; offers: { label: string; hours: number; swing: number; effects: Kpis; reaction: string }[] }[];
+  dawn_success: string;
+  dawn_fail: string;
+  retreat: string;
+}
+
+export interface CouncilScript {
+  agenda: string;
+  members: { role: string; name: string; stance: string }[];
+  rounds: { speaker: string; line: string; options: { label: string; loyalty: Record<string, number>; effects: Kpis; reaction: string }[] }[];
+  conspiracy: Record<string, string>;
+}
+
+export type LabKind = 'votacao' | 'debate' | 'telefonema' | 'reuniao' | 'coletiva' | 'ruptura' | 'conselho';
+const RUPTURE_IDS: RuptureActorId[] = ['generais', 'congresso', 'stf', 'governadores', 'exterior', 'rua', 'clero', 'mercado', 'movimentos'];
 
 const clamp = (v: unknown, min: number, max: number, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
 const kpis = (e: unknown): Kpis => {
@@ -116,6 +137,45 @@ export function sanitize(kind: LabKind, raw: any): unknown {
       if (rounds.length < 2) throw new Error('roteiro de reunião incompleto');
       return { agenda: s(raw.agenda, 140), clash: { a: s(raw.clash?.a, 20), aWants: s(raw.clash?.aWants, 140), b: s(raw.clash?.b, 20), bWants: s(raw.clash?.bWants, 140) }, rounds, resignation: Object.fromEntries(Object.entries(raw.resignation ?? {}).map(([k, v]) => [k, s(v, 160)])) } satisfies MeetingScript;
     }
+    case 'ruptura': {
+      const seen = new Set<string>();
+      const actors = (raw.actors ?? [])
+        .filter((a: any) => RUPTURE_IDS.includes(a?.id) && !seen.has(a.id) && seen.add(a.id))
+        .slice(0, 6)
+        .map((a: any) => ({
+          id: a.id,
+          name: s(a.name, 30),
+          title: s(a.title, 40),
+          opening: s(a.opening, 160),
+          offers: (a.offers ?? []).slice(0, 3).map((o: any) => ({ label: s(o.label, 50), hours: Math.round(clamp(o.hours, 1, 3, 2)), swing: clamp(o.swing, -40, 40, 10), effects: kpis(o.effects), reaction: s(o.reaction, 160) })),
+        }))
+        .filter((a: any) => a.offers.length >= 2);
+      if (actors.length < 4) throw new Error('roteiro da ruptura incompleto');
+      return {
+        codename: s(raw.codename, 40) || 'Operação Madrugada',
+        conspirator: { name: s(raw.conspirator?.name, 30), title: s(raw.conspirator?.title, 40) },
+        intro: s(raw.intro, 160),
+        actors,
+        dawn_success: s(raw.dawn_success, 120),
+        dawn_fail: s(raw.dawn_fail, 120),
+        retreat: s(raw.retreat, 160),
+      } satisfies RuptureScript;
+    }
+    case 'conselho': {
+      const members = (raw.members ?? []).slice(0, 5).map((m: any) => ({ role: s(m.role, 40), name: s(m.name, 30), stance: s(m.stance, 140) })).filter((m: any) => m.role && m.name);
+      const rounds = (raw.rounds ?? []).slice(0, 3).map((r: any) => ({
+        speaker: s(r.speaker, 40),
+        line: s(r.line, 200),
+        options: (r.options ?? []).slice(0, 3).map((o: any) => ({
+          label: s(o.label, 50),
+          loyalty: Object.fromEntries(Object.entries(o.loyalty ?? {}).map(([k, v]) => [k, clamp(v, -30, 30)])),
+          effects: kpis(o.effects),
+          reaction: s(o.reaction, 160),
+        })),
+      }));
+      if (members.length < 3 || rounds.length < 2) throw new Error('roteiro do conselho incompleto');
+      return { agenda: s(raw.agenda, 140), members, rounds, conspiracy: Object.fromEntries(Object.entries(raw.conspiracy ?? {}).map(([k, v]) => [k, s(v, 160)])) } satisfies CouncilScript;
+    }
   }
 }
 
@@ -139,9 +199,15 @@ export function labState(): GameState {
 const cache = new Map<LabKind, Promise<unknown>>();
 
 /** Pede ao Claude o roteiro da cena (uma vez por tipo, ou de novo com `fresh`). No jogo, passa o mandato real. */
-export function requestScript(kind: LabKind, fresh = false, state?: GameState): Promise<unknown> {
+export function requestScript(kind: LabKind, fresh = false, state?: GameState, extra = ''): Promise<unknown> {
   if (!fresh && !state && cache.has(kind)) return cache.get(kind)!;
   const st = state ?? labState();
+  // no laboratório, a noite e o conselho usam um governo de exemplo que já concentra poder
+  if (!extra && kind === 'ruptura') extra = ruptureBrief(ruptureSetup(st, 'militar'));
+  if (!extra && kind === 'conselho') {
+    const c = regimeOf(st).council ?? getRegime('personalista').council!;
+    extra = `Conselho: ${c.title}. Papéis dos membros, nesta ordem: ${c.members.map((m) => m.role).join(', ')}.`;
+  }
   const job = claudeOnline().then(async (online) => {
     if (!online) throw new Error('O Claude não está disponível neste servidor.');
     const country = getCountry('BR');
@@ -165,7 +231,7 @@ export function requestScript(kind: LabKind, fresh = false, state?: GameState): 
     const res = await fetch('/api/lab', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind, briefing: briefing(st, getCountry('BR')).replace('Escreva a próxima crise.', 'Escreva a cena.') }),
+      body: JSON.stringify({ kind, briefing: briefing(st, getCountry('BR')).replace('Escreva a próxima crise.', `${extra}\nEscreva a cena.`) }),
     });
     if (!res.ok) throw new Error(`geração falhou (${res.status})`);
     return sanitize(kind, await res.json());

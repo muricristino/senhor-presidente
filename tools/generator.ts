@@ -30,9 +30,15 @@ const effectsSchema = (axes: string[], factions: string[]) => ({
     },
     factions: { type: 'object', properties: Object.fromEntries(factions.map((f) => [f, num])), additionalProperties: false },
     relations: { type: 'object', description: 'relação com países parceiros', properties: Object.fromEntries(PARTNERS.map((p) => [p, num])), additionalProperties: false },
+    institutions: { type: 'object', description: 'independência das instituições (freios do poder)', properties: Object.fromEntries(INSTITUTION_IDS.map((i) => [i, num])), additionalProperties: false },
   },
   required: ['axes', 'kpis', 'factions'],
 });
+const INSTITUTION_IDS = ['stf', 'congresso', 'imprensa', 'eleicoes'];
+
+/** Regra comum a todos os roteiros: as instituições como efeito e a lógica do regime em vigor. */
+const REGIME_RULE = `Regime político: o briefing diz qual é o regime em vigor (presidencialismo, parlamentarismo, monarquia, regime híbrido, ditadura militar, ditadura personalista, socialismo de partido único, teocracia ou tecnocracia). Escreva SEMPRE na lógica dele: quem manda, quem fiscaliza, como se perde o poder, o vocabulário (Junta, Politburo, Conselho, Parlamento, Coroa...). Numa ditadura não há CPI nem imprensa livre; há censura, expurgos, conspirações, sanções, mercado negro, exílio. Numa democracia há Congresso, STF, imprensa e eleição.
+"institutions" (opcional, ±15): mexe na independência do STF, do Congresso, da imprensa e das eleições. Negativo quando a decisão enfraquece um freio do poder (aparelhar tribunal, censurar, mudar regra eleitoral, fechar o Congresso); positivo quando fortalece.`;
 const postSchema = {
   type: 'object',
   properties: { who: str, at: str, text: str, likes: num, tone: { enum: ['angry', 'happy', 'neutral', 'press', 'bot', 'faction'] } },
@@ -176,6 +182,7 @@ const billsSchema = (axes: string[], factions: string[]) => ({
           monthly: { type: 'object', properties: Object.fromEntries(['aprovacao', 'inflacao', 'desemprego', 'seguranca', 'educacao', 'selic'].map((k) => [k, num])), additionalProperties: false },
           months: num,
           lesson: str,
+          special: { enum: ['reeleicao', 'stf', 'imprensa', 'eleicoes', 'fortalecer'] },
         },
         required: ['icon', 'title', 'summary', 'area', 'needsPec', 'effects', 'monthly', 'months', 'lesson'],
       },
@@ -221,12 +228,13 @@ const list = (o: Record<string, string>) => Object.entries(o).map(([k, v]) => `-
 
 const SOCIAL_RULE = `Redes: 3 posts curtos por onda, com humor brasileiro de internet. Personagens recorrentes: Tia Cleide (@tiacleide.zap), Pedro Memes (@pedrao.memes), Prof. Marina (@profmarina), Tio Nando (@tionando.patriota), Faria Lima Insider (@fl.insider), Economia Hoje (@economiahoje), Advogada Ju (@ju.constituicao). Pode criar outros.`;
 
-const DETAILS_SYSTEM = `Você é roteirista de "Senhor Presidente", simulador político no Brasil real (instituições reais, pessoas fictícias).
+const DETAILS_SYSTEM_BASE = `Você é roteirista de "Senhor Presidente", simulador político no Brasil real (instituições reais, pessoas fictícias).
 Recebe uma crise já escrita com 4 opções e a omissão. Para cada uma, na mesma ordem, escreva:
 - lesson: título e texto curto (até 480 caracteres) e educativo, explicando o conceito político por trás da escolha, o eixo ideológico envolvido e o custo. Cite artigos da Constituição ou fatos históricos só se tiver certeza.
 - social: a reação das redes depois da decisão (trending, sentimento de -100 a 100, 3 posts).
 ${SOCIAL_RULE}
 Português do Brasil, com acentos.`;
+const DETAILS_SYSTEM = `${DETAILS_SYSTEM_BASE}\n${REGIME_RULE}`;
 
 const EVENT_SYSTEM = `Você é o roteirista-chefe de "Senhor Presidente", um simulador político em pixel art ambientado no Brasil real (STF, Congresso, Constituição de 1988, bancadas temáticas, presidencialismo de coalizão).
 Sua tarefa: escrever o PRÓXIMO GRANDE ACONTECIMENTO do mandato, em português do Brasil com acentuação correta.
@@ -244,7 +252,9 @@ Regras de conteúdo:
 - Efeitos: eixos entre -30 e 30; aprovacao e coalizao entre -12 e 12; selic ±1.5; inflacao ±1.2; desemprego ±0.8; seguranca ±1; educacao ±0.6; bancadas ±25; relations (EUA, China, UE, Mercosul, Rússia) ±25. Seja coerente com o conteúdo.
 - Política externa importa: cerca de 1 em cada 3 acontecimentos deve ter dimensão internacional (comércio, guerra, clima, cúpulas, sanções, imigração, espionagem). Use "relations" sempre que uma decisão agradar ou irritar outro país, e leve em conta as relações atuais.
 - "region": onde acontece (uma região do Brasil, "nacional" ou "exterior").
-- "stf" só quando a opção for claramente inconstitucional (cláusulas pétreas, direitos fundamentais, separação de Poderes). Cite artigos da Constituição só se tiver certeza.
+- "stf" só quando a opção for claramente inconstitucional (cláusulas pétreas, direitos fundamentais, separação de Poderes) E o STF ainda for independente (veja as instituições no briefing; com STF capturado, ele não barra nada). Cite artigos da Constituição só se tiver certeza.
+- ${REGIME_RULE}
+- Quando uma ameaça ao mandato estiver alta no briefing, faça o acontecimento empurrar nessa direção (ou dar ao jogador uma chance de reagir).
 - O "omission" é o que acontece se o presidente não decidir a tempo: sem eixos, custo alto.
 - ${SOCIAL_RULE}
 - Seja conciso: título até 50 caracteres, dossiê com 2 frases curtas (até 150 caracteres cada), advisor até 160 caracteres, callback até 150, títulos das opções até 45, resumos até 140.
@@ -265,6 +275,7 @@ Regras:
 - "post" opcional: reação de um perfil das redes. ${SOCIAL_RULE}
 - Varie os temas e conecte ao momento do país e às decisões recentes: consequências pequenas do que o jogador fez, pedidos de bancadas irritadas, oportunidades. Não repita o histórico.
 - "anim": a animação da Janela do Planalto que combina.
+${REGIME_RULE}
 Português do Brasil, com acentos.`;
 
 const INTERVIEW_SYSTEM = `Você escreve COLETIVAS DE IMPRENSA para "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
@@ -273,18 +284,21 @@ Regras:
 - Pergunta com até 150 caracteres, direta, no tom de repórter de Brasília.
 - 2 ou 3 respostas curtíssimas (até 40 caracteres), cada uma com uma postura diferente (franca, evasiva, agressiva, conciliadora...).
 - Cada resposta tem a manchete que sairia no dia seguinte (até 90 caracteres) e efeitos pequenos: eixos até ±8, aprovacao/coalizao até ±4, bancadas e relations até ±10.
+${REGIME_RULE}
 Português do Brasil, com acentos.`;
 
 const LEGACY_SYSTEM = `Você é o historiador de "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
 O mandato do jogador acabou (ou está em pausa). Com base no histórico completo, escreva como a história vai lembrar deste presidente:
 - headline: a manchete definitiva do legado, marcante e específica às decisões dele (até 80 caracteres), no estilo de capa de revista.
 - epitaph: 2 frases (até 220 caracteres) que resumem o governo, citando 1 ou 2 decisões concretas do histórico e o perfil ideológico. Pode ter ironia; não precisa ser elogioso.
+${REGIME_RULE}
 Português do Brasil, com acentos.`;
 
 const BULLETIN_SYSTEM = `Você escreve o BOLETIM DO PLANALTO de "Senhor Presidente", simulador político no Brasil real (pessoas fictícias).
 Com base no estado do país e nas decisões recentes, escreva:
 - editorial: 2 frases (até 240 caracteres) sobre o momento do governo, como a abertura de um telejornal.
 - ministers: para cada ministro, UMA frase em primeira pessoa (até 90 caracteres) dizendo como ele vê a própria área agora, com personalidade e coerente com os números. Ministros: fazenda (Helena Queiroz, economia), justica (Otávio Brandão, STF e direitos), casacivil (Rui Paranhos, Congresso), defesa (Gen. Augusto Vilela, Forças Armadas e fronteiras), agricultura (Tereza Lins, agro e comércio), comunicacao (Caio Nunes, redes e imagem).
+${REGIME_RULE}
 Português do Brasil, com acentos.`;
 
 const BILLS_SYSTEM = `Você é o assessor legislativo de "Senhor Presidente", simulador político no Brasil real (instituições reais, pessoas fictícias).
@@ -295,6 +309,10 @@ Regras:
 - effects: impacto no dia da aprovação. Eixos até ±25, aprovacao e coalizao até ±8, bancadas até ±20, relations até ±15.
 - monthly: o que a lei faz TODO MÊS enquanto vale (pequeno: inflacao e desemprego até ±0.08, aprovacao até ±0.5, seguranca e educacao até ±0.05, selic até ±0.05). months: por quantos meses vale (6 a 24).
 - lesson: uma frase (até 200 caracteres) explicando o mecanismo político ou econômico da lei.
+- special (opcional): use quando o projeto muda as REGRAS DO JOGO. "reeleicao" (PEC que permite mais um mandato seguido), "stf" (ampliar ou aparelhar o Supremo), "imprensa" (lei de controle da mídia ou contra "desinformação"), "eleicoes" (mudar regras eleitorais a favor do governo), "fortalecer" (blindar as instituições: mandato fixo, autonomia, transparência). reeleicao, stf e eleicoes exigem needsPec = true.
+- Se o eixo Poder do presidente estiver em +30 ou mais, inclua 1 projeto de erosão institucional com special (é tentador, legal e perigoso). Se estiver em -20 ou menos, inclua 1 projeto "fortalecer". Não repita um special que já está nas leis em vigor.
+- Numa autocracia (Congresso fechado ou de fachada) os projetos são DECRETOS: escreva como decretos do regime, sem needsPec.
+${REGIME_RULE}
 Português do Brasil, com acentos.`;
 
 const CUTSCENE_SYSTEM = `Você é o diretor de cena de "Senhor Presidente", um jogo em pixel art. Escreva o roteiro de uma cinemática curta (4 a 7 segundos) para a decisão descrita.
@@ -314,6 +332,21 @@ Quando a cena pedir algo que NÃO existe na biblioteca (ex.: robôs, um ditador 
 - customBackdrop (use backdrop "custom"): exatamente ${CUSTOM_BACKDROP.rows} linhas de ${CUSTOM_BACKDROP.cols} caracteres, cada célula vira ${CUSTOM_BACKDROP.cell}x${CUSTOM_BACKDROP.cell} pixels. Céu no topo, chão a partir da linha ~20.
 Use count/spacing para multidões e exércitos. Use "say" com falas curtas e engraçadas. Faça a cena ter começo, clímax e fim.
 Legenda (caption): uma frase de telejornal. Português do Brasil.`;
+
+const CRISIS_SYSTEM = `Você é o roteirista-chefe de "Senhor Presidente", simulador político em pixel art no Brasil (instituições reais, pessoas fictícias; nunca cite políticos, juízes ou partidos reais).
+Escreva o MOMENTO DECISIVO descrito no briefing (uma crise que pode derrubar o governante, ou a reta final de uma eleição), em português do Brasil com acentuação correta.
+Regras:
+- Exatamente 4 opções, UMA para cada papel listado no briefing (campo "role"), na mesma ordem. Cada opção faz exatamente o que o papel descreve, mas com os detalhes do momento: números do briefing, bancadas, decisões passadas do jogador, o regime em vigor.
+- O desfecho (se o governante sobrevive) é calculado pelo jogo: os efeitos das opções são só o custo imediato. Eixos até ±15, aprovacao e coalizao até ±8, bancadas até ±15, relations até ±15, institutions até ±10.
+- Tom de clímax: é o momento mais tenso do mandato. Título até 50 caracteres; dossiê com 2 frases (até 150 caracteres cada) citando números reais do briefing; advisor até 160.
+- "callback" liga o momento a decisões passadas que levaram até aqui.
+- O "omission" é não fazer nada: custo alto, sem eixos.
+- pressure.unit: h, d, min, % ou sem. scene.anim: a animação mais próxima. cutscene_idea: a cena ideal, livre.
+- ${REGIME_RULE}
+- ${SOCIAL_RULE}
+
+Animações disponíveis:
+${list(SCENE_ANIMS)}`;
 
 /** Extrai o primeiro objeto JSON de uma resposta (tolera cercas de markdown e texto em volta). */
 export function extractJson(text: string): unknown {
@@ -464,6 +497,15 @@ export function claudeDirector(): Plugin {
             const { briefing, axes, factions, ministers } = body;
             const event = await runClaude(EVENT_SYSTEM, briefing, eventSchema(axes, factions, ministers));
             console.log(`[claude] evento gerado em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, { event });
+          }
+          if (req.url === '/api/crisis' && req.method === 'POST') {
+            const { briefing, axes, factions, ministers, roles } = body;
+            const sc = eventSchema(axes, factions, ministers) as any;
+            const opt = sc.properties.options.items;
+            sc.properties.options.items = { ...opt, properties: { ...opt.properties, role: { enum: roles } }, required: [...opt.required, 'role'] };
+            const event = await runClaude(CRISIS_SYSTEM, briefing, sc);
+            console.log(`[claude] momento decisivo gerado em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, { event });
           }
           if (req.url === '/api/dispatches' && req.method === 'POST') {
