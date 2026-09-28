@@ -1,10 +1,15 @@
-import type { Country, GameState } from './types';
+import { democracyIndex } from './regime';
+import type { Country, CrisisKind, Ending, GameState, RegimeId } from './types';
 
 /** Fatos da partida que o estado sozinho não guarda. */
 export interface Milestones {
   survivedImpeachment?: boolean;
   reelected?: boolean;
-  ending?: 'impeachment' | 'derrota' | 'renuncia' | 'fim' | 'pausa';
+  ending?: Ending;
+  /** Regimes por onde o país passou nesta partida. */
+  regimes?: RegimeId[];
+  /** Crises terminais superadas. */
+  survived?: CrisisKind[];
 }
 
 export interface Achievement {
@@ -43,6 +48,27 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'fantasma', icon: '👻', name: 'Presidente fantasma', desc: 'Deixou 3 decisões sem resposta.', check: (s) => count(s, (d) => d.endsWith(':omissao') || d.endsWith(':arquivado')) >= 3 },
   { id: 'milagre', icon: '📈', name: 'Milagre econômico', desc: 'Desemprego até 5% e inflação até 3% ao mesmo tempo.', check: (s) => s.kpis.desemprego <= 5 && s.kpis.inflacao <= 3 },
   { id: 'paz', icon: '🚓', name: 'Paz nas ruas', desc: 'Segurança 9 ou mais.', check: (s) => s.kpis.seguranca >= 9 },
+  // regimes
+  { id: 'terceiro_mandato', icon: '♾️', name: 'Mais um, só mais um', desc: 'Aprovou uma PEC da reeleição.', check: (s) => (s.extraTerms ?? 0) >= 1 },
+  { id: 'fachada', icon: '🎭', name: 'Democracia de fachada', desc: 'O Brasil virou um regime híbrido sem nenhum golpe.', check: (s) => s.regime === 'hibrido' },
+  { id: 'freios', icon: '🛡️', name: 'Freios e contrapesos', desc: 'Índice de democracia 90 ou mais.', check: (s) => democracyIndex(s) >= 90 },
+  { id: 'fechada', icon: '🔒', name: 'Autocracia fechada', desc: 'Índice de democracia abaixo de 25.', check: (s) => democracyIndex(s) < 25 },
+  { id: 'golpista', icon: '🌒', name: 'A noite mais longa', desc: 'Deu um golpe e acordou no poder.', check: (s) => s.decisions.some((d) => /^CENA_ruptura_\d+:sucesso$/.test(d)) },
+  { id: 'recuo', icon: '↩️', name: 'Seis horas', desc: 'Recuou de uma ruptura no meio da noite.', check: (s) => s.decisions.some((d) => /^CENA_ruptura_\d+:recuo$/.test(d)) },
+  { id: 'revolucionario', icon: '✊', name: 'Revolucionário', desc: 'Mudou o regime por uma revolução.', check: (s) => (s.regimeHistory ?? []).some((h) => h.via === 'revolução') },
+  { id: 'coroa', icon: '👑', name: 'Viva o rei!', desc: 'O Brasil voltou a ser monarquia.', check: (s) => s.regime === 'monarquia' },
+  { id: 'parlamento', icon: '🗳️', name: 'Primeiro-ministro', desc: 'O Brasil adotou o parlamentarismo.', check: (s) => s.regime === 'parlamentarismo' },
+  { id: 'algoritmo', icon: '🤖', name: 'Governo por planilha', desc: 'Instaurou uma tecnocracia.', check: (s) => s.regime === 'tecnocracia' },
+  { id: 'partido', icon: '☭', name: 'Camarada Secretário', desc: 'Instaurou o socialismo de partido único.', check: (s) => s.regime === 'socialista' },
+  { id: 'teocrata', icon: '🕌', name: 'Líder Supremo', desc: 'Instaurou uma teocracia.', check: (s) => s.regime === 'teocracia' },
+  { id: 'junta', icon: '🪖', name: 'Chefe da Junta', desc: 'Governou numa ditadura militar.', check: (s) => s.regime === 'militar' },
+  { id: 'sobreviveu_golpe', icon: '🏰', name: 'O palácio resistiu', desc: 'Sobreviveu a um golpe contra você.', check: (_s, m) => !!m.survived?.includes('golpe_contra') },
+  { id: 'preso', icon: '⛓️', name: 'Tentativa de golpe', desc: 'Tentou a ruptura, fracassou e foi preso.', check: (_s, m) => m.ending === 'preso' },
+  { id: 'exilio', icon: '✈️', name: 'Voo de madrugada', desc: 'Terminou no exílio.', check: (_s, m) => m.ending === 'exilio' },
+  { id: 'deposto', icon: '🎖️', name: 'Deposto', desc: 'Caiu num golpe militar.', check: (_s, m) => m.ending === 'deposto' },
+  { id: 'cassado', icon: '🚫', name: 'Ganhou mas não levou', desc: 'Teve a chapa cassada pelo TSE.', check: (_s, m) => m.ending === 'cassado' },
+  { id: 'abertura', icon: '🕊️', name: 'Abertura', desc: 'Perdeu o próprio plebiscito e devolveu a democracia.', check: (_s, m) => m.ending === 'abertura' },
+  { id: 'eterno', icon: '🕯️', name: 'Até o último dia', desc: 'Morreu no poder.', check: (_s, m) => m.ending === 'morte' },
 ];
 
 const KEY = 'sp.achievements.v1';

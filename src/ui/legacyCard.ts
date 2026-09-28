@@ -7,7 +7,7 @@ import { AXES } from '../engine/data';
 import { dominantLeans, profileTitle } from '../engine/profile';
 import type { GameState } from '../engine/types';
 import { el, esc } from './dom';
-import type { Ending } from './summary';
+import type { Ending } from '../engine/types';
 
 const W = 1200;
 const H = 630;
@@ -18,6 +18,16 @@ const ENDING_LINE: Record<Ending, { text: string; color: string }> = {
   renuncia: { text: 'RENUNCIOU AO MANDATO', color: '#e0b04a' },
   fim: { text: 'COMPLETOU OS DOIS MANDATOS', color: '#4fc27f' },
   pausa: { text: 'GOVERNO EM CURSO', color: '#6fb6ff' },
+  desconfianca: { text: 'DERRUBADO POR MOÇÃO DE DESCONFIANÇA', color: '#e0574f' },
+  queda: { text: 'DERRUBADO PELA REVOLTA POPULAR', color: '#e0574f' },
+  exilio: { text: 'TERMINOU NO EXÍLIO', color: '#e0b04a' },
+  deposto: { text: 'DEPOSTO POR UM GOLPE', color: '#e0574f' },
+  preso: { text: 'PRESO POR TENTATIVA DE GOLPE', color: '#e0574f' },
+  cassado: { text: 'CHAPA CASSADA PELO TSE', color: '#e0574f' },
+  expurgo: { text: 'EXPURGADO PELO PARTIDO', color: '#e0574f' },
+  destituido: { text: 'DESTITUÍDO PELO CONSELHO', color: '#e0574f' },
+  morte: { text: 'MORREU NO PODER', color: '#9aa0b4' },
+  abertura: { text: 'DEVOLVEU O PAÍS À DEMOCRACIA', color: '#4fc27f' },
 };
 
 export interface Legacy {

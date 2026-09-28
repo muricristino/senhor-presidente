@@ -11,7 +11,8 @@ import { formatKpi, KPIS } from '../engine/kpis';
 import { ministerMood, moodFace } from '../engine/ministers';
 import { profileTitle } from '../engine/profile';
 import { regionalApproval } from '../engine/regions';
-import type { Country, GameState, KpiId } from '../engine/types';
+import { CRISES, democracyIndex, democracyLabel, INSTITUTIONS, institutionsOf, legalRoutes, regimeOf, routeOpen, ruptureRoutes, threats, getRegime } from '../engine/regime';
+import type { Country, CrisisKind, GameState, KpiId } from '../engine/types';
 import { el, esc } from './dom';
 import { showGallery } from './trophies';
 
@@ -75,7 +76,7 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
     root.insertAdjacentHTML(
       'beforeend',
       `<header class="home-head">
-        <div class="home-logo"><div class="logo-flag"><span></span></div><div><b>SENHOR PRESIDENTE</b><small>${esc(dateLabel(s, s.month))} · ${s.term}º mandato</small></div></div>
+        <div class="home-logo"><div class="logo-flag"><span></span></div><div><b>SENHOR PRESIDENTE</b><small>${esc(dateLabel(s, s.month))} · ${regimeOf(s).icon} ${esc(regimeOf(s).name)}</small></div></div>
         <div class="home-actions">
           ${o.primary ? `<button class="home-btn primary home-primary">${esc(o.primary.label)}</button>` : ''}
           <button class="home-btn ghost home-new">NOVO MANDATO</button>
@@ -87,7 +88,7 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
           <div class="hp-top">
             <div class="hp-portrait"></div>
             <div>
-              <div class="pi-title">${esc(c.head_of_state_title)}</div>
+              <div class="pi-title">${esc(regimeOf(s).headTitle)}</div>
               <div class="hp-name">${esc(s.player.name)}</div>
               <div class="hp-meta">${ageOf(s, s.month)} anos · ${s.history.length} decisões</div>
               <div class="hp-profile">${esc(profileTitle(s.axes))}</div>
@@ -103,13 +104,29 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
 
         <section class="home-mid">
           <div class="home-panel hp-congress">
-            <div class="panel-label">🏛️ CÂMARA DOS DEPUTADOS</div>
-            <div class="hp-hemi"></div>
-            <div class="hp-seats"><b>${chamber.base}</b> na base · <b class="red">${chamber.opposition}</b> na oposição</div>
-            <div class="hp-thresholds">
-              <span class="${chamber.base >= 257 ? 'ok' : ''}">257 · aprova lei</span>
-              <span class="${chamber.base >= 308 ? 'ok' : ''}">308 · aprova PEC</span>
-              <span class="${chamber.opposition < 342 ? 'ok' : 'bad'}">342 · impeachment ${chamber.opposition < 342 ? 'barrado' : 'passa'}</span>
+            <div class="hp-power">
+              <div>
+                <div class="panel-label">🏛️ ${regimeOf(s).congress === 'fechado' ? 'CONGRESSO FECHADO' : regimeOf(s).congress === 'carimbo' ? 'ASSEMBLEIA DE FACHADA' : 'CÂMARA DOS DEPUTADOS'}</div>
+                <div class="hp-hemi ${regimeOf(s).congress === 'independente' ? '' : 'closed'}"></div>
+                <div class="hp-seats"><b>${chamber.base}</b> na base · <b class="red">${chamber.opposition}</b> na oposição</div>
+                ${
+                  regimeOf(s).congress === 'independente'
+                    ? `<div class="hp-thresholds">
+                  <span class="${chamber.base >= 257 ? 'ok' : ''}">257 · lei</span>
+                  <span class="${chamber.base >= 308 ? 'ok' : ''}">308 · PEC</span>
+                  ${regimeOf(s).removal.includes('impeachment') ? `<span class="${chamber.opposition < 342 ? 'ok' : 'bad'}">342 · impeachment</span>` : '<span>257 · moção de desconfiança</span>'}
+                </div>`
+                    : ''
+                }
+              </div>
+              <div class="hp-regime" style="--acc:${regimeOf(s).accent}">
+                <div class="panel-label">${regimeOf(s).icon} ${esc(regimeOf(s).name.toUpperCase())}</div>
+                <div class="hp-dem"><b>${democracyIndex(s)}</b><span class="tone-${democracyLabel(democracyIndex(s)).tone}">${esc(democracyLabel(democracyIndex(s)).label)}</span></div>
+                <div class="hp-inst">${INSTITUTIONS.map((i) => `<div title="${esc(i.explain)}"><span>${i.icon} ${esc(i.name)}</span><i><b style="width:${institutionsOf(s)[i.id]}%"></b></i></div>`).join('')}</div>
+                <div class="hp-threats">${(Object.entries(threats(s)) as [CrisisKind, number][])
+                  .map(([k, v]) => `<span class="${v >= 60 ? 'bad' : v >= 30 ? 'warn' : ''}" title="${esc(CRISES[k].warn)}">${CRISES[k].icon} ${esc(CRISES[k].name)} <b>${v}</b></span>`)
+                  .join('')}</div>
+              </div>
             </div>
           </div>
           <div class="home-panel hp-world">
@@ -140,11 +157,22 @@ export function showHome(host: HTMLElement, o: HomeOptions): HTMLElement {
         <section class="home-panel home-side">
           <div class="panel-label">📺 BOLETIM DO PLANALTO</div>
           <p class="hp-editorial"></p>
-          <div class="panel-label mt">📜 PAUTA DO GOVERNO</div>
+          <div class="panel-label mt">${regimeOf(s).congress === 'independente' ? '📜 PAUTA DO GOVERNO' : '🖋️ DECRETOS DO REGIME'}</div>
           <div class="hp-pauta">
             ${s.bill ? `<div class="hp-bill">${s.bill.icon} <b>${esc(s.bill.title)}</b> <small>vota em ${esc(shortDate(s, s.bill.voteMonth))}</small></div>` : ''}
             ${(s.laws ?? []).filter((l) => l.until >= s.month).map((l) => `<div class="hp-law">⚖️ ${l.icon} ${esc(l.title)} <small>até ${esc(shortDate(s, l.until))}</small></div>`).join('')}
-            ${!s.bill && !(s.laws ?? []).some((l) => l.until >= s.month) ? '<div class="hp-law muted">Nenhum projeto do governo ainda. A pauta abre em fevereiro e agosto.</div>' : ''}
+            ${!s.bill && !(s.laws ?? []).some((l) => l.until >= s.month) ? `<div class="hp-law muted">${regimeOf(s).congress === 'independente' ? 'Nenhum projeto do governo ainda. A pauta abre em fevereiro e agosto.' : 'Nenhum decreto ainda. O regime decreta em fevereiro e agosto.'}</div>` : ''}
+          </div>
+          <div class="panel-label mt">🗺️ CAMINHOS DO REGIME</div>
+          <div class="hp-routes">
+            ${[...legalRoutes(s), ...ruptureRoutes(s)]
+              .map((r) => {
+                const reg = getRegime(r.to);
+                const open = routeOpen(r);
+                const tip = `${reg.summary} ${r.reqs.map((x) => `${x.ok ? '✓' : '✗'} ${x.label}`).join(' · ')}`;
+                return `<span class="hp-route ${open ? 'open' : ''}" title="${esc(tip)}">${reg.icon} ${esc(reg.name)} <small>${r.via === 'revolucao' ? 'revolução' : r.via}${open ? ' ✓' : ''}</small></span>`;
+              })
+              .join('') || '<span class="hp-route">Numa autocracia, o caminho de volta é a abertura (plebiscito da continuidade, na pauta).</span>'}
           </div>
           <div class="panel-label mt">👔 MINISTÉRIO</div>
           <div class="hp-ministers">

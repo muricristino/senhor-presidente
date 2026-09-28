@@ -2,6 +2,7 @@ import { sfx } from '../audio/sfx';
 import { AXES } from '../engine/data';
 import { formatDelta, KPIS } from '../engine/kpis';
 import { dominantLeans, lean, profileTitle } from '../engine/profile';
+import { INSTITUTIONS } from '../engine/regime';
 import type { Country, Deltas, EventOption, GameEvent, GameState } from '../engine/types';
 import { el, esc, typewriter, wait } from './dom';
 
@@ -45,6 +46,12 @@ export async function showNewspaper(host: HTMLElement, opt: EventOption, deltas:
       .map((p) => {
         const d = deltas.relations[p.id];
         return `<li class="${d > 0 ? 'good' : 'bad'}"><span>${p.flag} Relação com ${esc(p.short)}</span><b>${d > 0 ? '▲' : '▼'} ${d > 0 ? '+' : ''}${Math.round(d)}</b></li>`;
+      })
+      .join('') +
+    INSTITUTIONS.filter((i) => deltas.institutions?.[i.id])
+      .map((i) => {
+        const d = deltas.institutions![i.id]!;
+        return `<li class="${d > 0 ? 'good' : 'bad'}"><span>${i.icon} Independência: ${esc(i.name)}</span><b>${d > 0 ? '▲' : '▼'} ${d > 0 ? '+' : ''}${Math.round(d)}</b></li>`;
       })
       .join('');
   const overlay = mount(

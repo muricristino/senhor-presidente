@@ -1,3 +1,4 @@
+import { democracyIndex, democracyLabel, isParliamentary, regimeOf, threats } from '../engine/regime';
 import { drawAvatar } from '../art/avatar';
 import { makeCanvas } from '../art/pixel';
 import { BrazilMap, regionAt } from '../art/brazilMap';
@@ -63,7 +64,7 @@ export class Gabinete {
     const s = this.screen;
     s.innerHTML = `
       <div class="topbar">
-        <div class="tb-pres"><span class="tb-avatar"></span><div><small>PRESIDENTE · <span class="pi-age"></span></small><b>${esc(state.player.name)}</b></div></div>
+        <div class="tb-pres"><span class="tb-avatar"></span><div><small><span class="pi-title">PRESIDENTE</span> · <span class="pi-age"></span></small><b>${esc(state.player.name)}</b></div></div>
         <div class="tb-month"><small class="tb-term"></small><b class="tb-month-num"></b><span class="tb-month-name"></span></div>
         ${KPIS.map(
           (k) => `<div class="tb-item kpi" data-kpi="${k.id}" title="${esc(k.label)}">
@@ -71,7 +72,7 @@ export class Gabinete {
             <div><span>${esc(k.label.toUpperCase())}</span><b></b></div>
           </div>`,
         ).join('')}
-        <div class="tb-item stf" title="Supremo Tribunal Federal"><i class="ico">⚖️</i><div><span>${esc(country.institutions.supreme_court)}</span><b class="stf-status"></b></div></div>
+        <button class="tb-item tb-regime" title="Regime e índice de democracia (abre o painel do país)"><i class="ico regime-ico"></i><div><span class="regime-name"></span><b class="dem-idx"></b></div></button>
         <button class="tb-home" title="Início: painel do país (pausa o jogo)">🏠</button>
         <button class="tb-mute" title="Som (M)">🔊</button>
       </div>
@@ -93,7 +94,7 @@ export class Gabinete {
         </aside>
 
         <main class="desk">
-          <div class="nameplate">${esc(country.head_of_state_title.toUpperCase())} · ${esc(state.player.name.toUpperCase())}</div>
+          <div class="nameplate"></div>
           <div class="desk-trophies"></div>
           <div class="desk-content"></div>
         </main>
@@ -127,7 +128,7 @@ export class Gabinete {
             <div class="axis-tip">Passe o mouse num eixo para entender os dois lados.</div>
           </section>
           <section class="pane" data-pane="bancadas">
-            <p class="pane-intro">O peso de cada bancada no Congresso decide a sua <b>Coalizão</b>.</p>
+            <p class="pane-intro factions-intro"></p>
             ${country.factions
               .map(
                 (f) => `<div class="faction" data-faction="${f.id}" style="--fc:${f.color}">
@@ -242,6 +243,10 @@ export class Gabinete {
       sfx.click();
       this.onHome?.();
     });
+    this.$('.tb-regime').addEventListener('click', () => {
+      sfx.click();
+      this.onHome?.();
+    });
     this.$('.tb-mute').addEventListener('click', (e) => {
       (e.currentTarget as HTMLElement).textContent = sfx.toggleMute() ? '🔇' : '🔊';
     });
@@ -258,7 +263,33 @@ export class Gabinete {
     document.addEventListener('keydown', keydown);
     document.addEventListener('keyup', keyup);
 
+    this.refreshRegime();
     this.render();
+  }
+
+  /** Nomes, títulos e cor do regime em vigor (chamado de novo quando o regime muda). */
+  refreshRegime() {
+    const r = regimeOf(this.state);
+    this.screen.style.setProperty('--regime-accent', r.accent);
+    this.screen.dataset.family = r.family;
+    this.$('.pi-title').textContent = r.headTitle.toUpperCase();
+    this.$('.nameplate').textContent = `${r.headTitle.toUpperCase()} · ${this.state.player.name.toUpperCase()}`;
+    this.$('.regime-ico').textContent = r.icon;
+    for (const k of KPIS) {
+      const item = this.$(`.kpi[data-kpi="${k.id}"]`);
+      item.title = k.label;
+      item.querySelector('span')!.textContent = k.label.toUpperCase();
+    }
+    for (const f of this.country.factions) this.$(`.faction[data-faction="${f.id}"] .f-top b`).textContent = f.name;
+    const auto = r.family === 'autocracia';
+    this.$('.factions-intro').innerHTML = auto
+      ? `Os grupos que sustentam o regime, ou que podem derrubá-lo. <b>${esc(r.pillar?.label ?? '')}</b> é quem decide se você fica.`
+      : 'O peso de cada bancada no Congresso decide a sua <b>Coalizão</b>.';
+    this.$$('[data-tab="bancadas"], [data-view="bancadas"]').forEach((b) => {
+      const label = auto ? 'PODER' : 'CONGR.';
+      if (b.classList.contains('tab')) b.firstChild!.textContent = `🏛️ ${label}`;
+      else b.querySelector('small')!.textContent = label;
+    });
   }
 
   $<T extends Element = HTMLElement>(sel: string): T {
@@ -293,7 +324,13 @@ export class Gabinete {
     this.renderProfile();
     this.renderMonth();
     this.renderTimeline();
-    this.$('.stf-status').textContent = state.stf === 'OK' ? 'OK' : 'ATENTO';
+    const idx = democracyIndex(state);
+    const worst = Math.max(0, ...Object.values(threats(state)));
+    this.$('.regime-name').textContent = regimeOf(state).name.toUpperCase();
+    this.$('.dem-idx').textContent = `DEMOCRACIA ${idx}`;
+    const reg = this.$('.tb-regime');
+    reg.className = `tb-item tb-regime tone-${democracyLabel(idx).tone} ${worst >= 60 ? 'threat' : ''}`;
+    reg.title = `${regimeOf(state).name} · ${democracyLabel(idx).label} (${idx}/100)${worst >= 60 ? ' · ⚠ o mandato está ameaçado' : ''}`;
   }
 
   renderMonth() {
@@ -303,7 +340,9 @@ export class Gabinete {
     const changed = num.textContent !== '' && num.textContent !== label;
     num.textContent = label;
     this.$('.tb-month-name').textContent = String(yearOf(this.state, m));
-    this.$('.tb-term').textContent = `${this.state.term}º MANDATO`;
+    const r = regimeOf(this.state);
+    const since = (this.state.regimeHistory ?? []).slice(-1)[0];
+    this.$('.tb-term').textContent = r.family === 'autocracia' ? `NO PODER HÁ ${Math.max(0, Math.floor((m - (since?.month ?? 1)) / 12))} ANOS` : isParliamentary(this.state) ? 'LEGISLATURA' : `${this.state.term}º MANDATO`;
     this.$('.pi-age').textContent = `${ageOf(this.state, m)} ANOS`;
     if (changed) shake(this.$('.tb-month'));
   }
@@ -337,7 +376,9 @@ export class Gabinete {
 
   /** Troféus da partida em cima da mesa. */
   renderTrophies() {
+    // só os mais recentes: a placa do nome fica no meio da mesa
     this.$('.desk-trophies').innerHTML = (this.state.trophies ?? [])
+      .slice(-5)
       .map((id) => ACHIEVEMENTS.find((a) => a.id === id))
       .filter((a) => !!a)
       .map((a) => `<span title="${esc(a!.name)}: ${esc(a!.desc)}">${a!.icon}</span>`)

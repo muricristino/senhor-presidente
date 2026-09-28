@@ -1284,3 +1284,140 @@ canvas.pixel { image-rendering: pixelated; image-rendering: crisp-edges; display
 .mobile .pauta-card .chips { max-height: none; }
 .pauta-card p { max-height: 1.2em; line-height: 1.2; }
 .mobile .pauta-card p { max-height: 2.4em; }
+
+/* ======================================================================
+   REGIMES: indicador no topo, porta da ruptura, noite do golpe, cerimônia e painel da Home
+   ====================================================================== */
+.cabinet { --regime-accent: #f4c542; }
+.tb-regime { background: none; border: 0; border-right: 2px solid #1d2133; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.tb-regime:hover { background: #1d2133; }
+.tb-regime .regime-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--regime-accent); }
+.tb-regime.tone-good b { color: var(--green-2); }
+.tb-regime.tone-warn b { color: var(--yellow); }
+.tb-regime.tone-bad b { color: #ff9f5a; }
+.tb-regime.tone-dark b { color: var(--red); }
+.tb-regime.threat { animation: threat-pulse 1.4s infinite; }
+.tb-regime.threat .ico::after { content: '⚠'; position: absolute; font-size: 12px; margin: -6px 0 0 -4px; color: var(--red); }
+@keyframes threat-pulse { 50% { background: #e0574f33; } }
+.cabinet[data-family='autocracia'] .topbar { border-bottom-color: var(--regime-accent); }
+.cabinet[data-family='autocracia'] .nameplate { background: var(--regime-accent); color: #0b0d16; }
+.cabinet[data-family='hibrido'] .topbar { border-bottom-color: #ff9f5a; }
+
+/* reforma do regime e abertura na pauta */
+.pauta-reform { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
+.pauta-reform > span { font-weight: 700; font-size: 13px; color: #6a5a3a; margin-right: 2px; }
+.reform-btn { font: inherit; font-size: 13px; padding: 2px 7px; border: 2px solid #b8a67a; background: #fbf5e2; color: var(--ink); cursor: pointer; }
+.reform-btn small { margin-left: 4px; font-size: 11px; color: #6a5a3a; }
+.reform-btn.open { border-color: #1e7a45; }
+.reform-btn.open:hover { background: #e6f5ea; }
+.reform-btn.locked { opacity: 0.55; }
+
+/* audiência reservada */
+.rupture-door { background: #2a2418; color: #f1e6c8; }
+.rupture-door .kicker, .rupture-door .step { color: #f4c542; }
+.door-reason { margin: 4px 0 8px; font-size: 18px; line-height: 1.25; font-style: italic; }
+.door-routes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; flex: 1; min-height: 0; overflow-y: auto; }
+.door-route { background: #1a160e; border: 3px solid #4a3e28; border-left: 6px solid var(--acc); padding: 7px 9px; display: flex; flex-direction: column; gap: 4px; animation: slide-up 0.35s backwards; animation-delay: calc(var(--i) * 90ms); }
+.door-route.locked { opacity: 0.6; }
+.door-route .bill-top b { color: #fff; font-size: 17px; }
+.door-route .bill-top small { color: #c8b890; }
+.door-reqs { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.door-reqs .ok { color: var(--green-2); }
+.door-reqs .no { color: #e08a7f; }
+.door-go { margin-top: auto; font: inherit; font-weight: 700; font-size: 15px; padding: 4px 8px; background: #3a1414; border: 2px solid var(--red); color: #fff; cursor: pointer; }
+.door-go:disabled { background: none; border-color: #4a3e28; color: #8a7a5a; cursor: default; }
+.door-no { color: #f1e6c8; border-color: #f4c542; }
+.door-no:hover { color: #fff; border-color: #fff; }
+
+/* noite da ruptura */
+.rupture-actors { display: grid; grid-template-columns: repeat(2, 230px); gap: 3px 6px; }
+.rupture-actor { display: grid; grid-template-columns: 22px 1fr 60px 34px; align-items: center; gap: 5px; font: inherit; font-size: 13px; padding: 2px 5px; background: #0c0e17dd; border: 2px solid var(--line); color: var(--text); cursor: pointer; text-align: left; }
+.rupture-actor:hover:not(:disabled) { border-color: var(--yellow); }
+.rupture-actor.done { opacity: 0.55; }
+.rupture-actor span { font-size: 16px; }
+.rupture-actor em { font-style: normal; line-height: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rupture-actor em small { display: block; font-size: 11px; color: var(--muted); }
+.rupture-actor i { height: 7px; background: #1d2133; border: 1px solid var(--line); }
+.rupture-actor i b { display: block; height: 100%; transition: width 0.4s; }
+.rupture-actor strong { font-family: var(--num-font); font-size: 9px; font-weight: 400; text-align: right; }
+.rupture-actions { display: flex; gap: 6px; }
+.rupture-actions .lab-hud-btn { animation: none; }
+.rupture-retreat { background: #3a2a14 !important; border-color: #e0b04a !important; }
+.lab-hud .bad { color: var(--red); }
+.mobile .rupture-actors { grid-template-columns: 1fr 1fr; }
+.mobile .rupture-actor { grid-template-columns: 18px 1fr 34px; }
+.mobile .rupture-actor i { display: none; }
+
+/* cerimônia do regime novo */
+.regime-loading { background: #000d; display: grid; place-items: center; }
+.regime-loading div { text-align: center; }
+.regime-loading span { font-size: 64px; display: block; animation: wiggle 0.86s infinite; }
+.regime-loading b { font-family: var(--num-font); font-weight: 400; font-size: 18px; color: var(--red); display: block; margin: 8px 0; }
+.regime-loading small { font-size: 20px; color: var(--muted); }
+.regime-overlay { background: #05060aee; display: grid; place-items: center; }
+.regime-card { width: 860px; max-height: 94%; overflow-y: auto; background: var(--panel); border: 4px solid var(--acc); box-shadow: 10px 10px 0 var(--shadow); padding: 18px 26px; text-align: center; animation: slam 0.5s cubic-bezier(0.3, 1.6, 0.6, 1); }
+.rc-icon { font-size: 64px; }
+.regime-card h2 { font-size: 40px; margin: 2px 0 6px; color: var(--acc); }
+.rc-you { font-size: 19px; margin: 0 0 10px; line-height: 1.25; }
+.rc-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+.rc-cols div { background: #0c0e17; border: 2px solid var(--line); padding: 6px 10px; }
+.rc-cols b { font-size: 16px; }
+.rc-gain b { color: var(--green-2); }
+.rc-loss b { color: var(--red); }
+.rc-cols p { margin: 2px 0 0; font-size: 16px; line-height: 1.2; }
+.rc-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px; margin-top: 8px; font-size: 16px; }
+.rc-row > span { color: var(--muted); font-weight: 700; }
+.rc-row b { font-family: var(--num-font); font-weight: 400; font-size: 14px; }
+.rc-row .bad { color: var(--red); }
+.rc-row .good { color: var(--green-2); }
+.rc-row em { font-style: normal; color: var(--acc); }
+.rc-row .chip { font-style: normal; }
+.rc-inst { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; font-size: 14px; }
+.rc-inst i, .hp-inst i { display: block; height: 7px; background: #0c0e17; border: 1px solid var(--line); margin-top: 2px; }
+.rc-inst b, .hp-inst b { display: block; height: 100%; background: var(--acc, var(--green-2)); }
+.regime-card .btn-continue { margin-top: 12px; }
+.mobile .regime-card { width: 460px; padding: 12px; }
+.mobile .rc-cols, .mobile .rc-inst { grid-template-columns: 1fr 1fr; }
+.mobile .rc-cols { grid-template-columns: 1fr; }
+
+/* Home: poder e regime */
+.hp-power { display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+.hp-hemi.closed { opacity: 0.35; filter: grayscale(1); }
+.hp-regime { border-left: 3px solid var(--acc); padding-left: 10px; min-width: 0; }
+.hp-regime .panel-label { color: var(--acc); }
+.hp-dem { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 6px; }
+.hp-dem b { font-family: var(--num-font); font-weight: 400; font-size: 22px; }
+.hp-dem span { font-size: 16px; font-weight: 700; }
+.tone-good { color: var(--green-2); }
+.tone-warn { color: var(--yellow); }
+.tone-bad { color: #ff9f5a; }
+.tone-dark { color: var(--red); }
+.hp-inst { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 13px; }
+.hp-threats { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.hp-threats span { font-size: 12px; padding: 0 5px; border: 1px solid var(--line); color: var(--muted); }
+.hp-threats span.warn { color: var(--yellow); border-color: var(--yellow); }
+.hp-threats span.bad { color: var(--red); border-color: var(--red); animation: blink 1.4s steps(2) infinite; }
+.hp-threats b { font-family: var(--num-font); font-weight: 400; font-size: 8px; }
+.hp-routes { display: flex; flex-wrap: wrap; gap: 3px; }
+.hp-route { font-size: 13px; padding: 1px 6px; border: 1px solid var(--line); color: var(--muted); }
+.hp-route.open { color: var(--green-2); border-color: var(--green-2); }
+.hp-route small { font-size: 11px; }
+.mobile .hp-power { grid-template-columns: 1fr; }
+
+/* resumo: radar do legado */
+.sum-radar { display: flex; flex-direction: column; gap: 5px; }
+.radar-row { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center; font-size: 16px; }
+.radar-row i { position: relative; height: 10px; background: #0c0e17; border: 2px solid var(--line); }
+.radar-row i b { display: block; height: 100%; background: var(--yellow); }
+.radar-row i em { position: absolute; top: -4px; width: 2px; height: 14px; background: #fff; }
+.radar-row strong { font-family: var(--num-font); font-weight: 400; font-size: 11px; text-align: right; }
+.radar-row strong.good { color: var(--green-2); }
+.radar-row strong.bad { color: var(--red); }
+.sum-radar-note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+.sum-grid { grid-template-columns: 1fr 0.9fr 0.9fr 1fr; }
+.lab-hud.rupture-hud { left: auto; right: 8px; align-items: flex-end; max-width: 60%; }
+.rupture-hud .rupture-actors { grid-template-columns: repeat(2, 200px); }
+.rupture-hud .rupture-actor { grid-template-columns: 20px 1fr 44px 30px; }
+.mobile .lab-hud.rupture-hud { left: 0; right: auto; align-items: stretch; max-width: 100%; }
+.pauta-reform { flex-wrap: nowrap; overflow: hidden; }
+.pauta-reform .reform-btn { white-space: nowrap; }

@@ -1,3 +1,4 @@
+import { institutionsOf } from '../engine/regime';
 import { drawAvatar } from '../art/avatar';
 import { stfCutscene } from '../art/cutscene';
 import { makeCanvas } from '../art/pixel';
@@ -347,9 +348,9 @@ export function runBigEvent(g: Gabinete, event: GameEvent, hooks: BigEventHooks)
 
       await showNewspaper(g.screen, opt, result.deltas, state, country);
 
-      if (opt.stf) {
-        g.$('.stf-status').textContent = 'LIMINAR';
-        g.$('.stf').classList.add('alert');
+      // um Supremo capturado pelo regime não barra mais nada
+      if (opt.stf && institutionsOf(state).stf >= 40) {
+        g.$('.tb-regime').classList.add('flash-bad');
         await playCinematic(g.screen, stfCutscene(`${opt.stf.title}: o Supremo suspende a decisão do Presidente`, 'SUSPENSO!'), g.library, 'STF · URGENTE');
         await showStf(g.screen, opt.stf, country);
         const r = applyEffects(state, opt.stf.effects ?? {}, country);

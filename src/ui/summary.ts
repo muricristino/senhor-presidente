@@ -6,7 +6,8 @@ import { formatDelta, formatKpi, KPIS } from '../engine/kpis';
 import { ACHIEVEMENTS } from '../engine/achievements';
 import { ageOf, yearOf } from '../engine/calendar';
 import { dominantLeans, profileTitle } from '../engine/profile';
-import type { Country, GameState } from '../engine/types';
+import { democracyIndex, democracyLabel, getRegime, legacyRadar, type LegacyAxes } from '../engine/regime';
+import type { Country, Ending, GameState, RegimeId } from '../engine/types';
 import { slow } from '../speed';
 import { el, esc, typewriter, wait } from './dom';
 import { showLegacyCard, type Legacy } from './legacyCard';
@@ -20,13 +21,34 @@ function legacy(state: GameState, ending: Ending): string {
     renuncia: 'Preferiu sair antes de ser tirado.',
     fim: state.kpis.aprovacao >= 50 ? 'Deixa o Planalto aplaudido.' : 'Deixa o Planalto sob vaias, mas completou os oito anos.',
     pausa: state.kpis.aprovacao >= 55 ? 'O povo está com você, por enquanto.' : state.kpis.aprovacao < 40 ? 'A rua já fala em impeachment.' : 'O país segue dividido sobre o seu governo.',
+    desconfianca: 'O Parlamento retirou a confiança.',
+    queda: 'A rua derrubou o governo.',
+    exilio: 'Saiu do país de madrugada.',
+    deposto: 'Os tanques decidiram por você.',
+    preso: 'Tentou romper as regras e as regras venceram.',
+    cassado: 'Ganhou na urna e perdeu no tribunal.',
+    expurgo: 'O partido engoliu o próprio líder.',
+    destituido: 'Quem sustentava o regime tirou o apoio.',
+    morte: 'Nunca largou o poder.',
+    abertura: 'Devolveu o voto ao povo.',
   };
   if (!leans.length) return `Um governo que evitou lados. ${closing[ending]}`;
   const marks = leans.map((l) => `${l.pole} (${l.axis.category})`).join(' e ');
   return `Seu governo fica marcado por: ${marks}. ${closing[ending]}`;
 }
 
-export type Ending = 'impeachment' | 'derrota' | 'renuncia' | 'fim' | 'pausa';
+export type { Ending } from '../engine/types';
+
+const RADAR_LABELS: Record<keyof LegacyAxes, string> = { liberdade: '🕊️ Liberdade', prosperidade: '💰 Prosperidade', igualdade: '⚖️ Igualdade', estabilidade: '🧱 Estabilidade', prestigio: '🌍 Prestígio' };
+
+function radarBars(end: LegacyAxes, start: LegacyAxes): string {
+  return (Object.keys(RADAR_LABELS) as (keyof LegacyAxes)[])
+    .map((k) => {
+      const d = end[k] - start[k];
+      return `<div class="radar-row"><span>${RADAR_LABELS[k]}</span><i><b style="width:${end[k]}%"></b><em style="left:${start[k]}%"></em></i><strong class="${d > 0 ? 'good' : d < 0 ? 'bad' : ''}">${end[k]}</strong></div>`;
+    })
+    .join('');
+}
 
 const ENDING_TITLE: Record<Ending, string> = {
   impeachment: '⚖️ IMPEACHMENT: o Congresso afastou o presidente',
@@ -34,6 +56,16 @@ const ENDING_TITLE: Record<Ending, string> = {
   renuncia: '🚪 O PRESIDENTE RENUNCIOU',
   fim: '🏁 FIM DO SEGUNDO MANDATO: oito anos no Planalto',
   pausa: 'BALANÇO DO GOVERNO ATÉ AQUI',
+  desconfianca: '✋ MOÇÃO DE DESCONFIANÇA: o Parlamento derrubou o governo',
+  queda: '🔥 REVOLTA POPULAR: o governo caiu na rua',
+  exilio: '✈️ EXÍLIO: fugiu do país',
+  deposto: '🪖 DEPOSTO POR UM GOLPE',
+  preso: '⛓️ PRESO: a ruptura fracassou',
+  cassado: '⚖️ CASSADO: o TSE anulou a vitória',
+  expurgo: '☭ EXPURGADO PELO PARTIDO',
+  destituido: '📜 DESTITUÍDO PELO CONSELHO',
+  morte: '🕯️ MORREU NO PODER',
+  abertura: '🕊️ ABERTURA: a democracia voltou',
 };
 
 export function summaryScreen(
@@ -53,7 +85,7 @@ export function summaryScreen(
       <div class="sum-portrait"></div>
       <div>
         <div class="lesson-kicker ending-${ending}">${ENDING_TITLE[ending]}</div>
-        <div class="sum-span">${start.startYear}–${yearOf(end, end.month)} · ${end.term === 1 ? 'primeiro' : 'segundo'} mandato · ${end.month} meses no poder · ${start.startAge} → ${ageOf(end, end.month)} anos</div>
+        <div class="sum-span">${start.startYear}–${yearOf(end, end.month)} · ${(end.regimeHistory ?? []).length ? ['presidencialismo', ...(end.regimeHistory ?? []).map((h) => h.regime)].map((id) => getRegime(id as RegimeId).icon + ' ' + getRegime(id as RegimeId).name).join(' → ') : `${end.term}º mandato`} · ${end.month} meses no poder · ${start.startAge} → ${ageOf(end, end.month)} anos</div>
         <h1>${esc(end.player.name)}</h1>
         <div class="profile-big">${esc(profileTitle(end.axes))}</div>
         <h2 class="legacy-headline"></h2>
@@ -76,6 +108,11 @@ export function summaryScreen(
             )
             .join('')}
         </ol>
+      </section>
+      <section class="panel">
+        <div class="panel-label">LEGADO EM CINCO DIMENSÕES</div>
+        <div class="sum-radar">${radarBars(legacyRadar(end, country), legacyRadar(start, country))}</div>
+        <p class="sum-radar-note">Nenhum regime vence em tudo. Índice de democracia no fim: <b>${democracyIndex(end)}</b> (${esc(democracyLabel(democracyIndex(end)).label)}).</p>
       </section>
       <section class="panel">
         <div class="panel-label">O PAÍS: ANTES → AGORA</div>
@@ -142,5 +179,4 @@ export function summaryScreen(
     sfx.click();
     cb.onNewPresident();
   });
-  void country;
 }
