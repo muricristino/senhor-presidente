@@ -177,3 +177,115 @@ export function plenary() {
     },
   ];
 }
+
+/** Plenário da Câmara em corte lateral, mais largo que a tela: o presidente circula entre os grupos. */
+export function chamberFloor(worldW: number) {
+  return [
+    (ctx: Ctx, cam: Camera) => {
+      const off = -cam.x * 0.5;
+      r(ctx, 0, 0, LW, LH, '#2e4a3a');
+      for (let x = Math.floor(-off / 40) * 40 - 40; x < -off + LW + 40; x += 40) r(ctx, x + off, 0, 2, 70, '#274032');
+      r(ctx, 0, 0, LW, 10, '#1e3a2a');
+      text(ctx, 'CAMARA DOS DEPUTADOS - PLENARIO ULYSSES GUIMARAES', 8 + off * 0.2, 2, '#d8c070');
+    },
+    (ctx: Ctx, cam: Camera) => {
+      const off = -cam.x;
+      // tribuna ao fundo e piso
+      r(ctx, 0, 118, LW, LH - 118, '#3a5a46');
+      for (let x = Math.floor(-off / 20) * 20 - 20; x < -off + LW + 20; x += 20) r(ctx, x + off, 118, 1, LH - 118, '#335040');
+      r(ctx, worldW / 2 - 30 + off, 100, 60, 18, '#6a4a2a');
+      r(ctx, worldW / 2 - 30 + off, 100, 60, 2, '#9a6a3a');
+    },
+  ];
+}
+
+/** Estúdio de debate: telão, dois púlpitos e a plateia em três setores. */
+export function tvStudio() {
+  return [
+    (ctx: Ctx, _cam: Camera, t: number) => {
+      r(ctx, 0, 0, LW, LH, '#0e1a3a');
+      for (let x = 0; x < LW; x += 12) r(ctx, x, 0, 1, 110, '#152450');
+      r(ctx, 110, 10, 100, 50, '#0c0e17');
+      r(ctx, 112, 12, 96, 46, Math.sin(t * 2) > 0 ? '#1f4fa0' : '#2a5ab8');
+      text(ctx, 'DEBATE', 146, 22, '#f4f1ea');
+      text(ctx, 'PRESIDENCIAL', 136, 32, '#f4c542');
+      for (let i = 0; i < 6; i++) {
+        const x = 20 + i * 56;
+        ctx.fillStyle = `rgba(255,240,180,${0.05 + 0.04 * Math.sin(t * 3 + i)})`;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 18, 110);
+        ctx.lineTo(x + 18, 110);
+        ctx.fill();
+      }
+      r(ctx, 0, 110, LW, 70, '#0a1024');
+    },
+  ];
+}
+
+export function podium(ctx: Ctx, x: number, color: string) {
+  r(ctx, x - 14, 96, 28, 24, color);
+  r(ctx, x - 14, 96, 28, 3, '#f4f1ea');
+  r(ctx, x - 1, 88, 2, 8, '#2a2a2a');
+  r(ctx, x - 2, 86, 4, 3, '#4a4a52');
+}
+
+const PARTNER_LOOK: Record<string, { wall: string; accent: string; flag: string[] }> = {
+  eua: { wall: '#2a3a6a', accent: '#b22234', flag: ['#b22234', '#f4f1ea', '#3c3b6e'] },
+  china: { wall: '#6a1a1a', accent: '#f4c542', flag: ['#de2910', '#de2910', '#ffde00'] },
+  ue: { wall: '#1f3a8a', accent: '#f4c542', flag: ['#003399', '#003399', '#ffcc00'] },
+  mercosul: { wall: '#3a6a9a', accent: '#f4f1ea', flag: ['#74acdf', '#f4f1ea', '#f6b40e'] },
+  russia: { wall: '#4a4a5a', accent: '#d8c070', flag: ['#f4f1ea', '#0039a6', '#d52b1e'] },
+};
+
+/** Tela dividida do telefonema: Planalto à esquerda, o gabinete estrangeiro à direita. */
+export function splitCall(partner: string) {
+  const p = PARTNER_LOOK[partner] ?? PARTNER_LOOK.eua;
+  return [
+    (ctx: Ctx, _cam: Camera, t: number) => {
+      // Planalto
+      r(ctx, 0, 0, LW / 2, LH, '#d8ccb0');
+      r(ctx, 26, 20, 90, 60, '#86c4ec');
+      r(ctx, 26, 64, 90, 16, '#6f9a48');
+      r(ctx, 64, 44, 3, 20, '#e8e4da');
+      r(ctx, 70, 44, 3, 20, '#e8e4da');
+      flag(ctx, 132, 30, t);
+      r(ctx, 0, 140, LW / 2, 40, '#8a3a2a');
+      // exterior
+      r(ctx, LW / 2, 0, LW / 2, LH, p.wall);
+      for (let i = 0; i < 3; i++) r(ctx, LW / 2 + 110, 24 + i * 8, 24, 8, p.flag[i]);
+      r(ctx, LW / 2 + 109, 24, 1, 50, '#8a8a8a');
+      r(ctx, LW / 2 + 20, 20, 70, 50, p.accent);
+      r(ctx, LW / 2 + 23, 23, 64, 44, p.wall);
+      r(ctx, LW / 2, 140, LW / 2, 40, '#3a2a2a');
+      // divisória com sinal de linha
+      r(ctx, LW / 2 - 2, 0, 4, LH, '#07080d');
+      for (let i = 0; i < 4; i++) if (Math.floor(t * 4) % 4 >= i) r(ctx, LW / 2 - 1, 80 - i * 6, 2, 3, '#4fc27f');
+    },
+  ];
+}
+
+export function desk(ctx: Ctx, x: number, w: number, color = '#5a3a22') {
+  r(ctx, x, 128, w, 12, color);
+  r(ctx, x, 126, w, 3, '#8a5a32');
+  r(ctx, x + 4, 140, 4, 30, '#3a2412');
+  r(ctx, x + w - 8, 140, 4, 30, '#3a2412');
+}
+
+/** Sala de reuniões ministerial: mesa comprida, bandeira e porta de saída à direita. */
+export function cabinetRoom() {
+  return [
+    (ctx: Ctx, _cam: Camera, t: number) => {
+      r(ctx, 0, 0, LW, LH, '#cfc2a4');
+      for (let x = 0; x < LW; x += 40) r(ctx, x, 0, 1, 118, '#bfb294');
+      flag(ctx, 16, 26, t);
+      r(ctx, 60, 14, 120, 40, '#8a7a5a');
+      r(ctx, 63, 17, 114, 34, '#86c4ec');
+      text(ctx, 'REUNIAO MINISTERIAL', 80, 60, '#6a5a3a');
+      r(ctx, 286, 52, 30, 70, '#5a3a22');
+      r(ctx, 288, 54, 26, 68, '#7a4a2a');
+      r(ctx, 308, 88, 3, 3, '#f4c542');
+      r(ctx, 0, 118, LW, LH - 118, '#8a3a2a');
+    },
+  ];
+}

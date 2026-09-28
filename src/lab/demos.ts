@@ -1,322 +1,47 @@
-import { buildLibrary } from '../art/sprites';
+import { buildLibrary, npcPerson } from '../art/sprites';
 import { sfx } from '../audio/sfx';
+import { getCountry } from '../engine/data';
 import type { PixelSprite } from '../engine/types';
-import { el } from '../ui/dom';
-import { coffeeMachine, corridor, esplanada, meetingTable, officeRoom, plenary, stfBench, stfRoom } from './backdrops';
+import { el, esc } from '../ui/dom';
+import { cabinetRoom, chamberFloor, desk, meetingTable, officeRoom, plenary, podium, splitCall, tvStudio } from './backdrops';
 import { Actor, ease, LW, type Stage } from './engine';
+import { labState, type CallScript, type DebateScript, type Kpis, type LabKind, type MeetingScript, type VoteScript } from './scripts';
 
 export interface Demo {
   id: string;
   icon: string;
   title: string;
   kind: string;
-  /** O que a demo testa no motor. */
-  tests: string[];
+  /** Tipo de roteiro que o Claude escreve para esta cena (sem ele, a cena é fixa). */
+  script?: LabKind;
+  /** O mecanismo político que a cena ensina. */
+  teaches: string[];
   help: string;
-  run: (stage: Stage, hud: HTMLElement) => Promise<void>;
+  run: (stage: Stage, hud: HTMLElement, script?: unknown) => Promise<void>;
 }
 
-const lib = () => buildLibrary(0);
+const lib = () => buildLibrary(labState().player.avatar);
 const sprite = (l: Map<string, PixelSprite>, id: string) => l.get(id)!;
+const MINISTER_NPC: Record<string, string> = { fazenda: 'helena', justica: 'otavio', casacivil: 'rui', defesa: 'general', agricultura: 'tereza', comunicacao: 'caio' };
 
-// ======================================================================
-// 1. Um dia no Planalto: apontar e clicar + diálogo com escolhas
-// ======================================================================
-
-const planalto: Demo = {
-  id: 'planalto',
-  icon: '🏛️',
-  title: 'Um dia no Planalto',
-  kind: 'Aventura · apontar e clicar',
-  tests: ['Caminhada com ciclo de pernas', 'Câmera que segue com paralaxe', 'Diálogo com escolhas dentro da cena', 'Zoom e flashes'],
-  help: 'Toque no chão para andar. Toque nas setas ▼ para interagir.',
-  async run(stage, hud) {
-    const L = lib();
-    const WORLD = 640;
-    stage.background.push(...corridor(WORLD));
-    stage.camera.bounds = { minX: 0, maxX: WORLD - LW };
-    const pres = stage.add(new Actor(sprite(L, 'presidente'), 50, 160, 'Presidente'));
-    const iris = stage.add(new Actor(sprite(L, 'deputada'), 230, 158, 'Íris'));
-    iris.facing = -1;
-    const reporters = [0, 1, 2].map((i) => {
-      const a = stage.add(new Actor(sprite(L, i === 1 ? 'cidada' : 'jornalista'), WORLD - 40 + i * 12, 162, 'Repórter'));
-      a.visible = false;
-      return a;
-    });
-    stage.camera.follow = pres;
-
-    let busy = false;
-    let coffee = false;
-    let met = false;
-    const hotspots = [
-      { x: 230, label: 'Conversar com a Íris', action: talkIris },
-      { x: 360, label: 'Tomar um café', action: drinkCoffee },
-      { x: WORLD - 38, label: 'Entrar na sala de imprensa', action: pressRoom },
-    ];
-    stage.foreground.push((ctx, t) => {
-      coffeeMachine(ctx, 360, t);
-      if (busy) return;
-      for (const h of hotspots) {
-        const y = 92 + Math.sin(t * 5 + h.x) * 3;
-        ctx.fillStyle = '#f4c542';
-        ctx.fillRect(h.x - 3, y, 7, 2);
-        ctx.fillRect(h.x - 2, y + 2, 5, 2);
-        ctx.fillRect(h.x - 1, y + 4, 3, 2);
-      }
-    });
-    hud.innerHTML = '<div class="lab-hud-line">☕ <b class="h-coffee">sem café</b> · 🗨️ <b class="h-met">Íris ainda não falou</b></div>';
-
-    stage.onPointer = async (p) => {
-      if (busy) return;
-      const spot = hotspots.find((h) => Math.abs(p.x - h.x) < 18 && p.y > 80);
-      if (spot) {
-        busy = true;
-        sfx.click();
-        await pres.walkTo(spot.x - 18 * Math.sign(spot.x - pres.x || 1), 160);
-        pres.facing = spot.x > pres.x ? 1 : -1;
-        await spot.action();
-        busy = false;
-        return;
-      }
-      if (p.y > 118) {
-        sfx.hover();
-        void pres.walkTo(Math.max(12, Math.min(WORLD - 12, p.x)), Math.max(150, Math.min(170, p.y)));
-      }
-    };
-
-    async function talkIris() {
-      iris.facing = -1;
-      stage.emote(iris, '❗');
-      iris.jump();
-      await stage.say(iris, met ? 'De volta, Presidente? A imprensa não vai esperar para sempre.' : 'Bom dia, Presidente! A agenda de hoje está pesada.');
-      if (met) return;
-      const i = await stage.choose('O que o senhor quer primeiro?', [{ label: 'Um café, por favor ☕' }, { label: 'Me dá o resumo do dia 📋' }, { label: 'Quem vazou aquela foto minha? 😠' }], 'Íris Monteiro');
-      if (i === 0) {
-        await iris.walkTo(346, 158);
-        stage.particles.emit(360, 128, { colors: ['#f0ece0', '#d8d4ca'], count: 10, speed: 12, gravity: -30, life: 1.2 });
-        await stage.wait(0.6);
-        await iris.walkTo(pres.x + 18, 158);
-        iris.facing = -1;
-        coffee = true;
-        stage.emote(pres, '☕');
-        pres.jump();
-        await stage.say(iris, 'Sem açúcar, como sempre.');
-      } else if (i === 1) {
-        stage.emote(pres, '😰', 2.5);
-        await stage.say(iris, 'Greve no porto de Santos, um deputado irritado e a imprensa na porta.');
-      } else {
-        stage.emote(iris, '😬');
-        iris.jump();
-        stage.camera.shake(2, 0.3);
-        await stage.say(iris, 'Não fui eu! Juro! Deve ter sido o pessoal da Comunicação…', { tone: 'shout' });
-      }
-      met = true;
-      await stage.say(iris, 'A imprensa está esperando no fim do corredor. Boa sorte.');
-      updateHud();
-    }
-
-    async function drinkCoffee() {
-      stage.particles.emit(360, 128, { colors: ['#f0ece0', '#d8d4ca'], count: 14, speed: 14, gravity: -40, life: 1.4 });
-      await stage.wait(0.8);
-      coffee = true;
-      stage.emote(pres, '☕');
-      pres.jump();
-      await stage.say(pres, 'Agora sim. Pode vir, Brasil.');
-      updateHud();
-    }
-
-    async function pressRoom() {
-      sfx.ring();
-      stage.flash('#fff', 1);
-      reporters.forEach((a, i) => {
-        a.visible = true;
-        a.x = pres.x + 30 + i * 14;
-        a.facing = -1;
-      });
-      await stage.tween(stage.camera, { zoom: 1.6 }, 0.6, ease.out);
-      const flashes = setInterval(() => {
-        const who = reporters[Math.floor(Math.random() * 3)];
-        stage.particles.emit(who.x, who.y - 18, { colors: ['#ffffff', '#fffbe0'], count: 5, speed: 30, gravity: 0, life: 0.25, size: 3 });
-        sfx.stamp();
-      }, 450);
-      reporters[0].jump();
-      await stage.say(reporters[0], 'Presidente! Presidente! Uma palavrinha!', { tone: 'shout' });
-      const i = await stage.choose(coffee ? 'Com o café no sangue, o senhor…' : 'Sem café, o senhor…', [
-        { label: 'Sem comentários 🤐', hint: 'seguro, sem manchete' },
-        { label: 'Sorri e acena 👋', hint: 'simpático' },
-        { label: 'Discurso improvisado 📣', hint: coffee ? 'arriscado' : 'muito arriscado sem café' },
-      ]);
-      clearInterval(flashes);
-      if (i === 0) {
-        await stage.say(pres, 'Sem comentários.');
-        stage.emote(reporters[1], '😒');
-      } else if (i === 1) {
-        pres.jump();
-        stage.emote(pres, '😁');
-        await stage.say(reporters[2], 'Ele acenou! Manchete: “Presidente de bom humor”.');
-      } else if (coffee) {
-        await stage.say(pres, 'O Brasil vai crescer como nunca! Anotem!', { tone: 'shout' });
-        reporters.forEach((a) => a.jump());
-        await stage.banner('DISCURSO VIRALIZA', '12 milhões de visualizações');
-      } else {
-        await stage.say(pres, 'O Brasil vai… é… crescer… onde eu estava?');
-        stage.camera.shake(3, 0.4);
-        stage.emote(pres, '😵');
-        await stage.banner('GAFE DO DIA', 'Sem café, o presidente se perdeu no discurso');
-      }
-      await stage.tween(stage.camera, { zoom: 1 }, 0.6, ease.inOut);
-      reporters.forEach((a) => (a.visible = false));
-    }
-
-    function updateHud() {
-      hud.querySelector('.h-coffee')!.textContent = coffee ? 'tomou café' : 'sem café';
-      hud.querySelector('.h-met')!.textContent = met ? 'Íris já falou' : 'Íris ainda não falou';
-    }
-  },
-};
-
-// ======================================================================
-// 2. Chuva de ovos: ação com teclado ou dedo
-// ======================================================================
-
-interface Projectile {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  kind: 'ovo' | 'tomate' | 'flor';
-  spin: number;
+/** Soma efeitos nos indicadores e mostra o saldo no HUD. */
+function effectLine(total: Kpis): string {
+  const fmt = (k: keyof Kpis, label: string, pct = true) => {
+    const v = total[k] ?? 0;
+    if (!v) return '';
+    const good = k === 'inflacao' || k === 'desemprego' ? v < 0 : v > 0;
+    return `<span class="${good ? 'good' : 'bad'}">${label} ${v > 0 ? '+' : ''}${pct ? Math.round(v) : v.toFixed(1)}</span>`;
+  };
+  return [fmt('aprovacao', 'Aprovação'), fmt('coalizao', 'Coalizão'), fmt('inflacao', 'Inflação', false), fmt('desemprego', 'Desemprego', false)].filter(Boolean).join(' · ') || '<span>sem custo ainda</span>';
+}
+function addKpis(a: Kpis, b: Kpis): Kpis {
+  const out: Kpis = { ...a };
+  for (const [k, v] of Object.entries(b) as [keyof Kpis, number][]) out[k] = (out[k] ?? 0) + v;
+  return out;
 }
 
-const eggs: Demo = {
-  id: 'ovos',
-  icon: '🥚',
-  title: 'Chuva de ovos na Esplanada',
-  kind: 'Ação · desviar',
-  tests: ['Controle em tempo real (teclado e arrasto)', 'Projéteis com gravidade', 'Partículas de impacto', 'Esticar/amassar e flash de dano'],
-  help: '← → ou A/D para desviar. No celular, arraste o dedo. Pegue as flores 🌸.',
-  async run(stage, hud) {
-    const L = lib();
-    stage.background.push(...esplanada());
-    const pres = stage.add(new Actor(sprite(L, 'presidente'), LW / 2, 164, 'Presidente'));
-    pres.speed = 0;
-    const crowd = Array.from({ length: 16 }, (_, i) => {
-      const a = stage.add(new Actor(sprite(L, i % 3 ? 'manifestante' : 'manifestante2'), 10 + i * 20, 124 + (i % 2) * 4));
-      a.facing = i < 8 ? 1 : -1;
-      return a;
-    });
-    let approval = 50;
-    let time = 30;
-    let over = false;
-    const shots: Projectile[] = [];
-    let spawn = 0;
-    let dragX: number | null = null;
-    hud.innerHTML = `<div class="lab-meter"><span>APROVAÇÃO</span><i><b class="m-fill"></b></i><em class="m-val">50%</em></div><div class="lab-hud-line">⏱️ <b class="m-time">30</b>s</div>`;
-    const render = () => {
-      (hud.querySelector('.m-fill') as HTMLElement).style.width = `${approval}%`;
-      hud.querySelector('.m-val')!.textContent = `${Math.round(approval)}%`;
-      hud.querySelector('.m-time')!.textContent = String(Math.ceil(time));
-    };
-    stage.onPointer = (p) => (dragX = p.x);
-    stage.onPointerMove = (p) => (dragX = p.x);
-
-    stage.onUpdate = (dt) => {
-      if (over) return;
-      time -= dt;
-      // movimento
-      const left = stage.keys.has('arrowleft') || stage.keys.has('a');
-      const right = stage.keys.has('arrowright') || stage.keys.has('d');
-      let vx = (right ? 1 : 0) - (left ? 1 : 0);
-      if (dragX !== null && !left && !right) vx = Math.abs(dragX - pres.x) < 3 ? 0 : Math.sign(dragX - pres.x);
-      if (vx) pres.facing = vx > 0 ? 1 : -1;
-      pres.x = Math.max(12, Math.min(LW - 12, pres.x + vx * 130 * dt));
-      // lançamentos: a multidão mira onde o presidente está (com erro), cada vez mais rápido
-      spawn -= dt;
-      if (spawn <= 0) {
-        spawn = Math.max(0.28, 0.9 - (30 - time) * 0.022);
-        const thrower = crowd[Math.floor(Math.random() * crowd.length)];
-        thrower.jump();
-        const kind = Math.random() < 0.14 ? 'flor' : Math.random() < 0.5 ? 'ovo' : 'tomate';
-        const T = 1.05;
-        const tx = pres.x + (Math.random() - 0.5) * 50;
-        const g = 220;
-        shots.push({ x: thrower.x, y: thrower.y - 20, vx: (tx - thrower.x) / T, vy: (150 - (thrower.y - 20)) / T - 0.5 * g * T, kind, spin: 0 });
-      }
-      for (const s of shots) {
-        s.vy += 220 * dt;
-        s.x += s.vx * dt;
-        s.y += s.vy * dt;
-        s.spin += dt * 10;
-      }
-      for (let i = shots.length - 1; i >= 0; i--) {
-        const s = shots[i];
-        const hit = Math.abs(s.x - pres.x) < 7 && Math.abs(s.y - (pres.y - 12)) < 11;
-        if (hit) {
-          shots.splice(i, 1);
-          if (s.kind === 'flor') {
-            approval = Math.min(100, approval + 4);
-            stage.particles.emit(s.x, s.y, { colors: ['#ff6fa8', '#fbe38a', '#4fc27f'], count: 14, speed: 50, gravity: 60 });
-            stage.emote(pres, '😊', 0.8);
-            sfx.up();
-          } else {
-            approval = Math.max(0, approval - 6);
-            const colors = s.kind === 'ovo' ? ['#f4f1ea', '#f4c542', '#fbe38a'] : ['#e0574f', '#a82a2a', '#4fc27f'];
-            stage.particles.emit(s.x, s.y, { colors, count: 22, speed: 80, gravity: 260 });
-            pres.punch(-0.35);
-            stage.camera.shake(3, 0.2);
-            stage.flash(s.kind === 'ovo' ? '#fbe38a' : '#e0574f', 0.35);
-            stage.emote(pres, s.kind === 'ovo' ? '🥚' : '🍅', 0.8);
-            sfx.stamp();
-          }
-        } else if (s.y > 172) {
-          shots.splice(i, 1);
-          if (s.kind !== 'flor') stage.particles.emit(s.x, 170, { colors: s.kind === 'ovo' ? ['#f4f1ea', '#f4c542'] : ['#e0574f'], count: 6, speed: 30, gravity: 200 });
-        }
-      }
-      render();
-      if (time <= 0 || approval <= 0) {
-        over = true;
-        void finish();
-      }
-    };
-    stage.foreground.push((ctx) => {
-      for (const s of shots) {
-        const x = Math.round(s.x);
-        const y = Math.round(s.y);
-        if (s.kind === 'ovo') {
-          ctx.fillStyle = '#f4f1ea';
-          ctx.fillRect(x - 2, y - 3, 4, 6);
-          ctx.fillRect(x - 3, y - 1, 6, 3);
-        } else if (s.kind === 'tomate') {
-          ctx.fillStyle = '#e0574f';
-          ctx.fillRect(x - 3, y - 2, 6, 5);
-          ctx.fillStyle = '#4fc27f';
-          ctx.fillRect(x - 1, y - 3, 2, 1);
-        } else {
-          ctx.fillStyle = '#4fc27f';
-          ctx.fillRect(x, y, 1, 5);
-          ctx.fillStyle = Math.sin(s.spin) > 0 ? '#ff6fa8' : '#fbe38a';
-          ctx.fillRect(x - 2, y - 3, 5, 3);
-        }
-      }
-    });
-    async function finish() {
-      const won = approval > 0;
-      await stage.slowmo(0.3, 0.8);
-      if (won) {
-        pres.jump();
-        stage.particles.emit(pres.x, pres.y - 30, { colors: ['#f4c542', '#4fc27f', '#6fb6ff', '#ff6fa8'], count: 40, speed: 90, gravity: 120 });
-        await stage.banner('SOBREVIVEU AO COMÍCIO', `Terminou com ${Math.round(approval)}% de aprovação`, 3);
-      } else {
-        stage.emote(pres, '😵', 3);
-        await stage.banner('BATEU EM RETIRADA', 'A segurança tirou o presidente do palanque', 3);
-      }
-    }
-  },
-};
-
 // ======================================================================
-// 3. Negociação com o Centrão: diálogo com medidor de humor e votação
+// Negociação com o Centrão (roteiro fixo, a primeira cena do laboratório): diálogo com medidor de humor e votação
 // ======================================================================
 
 const centrao: Demo = {
@@ -324,7 +49,7 @@ const centrao: Demo = {
   icon: '🤝',
   title: 'Negociação com o Centrão',
   kind: 'Diálogo · negociação',
-  tests: ['Árvore de diálogo com consequências', 'Medidor de humor que reage', 'Personagem que bate na mesa (tremor + mola)', 'Transição de cena e votação animada'],
+  teaches: ['Troca de apoio por cargos e emendas', 'Pautas de costumes como moeda', 'Fisiologismo e nepotismo'],
   help: 'Escolha as falas (toque ou teclas 1-3). Você precisa de 257 votos.',
   async run(stage, hud) {
     const L = lib();
@@ -429,110 +154,425 @@ const centrao: Demo = {
   },
 };
 
+
 // ======================================================================
-// 4. O martelo do Supremo: tempo certo (QTE)
+// Articulação da votação: circular pelo plenário gastando capital político
 // ======================================================================
 
-const gavel: Demo = {
-  id: 'martelo',
-  icon: '🔨',
-  title: 'O martelo do Supremo',
-  kind: 'Reflexo · tempo certo',
-  tests: ['Evento de tempo (QTE) com dificuldade crescente', 'Câmera lenta', 'Rotação de objeto com pivô', 'Poeira, tremor e letreiro de impacto'],
-  help: 'Toque ou aperte ESPAÇO quando o cursor estiver na faixa verde. 3 liminares.',
-  async run(stage, hud) {
+interface Bloc {
+  data: VoteScript['groups'][number];
+  x: number;
+  yes: number;
+  undecided: number;
+  no: number;
+  leader: Actor;
+  done: boolean;
+  flips: number[];
+}
+
+const votacao: Demo = {
+  id: 'votacao',
+  icon: '🗳️',
+  title: 'Articulação da votação',
+  kind: 'Estratégia · contar votos',
+  script: 'votacao',
+  teaches: ['Presidencialismo de coalizão: votos têm preço', 'Maioria simples (257) × PEC (308)', 'Cada concessão tem custo em outra frente'],
+  help: 'Toque num grupo para ir negociar com o líder. Gaste o capital político e abra a votação quando achar que tem os votos.',
+  async run(stage, hud, raw) {
+    const sc = raw as VoteScript;
     const L = lib();
-    stage.background.push(...stfRoom());
-    const judge = stage.add(new Actor(sprite(L, 'ministro_careca'), LW / 2, 128, 'Relator'));
-    const others = [50, 86, 234, 270].map((x, i) => stage.add(new Actor(sprite(L, i % 2 ? 'ministra' : 'ministro'), x, 132)));
-    stage.foreground.push((ctx) => stfBench(ctx));
-    // martelo com pivô na mão do relator
-    const hammer = { angle: -0.4 };
-    stage.foreground.push((ctx) => {
-      ctx.save();
-      ctx.translate(Math.round(judge.x + 10), Math.round(judge.y - 12));
-      ctx.rotate(hammer.angle);
-      ctx.fillStyle = '#b8844a';
-      ctx.fillRect(0, -1, 14, 2);
-      ctx.fillStyle = '#5a3a1a';
-      ctx.fillRect(12, -5, 6, 10);
-      ctx.fillStyle = '#9a6a3a';
-      ctx.fillRect(13, -5, 4, 2);
-      ctx.restore();
+    const WORLD = 560;
+    stage.background.push(...chamberFloor(WORLD));
+    stage.camera.bounds = { minX: 0, maxX: WORLD - LW };
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), WORLD / 2, 168, 'Presidente'));
+    stage.camera.follow = pres;
+    stage.camera.x = WORLD / 2 - LW / 2;
+    const people = ['deputado', 'deputada', 'empresario', 'pastor', 'agricultor', 'assessor'];
+    const blocs: Bloc[] = sc.groups.map((g, i) => {
+      const x = 46 + i * ((WORLD - 92) / (sc.groups.length - 1));
+      const base = g.stance === 'a_favor' ? [0.8, 0.2, 0] : g.stance === 'contra' ? [0, 0.2, 0.8] : [0.1, 0.8, 0.1];
+      const yes = Math.round(g.seats * base[0]);
+      const no = Math.round(g.seats * base[2]);
+      const leader = stage.add(new Actor(sprite(L, people[i % people.length]), x, 150, g.leader));
+      leader.facing = x < WORLD / 2 ? 1 : -1;
+      return { data: g, x, yes, no, undecided: g.seats - yes - no, leader, done: false, flips: [] };
     });
-    hud.innerHTML = `<div class="lab-qte"><i class="q-zone"></i><b class="q-cursor"></b></div><div class="lab-hud-line">⚖️ Liminares: <b class="q-count">0</b>/3</div>`;
-    const zoneEl = hud.querySelector('.q-zone') as HTMLElement;
-    const cursorEl = hud.querySelector('.q-cursor') as HTMLElement;
-    let wins = 0;
-    let round = 0;
-    let armed = false;
-    let pos = 0;
-    let zone = { from: 0.4, to: 0.6 };
-    const setZone = () => {
-      const w = [0.22, 0.15, 0.09][round] ?? 0.08;
-      const c = 0.2 + Math.random() * 0.6;
-      zone = { from: c - w / 2, to: c + w / 2 };
-      zoneEl.style.left = `${zone.from * 100}%`;
-      zoneEl.style.width = `${w * 100}%`;
-    };
-    stage.onUpdate = (_dt, t) => {
-      if (!armed) return;
-      const speed = [1.6, 2.3, 3.1][round] ?? 3.5;
-      pos = (Math.sin(t * speed * Math.PI) + 1) / 2;
-      cursorEl.style.left = `${pos * 100}%`;
-    };
-    const press = () => {
-      if (!armed) return;
-      armed = false;
-      void strike(pos >= zone.from && pos <= zone.to);
-    };
-    stage.onPointer = press;
-    const onKey = (e: KeyboardEvent) => e.code === 'Space' && (e.preventDefault(), press());
-    document.addEventListener('keydown', onKey);
-    stage.own(() => document.removeEventListener('keydown', onKey));
+    let capital = sc.capital;
+    let costs: Kpis = {};
+    let busy = false;
+    let voting = false;
 
-    async function strike(hit: boolean) {
-      await stage.tween(hammer, { angle: -1.6 }, 0.18, ease.out);
-      if (hit) {
-        void stage.slowmo(0.25, 0.7);
-        await stage.tween(hammer, { angle: 0.5 }, 0.08, ease.linear);
-        stage.camera.shake(6, 0.4);
-        stage.flash('#fff', 0.7);
-        stage.particles.emit(judge.x + 26, 124, { colors: ['#b8a888', '#8a7a5a', '#f0ece0'], count: 30, speed: 70, gravity: 150, up: 30 });
-        sfx.gavel();
-        wins++;
-        hud.querySelector('.q-count')!.textContent = String(wins);
-        others.forEach((o) => o.jump());
-        await stage.banner(['SUSPENSO!', 'CASSADO!', 'INCONSTITUCIONAL!'][round] ?? 'SUSPENSO!', `Liminar ${wins} de 3`, 1.2);
-        round++;
-      } else {
-        await stage.tween(hammer, { angle: 0.2 }, 0.12, ease.linear);
-        judge.punch(-0.4);
-        stage.emote(judge, '😵');
-        stage.camera.shake(2, 0.2);
-        sfx.down();
-        await stage.say(judge, ['Ai! Meu dedo!', 'Errei o ritmo…', 'Ninguém viu isso.'][Math.floor(Math.random() * 3)], { hold: 1.2 });
+    // bancadas: cada ponto é ~5 deputados; cor pela posição atual
+    stage.foreground.push((ctx, t) => {
+      for (const b of blocs) {
+        const dots = Math.max(4, Math.round(b.data.seats / 5));
+        const yesDots = Math.round((b.yes / b.data.seats) * dots);
+        const noDots = Math.round((b.no / b.data.seats) * dots);
+        for (let k = 0; k < dots; k++) {
+          const col = k % 8;
+          const row = Math.floor(k / 8);
+          const x = b.x - 18 + col * 5;
+          const y = 138 - row * 7;
+          const flip = b.flips[k] ? Math.max(0, 1 - (t - b.flips[k]) * 3) : 0;
+          ctx.fillStyle = k < yesDots ? '#4fc27f' : k >= dots - noDots ? '#e0574f' : '#9aa0b4';
+          ctx.fillRect(Math.round(x), Math.round(y - flip * 4), 3, 5);
+        }
+        if (!b.done && !busy && !voting) {
+          const y = 104 - Math.floor(b.data.seats / 40) * 7 + Math.sin(t * 5 + b.x) * 2;
+          ctx.fillStyle = '#f4c542';
+          ctx.fillRect(b.x - 3, y, 7, 2);
+          ctx.fillRect(b.x - 2, y + 2, 5, 2);
+          ctx.fillRect(b.x - 1, y + 4, 3, 2);
+        }
       }
-      await stage.tween(hammer, { angle: -0.4 }, 0.3, ease.back);
-      if (round >= 3) {
-        document.removeEventListener('keydown', onKey);
-        judge.jump();
-        await stage.banner('SESSÃO ENCERRADA', 'O Supremo falou três vezes', 3);
+    });
+
+    const certain = () => blocs.reduce((n, b) => n + b.yes, 0);
+    const renderHud = () => {
+      hud.innerHTML = `
+        <div class="lab-hud-line"><b>${esc(sc.bill.title)}</b></div>
+        <div class="lab-hud-line">💼 Capital: <b>${'●'.repeat(capital)}${'○'.repeat(Math.max(0, sc.capital - capital))}</b> · 🗳️ Garantidos: <b class="${certain() >= sc.bill.needed ? 'good' : ''}">${certain()}</b> / ${sc.bill.needed}</div>
+        <div class="lab-hud-line lab-costs">${effectLine(costs)}</div>
+        <button class="lab-hud-btn lab-vote">🗳️ ABRIR VOTAÇÃO</button>`;
+      hud.querySelector('.lab-vote')!.addEventListener('click', () => void vote());
+    };
+    renderHud();
+    await stage.banner(sc.bill.needed >= 308 ? 'PEC NO PLENÁRIO' : 'PROJETO NO PLENÁRIO', `Precisa de ${sc.bill.needed} votos`, 2);
+    await stage.say(pres, sc.bill.description.slice(0, 110));
+
+    stage.onPointer = async (p) => {
+      if (busy || voting) return;
+      const b = blocs.find((x) => Math.abs(p.x - x.x) < 26);
+      if (!b) {
+        if (p.y > 140) void pres.walkTo(Math.max(12, Math.min(WORLD - 12, p.x)), 168);
         return;
       }
-      setZone();
-      armed = true;
-    }
+      if (b.done) {
+        stage.emote(b.leader, '🙅');
+        return;
+      }
+      busy = true;
+      sfx.click();
+      await pres.walkTo(b.x + (pres.x < b.x ? -16 : 16), 168);
+      pres.facing = b.x > pres.x ? 1 : -1;
+      b.leader.facing = pres.x < b.x ? -1 : 1;
+      b.leader.jump();
+      await stage.say(b.leader, b.data.demand);
+      const options = [...b.data.offers.map((o) => ({ label: o.label, hint: `${'●'.repeat(o.cost)}${o.cost > capital ? ' · sem capital' : ''}` })), { label: 'Sair sem negociar', hint: 'grátis' }];
+      let i = await stage.choose(`${b.data.name} · ${b.yes} a favor, ${b.undecided} indecisos, ${b.no} contra`, options, b.data.leader);
+      while (i < b.data.offers.length && b.data.offers[i].cost > capital) {
+        sfx.down();
+        i = await stage.choose('Capital político insuficiente para essa oferta.', options, b.data.leader);
+      }
+      if (i < b.data.offers.length) {
+        const o = b.data.offers[i];
+        capital -= o.cost;
+        costs = addKpis(costs, o.effects);
+        const moving = Math.round((b.undecided + b.no) * o.swing);
+        const fromUndecided = Math.min(b.undecided, moving);
+        b.undecided -= fromUndecided;
+        b.no -= moving - fromUndecided;
+        b.yes += moving;
+        const dots = Math.max(4, Math.round(b.data.seats / 5));
+        for (let k = 0; k < dots; k++) b.flips[k] = stage.t + k * 0.03;
+        b.done = true;
+        stage.emote(b.leader, o.swing >= 0.6 ? '🤝' : '😏');
+        sfx.up();
+        await stage.say(b.leader, o.reaction);
+      } else {
+        stage.emote(b.leader, '😒');
+        b.done = true;
+      }
+      renderHud();
+      busy = false;
+    };
 
-    await stage.say(judge, 'Está aberta a sessão. Vamos às liminares.');
-    setZone();
-    armed = true;
+    async function vote() {
+      if (voting || busy) return;
+      voting = true;
+      sfx.ring();
+      await pres.walkTo(WORLD / 2, 168);
+      await stage.tween(stage.camera, { zoom: 1.1 }, 0.6);
+      // indecisos se dividem no painel
+      let yes = 0;
+      let no = 0;
+      for (const b of blocs) {
+        const undecidedYes = Math.round(b.undecided * 0.4);
+        b.yes += undecidedYes;
+        b.no += b.undecided - undecidedYes;
+        b.undecided = 0;
+        const dots = Math.max(4, Math.round(b.data.seats / 5));
+        for (let k = 0; k < dots; k++) b.flips[k] = stage.t + k * 0.02;
+        yes += b.yes;
+        no += b.no;
+        hud.innerHTML = `<div class="lab-votes"><b class="v-yes">SIM ${yes}</b><b class="v-no">NÃO ${no}</b></div>`;
+        sfx.tick();
+        await stage.wait(0.5);
+      }
+      const passed = yes >= sc.bill.needed;
+      if (passed) {
+        stage.particles.emit(pres.x, 90, { colors: ['#f4c542', '#4fc27f', '#6fb6ff', '#ff6fa8'], count: 60, speed: 120, gravity: 110 });
+        pres.jump();
+        sfx.fanfare();
+      } else {
+        stage.camera.shake(4, 0.5);
+        sfx.down();
+      }
+      hud.insertAdjacentHTML('beforeend', `<div class="lab-hud-line lab-costs">Conta política: ${effectLine(costs)}</div>`);
+      await stage.banner(passed ? 'APROVADO' : 'REJEITADO', `${yes} a ${no} · eram necessários ${sc.bill.needed}`, 4);
+    }
   },
 };
 
-export const DEMOS: Demo[] = [planalto, eggs, centrao, gavel];
+// ======================================================================
+// Debate na TV: ataques com o histórico real e plateia por segmento
+// ======================================================================
 
-/** Anota no HUD uma dica curta. */
-export function helpLine(text: string) {
-  return el('div', 'lab-help', text);
-}
+const debate: Demo = {
+  id: 'debate',
+  icon: '📺',
+  title: 'Debate na TV',
+  kind: 'Retórica · plateia e checagem',
+  script: 'debate',
+  teaches: ['O eleitorado não é um bloco só', 'Checagem de fatos: estilo × verdade', 'O seu histórico vira munição do adversário'],
+  help: 'O adversário ataca com as suas decisões. Escolha a réplica: cada setor da plateia reage de um jeito, e a checagem aparece na hora.',
+  async run(stage, hud, raw) {
+    const sc = raw as DebateScript;
+    const L = lib();
+    stage.background.push(...tvStudio());
+    const opp = stage.add(new Actor(sprite(L, 'empresario'), 70, 120, sc.opponent.name));
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), 250, 120, 'Presidente'));
+    pres.facing = -1;
+    const mod = stage.add(new Actor(sprite(L, 'jornalista'), 160, 108, sc.moderator));
+    stage.foreground.push((ctx) => {
+      podium(ctx, 70, '#8a2a2a');
+      podium(ctx, 250, '#1f4fa0');
+    });
+    // plateia em três setores
+    const segs = [
+      { key: 'progressistas' as const, label: 'Progressistas', color: '#6fa8ff', x: 10 },
+      { key: 'indecisos' as const, label: 'Indecisos', color: '#9aa0b4', x: 115 },
+      { key: 'conservadores' as const, label: 'Conservadores', color: '#ff9f5a', x: 220 },
+    ];
+    const start = Math.round(labState().kpis.aprovacao);
+    const score: Record<string, number> = { progressistas: start, indecisos: start, conservadores: start };
+    const cheer: Record<string, number> = {};
+    stage.foreground.push((ctx, t) => {
+      for (const s of segs) {
+        for (let i = 0; i < 18; i++) {
+          const x = s.x + (i % 9) * 10 + 4;
+          const y = 160 + Math.floor(i / 9) * 9;
+          const c = cheer[s.key] ?? 0;
+          const hop = c > 0 && Math.sin(t * 18 + i) > 0 ? -2 : 0;
+          ctx.fillStyle = s.color;
+          ctx.fillRect(x, y + 3 + hop, 6, 6);
+          ctx.fillStyle = '#e8c09a';
+          ctx.fillRect(x + 1, y + hop, 4, 3);
+          if (c < 0 && i % 4 === 0) {
+            ctx.fillStyle = '#e0574f';
+            ctx.fillRect(x + 1, y - 5, 4, 3);
+          }
+        }
+      }
+    });
+    const renderHud = () => {
+      hud.innerHTML = segs
+        .map((s) => `<div class="lab-meter seg"><span style="color:${s.color}">${s.label}</span><i><b style="width:${score[s.key]}%;background:${s.color}"></b></i><em>${Math.round(score[s.key])}%</em></div>`)
+        .join('');
+    };
+    renderHud();
+    await stage.banner('DEBATE PRESIDENCIAL', `${sc.opponent.name} · ${sc.opponent.style}`, 2);
+    for (const [ri, round] of sc.rounds.entries()) {
+      mod.jump();
+      await stage.say(mod, `Bloco ${ri + 1}: ${round.topic}. Candidato ${sc.opponent.name.split(' ')[0]}, sua pergunta.`);
+      opp.jump();
+      stage.camera.shake(1, 0.2);
+      await stage.say(opp, round.attack, { tone: 'shout' });
+      const i = await stage.choose('Sua réplica:', round.options.map((o) => ({ label: o.label, hint: o.style })), 'Presidente');
+      const o = round.options[i];
+      await stage.say(pres, o.reply);
+      for (const s of segs) {
+        const d = o.audience[s.key];
+        score[s.key] = Math.max(0, Math.min(100, score[s.key] + d));
+        cheer[s.key] = d;
+        if (d >= 4) stage.particles.emit(s.x + 45, 158, { colors: [s.color, '#f4c542'], count: 10, speed: 40, gravity: 60 });
+      }
+      renderHud();
+      sfx[o.audience.indecisos >= 0 ? 'up' : 'down']();
+      const stampClass = o.factcheck.verdict === 'verdadeiro' ? 'ok' : o.factcheck.verdict === 'falso' ? 'bad' : 'warn';
+      const stamp = el('div', `lab-factcheck ${stampClass}`, `<b>${o.factcheck.verdict === 'verdadeiro' ? '✔ VERDADEIRO' : o.factcheck.verdict === 'falso' ? '✖ FALSO' : '⚠ EXAGERADO'}</b><small>${esc(o.factcheck.note)}</small>`);
+      stage.ui.append(stamp);
+      sfx.stamp();
+      await stage.wait(3.2);
+      stamp.remove();
+      for (const s of segs) cheer[s.key] = 0;
+    }
+    await stage.say(opp, sc.closing, { tone: 'shout' });
+    const poll = Math.round(score.progressistas * 0.3 + score.indecisos * 0.4 + score.conservadores * 0.3);
+    await stage.tween(stage.camera, { zoom: 1.2 }, 0.5, ease.back);
+    if (poll >= 50) {
+      pres.jump();
+      stage.particles.emit(250, 80, { colors: ['#f4c542', '#4fc27f', '#6fb6ff'], count: 40, speed: 90, gravity: 110 });
+    } else opp.jump();
+    await stage.banner(poll >= 50 ? 'VENCEU O DEBATE' : 'PERDEU O DEBATE', `Pesquisa pós-debate: ${poll}% × ${100 - poll}%`, 4);
+  },
+};
+
+// ======================================================================
+// Telefonema com chefe de Estado: concessões dos dois lados
+// ======================================================================
+
+const telefonema: Demo = {
+  id: 'telefonema',
+  icon: '☎️',
+  title: 'Telefonema com chefe de Estado',
+  kind: 'Diplomacia · concessões',
+  script: 'telefonema',
+  teaches: ['Diplomacia é troca: nada sai de graça', 'Relações externas mexem na economia', 'Pragmatismo × alinhamento'],
+  help: 'Negocie ao telefone. Cada resposta muda a relação com o país e soma pontos de acordo: 5 pontos fecham o acordo.',
+  async run(stage, hud, raw) {
+    const sc = raw as CallScript;
+    const L = lib();
+    const partner = getCountry('BR').partners.find((p) => p.id === sc.partner)!;
+    stage.background.push(...splitCall(sc.partner));
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), 95, 128, 'Presidente'));
+    const leader = stage.add(new Actor(sprite(L, sc.partner === 'china' || sc.partner === 'russia' ? 'empresario' : 'deputado'), 235, 128, sc.leader.name));
+    leader.facing = -1;
+    stage.foreground.push((ctx) => {
+      desk(ctx, 50, 90);
+      desk(ctx, 190, 90, '#3a2a2a');
+      ctx.fillStyle = '#c63d3d';
+      ctx.fillRect(Math.round(pres.x + 5), Math.round(pres.y - 17), 3, 5);
+      ctx.fillRect(Math.round(leader.x - 8), Math.round(leader.y - 17), 3, 5);
+    });
+    let relation = Math.round(labState().relations?.[sc.partner] ?? 0);
+    let points = 0;
+    let costs: Kpis = {};
+    const renderHud = () => {
+      hud.innerHTML = `
+        <div class="lab-meter"><span>${partner.flag} ${esc(partner.short)}</span><i><b style="width:${(relation + 100) / 2}%;background:${relation >= 0 ? '#4fc27f' : '#e0574f'}"></b></i><em>${relation > 0 ? '+' : ''}${relation}</em></div>
+        <div class="lab-hud-line">🤝 Acordo: <b>${'■'.repeat(Math.min(points, 5))}${'□'.repeat(Math.max(0, 5 - points))}</b></div>
+        <div class="lab-hud-line lab-costs">${effectLine(costs)}</div>`;
+    };
+    renderHud();
+    for (let k = 0; k < 3; k++) {
+      sfx.ring();
+      stage.camera.shake(1, 0.2);
+      await stage.wait(0.5);
+    }
+    await stage.banner(`${partner.flag} LINHA DIRETA`, `${sc.leader.title} ${sc.leader.name}`, 1.8);
+    await stage.say(pres, 'Alô? Aqui é do Planalto.');
+    await stage.say(leader, sc.context);
+    await stage.say(leader, `O que queremos: ${sc.theirAsk}`);
+    await stage.say(pres, `E nós precisamos de: ${sc.ourAsk}`);
+    for (const round of sc.rounds) {
+      await stage.say(leader, round.line);
+      const i = await stage.choose('Sua resposta:', round.options.map((o) => ({ label: o.label, hint: `${o.relation > 0 ? '+' : ''}${o.relation} relação · ${'■'.repeat(o.points) || 'sem avanço'}` })), 'Presidente');
+      const o = round.options[i];
+      relation = Math.max(-100, Math.min(100, relation + o.relation));
+      points += o.points;
+      costs = addKpis(costs, o.effects);
+      renderHud();
+      stage.emote(leader, o.relation >= 8 ? '😊' : o.relation <= -8 ? '😠' : '🤔');
+      if (o.relation <= -8) leader.punch(-0.3);
+      else if (o.relation >= 8) leader.jump();
+      await stage.say(leader, o.reaction);
+    }
+    const deal = points >= 5;
+    if (deal) {
+      stage.particles.emit(LW / 2, 60, { colors: ['#f4c542', '#4fc27f', '#6fb6ff'], count: 50, speed: 90, gravity: 110 });
+      sfx.fanfare();
+    } else sfx.down();
+    await stage.banner(deal ? 'ACORDO FECHADO' : 'SEM ACORDO', `Relação com ${partner.name}: ${relation > 0 ? '+' : ''}${relation}`, 4);
+  },
+};
+
+// ======================================================================
+// Reunião ministerial: briga na mesa, lealdade e demissão em cena
+// ======================================================================
+
+const reuniao: Demo = {
+  id: 'reuniao',
+  icon: '👔',
+  title: 'Reunião ministerial',
+  kind: 'Gestão · lealdade do ministério',
+  script: 'reuniao',
+  teaches: ['Ministros têm agendas próprias', 'Arbitrar conflitos custa lealdade', 'Governo dividido vira manchete'],
+  help: 'Dois ministros brigam na sua frente. Decida quem apoiar: a lealdade de cada um muda e, se cair demais, ele pede demissão.',
+  async run(stage, hud, raw) {
+    const sc = raw as MeetingScript;
+    const country = getCountry('BR');
+    const L = lib();
+    stage.background.push(...cabinetRoom());
+    const pres = stage.add(new Actor(sprite(L, 'presidente'), 30, 150, 'Presidente'));
+    const seats = [80, 120, 160, 200, 240, 272];
+    const mins = country.ministers.map((m, i) => {
+      const a = stage.add(new Actor(npcPerson(MINISTER_NPC[m.id] ?? 'rui'), seats[i], 128, m.name));
+      a.facing = -1;
+      return { id: m.id, m, a, loyalty: 30, gone: false };
+    });
+    stage.foreground.push((ctx) => {
+      ctx.fillStyle = '#5a3a22';
+      ctx.fillRect(60, 132, 230, 10);
+      ctx.fillStyle = '#8a5a32';
+      ctx.fillRect(60, 130, 230, 3);
+    });
+    const find = (id: string) => mins.find((x) => x.id === id) ?? mins.find((x) => x.m.role.toLowerCase().includes(id.toLowerCase())) ?? mins[2];
+    let costs: Kpis = {};
+    const renderHud = () => {
+      hud.innerHTML = `<div class="lab-loyalty">${mins
+        .map((x) => `<div class="${x.gone ? 'gone' : ''} ${x.id === sc.clash.a || x.id === sc.clash.b ? 'clash' : ''}"><span>${esc(x.m.role)}</span><i><b style="width:${Math.max(0, (x.loyalty + 100) / 2)}%;background:${x.loyalty >= 0 ? '#4fc27f' : '#e0574f'}"></b></i></div>`)
+        .join('')}</div><div class="lab-hud-line lab-costs">${effectLine(costs)}</div>`;
+    };
+    renderHud();
+    await stage.banner('REUNIÃO MINISTERIAL', sc.agenda, 2.2);
+    const a = find(sc.clash.a);
+    const b = find(sc.clash.b);
+    await stage.say(a.a, sc.clash.aWants);
+    b.a.jump();
+    await stage.say(b.a, sc.clash.bWants, { tone: 'shout' });
+    for (const round of sc.rounds) {
+      const speaker = find(round.speaker);
+      if (speaker.gone) continue;
+      await stage.say(speaker.a, round.line);
+      if (round.interrupt) {
+        const who = find(round.interrupt.speaker);
+        if (!who.gone) {
+          who.a.jump();
+          stage.camera.shake(3, 0.3);
+          stage.particles.emit(who.a.x, 130, { colors: ['#9a6a3a', '#f0ece0'], count: 8, speed: 30, gravity: 200 });
+          await stage.say(who.a, round.interrupt.line, { tone: 'shout' });
+        }
+      }
+      const i = await stage.choose('O senhor decide:', round.options.map((o) => ({ label: o.label })), 'Presidente');
+      const o = round.options[i];
+      costs = addKpis(costs, o.effects);
+      for (const [id, d] of Object.entries(o.loyalty)) {
+        const x = find(id);
+        if (x.gone) continue;
+        x.loyalty = Math.max(-100, Math.min(100, x.loyalty + d));
+        stage.emote(x.a, d > 0 ? '💚' : '💢');
+        if (d < 0) x.a.punch(-0.3);
+      }
+      renderHud();
+      await stage.say(speaker.a, o.reaction);
+      for (const x of mins) {
+        if (x.gone || x.loyalty > -20) continue;
+        x.gone = true;
+        stage.emote(x.a, '🚪', 3);
+        await stage.say(x.a, sc.resignation[x.id] ?? 'Presidente, com todo o respeito: eu saio.', { tone: 'shout' });
+        await x.a.walkTo(300, 140);
+        stage.camera.shake(5, 0.4);
+        sfx.stamp();
+        x.a.visible = false;
+        renderHud();
+        await stage.banner('PEDIU DEMISSÃO', `${x.m.name} deixa o ${x.m.role}`, 2);
+      }
+    }
+    const lost = mins.filter((x) => x.gone).length;
+    pres.jump();
+    await stage.banner(lost ? 'GOVERNO RACHADO' : 'MINISTÉRIO UNIDO', lost ? `${lost} ministro(s) saíram batendo a porta` : 'Ninguém saiu, mas nem todo mundo saiu feliz', 4);
+  },
+};
+
+export const DEMOS: Demo[] = [votacao, debate, telefonema, reuniao, centrao];

@@ -1,5 +1,5 @@
 import type { PixelSprite } from '../engine/types';
-import { AVATARS } from './avatar';
+import { AVATARS, NPCS } from './avatar';
 import type { Ctx } from './pixel';
 
 /* Sprites da biblioteca no mesmo formato que o Claude usa para desenhar os seus. */
@@ -224,4 +224,11 @@ export function drawSprite(ctx: Ctx, s: PixelSprite, x: number, y: number, opts:
       ctx.fillRect(left + cx * scale, top + r * scale, scale, scale);
     }
   }
+}
+
+/** Corpo inteiro de um personagem fixo (ministros, conselheira), a partir do retrato dele. */
+export function npcPerson(key: string, face: 'neutral' | 'angry' | 'happy' = 'neutral'): PixelSprite {
+  const a = NPCS[key] ?? AVATARS[0];
+  const style: Hair = a.beret ? 'beret' : a.style === 'careca' ? 'bald' : a.style === 'longo' || a.style === 'volume' ? 'long' : a.style === 'coque' ? 'bun' : 'short';
+  return person(key, { skin: a.skin, hair: a.hair, style, outfit: a.beret ? 'uniform' : 'suit', main: a.suit, accent: a.beret ?? a.tie, glasses: a.glasses, face });
 }

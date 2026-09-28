@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
+import { LAB_KINDS } from './labScenes';
 import { BACKDROPS, CUSTOM_BACKDROP, CUT_ACTIONS, LIB_SPRITES, MAX_SPRITE, SCENE_ANIMS } from '../src/engine/catalog';
 
 /*
@@ -444,6 +445,12 @@ export function claudeDirector(): Plugin {
             const details = await runClaude(DETAILS_SYSTEM, body.briefing, detailsSchema);
             console.log(`[claude] detalhes gerados em ${((Date.now() - started) / 1000).toFixed(1)}s`);
             return send(res, 200, { details });
+          }
+          if (req.url === '/api/lab' && req.method === 'POST' && LAB_KINDS[body.kind]) {
+            const k = LAB_KINDS[body.kind];
+            const out = await runClaude(k.system, body.briefing, k.schema);
+            console.log(`[claude] cena de laboratório "${body.kind}" gerada em ${((Date.now() - started) / 1000).toFixed(1)}s`);
+            return send(res, 200, out);
           }
           if (req.url === '/api/cutscene' && req.method === 'POST') {
             const cutscene = await runClaude(CUTSCENE_SYSTEM, body.briefing, cutsceneSchema);
