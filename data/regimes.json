@@ -1,0 +1,618 @@
+[
+  {
+    "id": "presidencialismo",
+    "name": "Presidencialismo",
+    "family": "democracia",
+    "icon": "🏛️",
+    "headTitle": "Presidente",
+    "accent": "#f4c542",
+    "summary": "O presidente é eleito pelo voto direto, governa com o Congresso e é fiscalizado pelo STF e pela imprensa.",
+    "gains": "Mandato com prazo, regras claras e alternância no poder. Erros são corrigidos nas urnas.",
+    "losses": "Governar exige coalizão. Sem maioria no Congresso, o presidente trava ou cai.",
+    "examples": [
+      "Brasil desde 1988",
+      "Estados Unidos",
+      "Chile",
+      "México"
+    ],
+    "elections": "livres",
+    "termLimit": 2,
+    "congress": "independente",
+    "removal": [
+      "impeachment",
+      "revolta",
+      "golpe_contra"
+    ],
+    "institutionsCap": {},
+    "scenes": [
+      "telefonema",
+      "reuniao",
+      "coletiva"
+    ],
+    "debate": "debate",
+    "drift": {}
+  },
+  {
+    "id": "parlamentarismo",
+    "name": "Parlamentarismo",
+    "family": "democracia",
+    "icon": "🗳️",
+    "headTitle": "Primeiro-Ministro",
+    "accent": "#6fb6ff",
+    "summary": "O governo nasce da maioria do Parlamento. O chefe de governo fica enquanto tiver apoio e cai por moção de desconfiança.",
+    "gains": "Crises se resolvem trocando o governo, sem impeachment. Não há limite de mandatos.",
+    "losses": "Governo refém da maioria: perdeu a coalizão, perdeu o cargo, a qualquer momento.",
+    "examples": [
+      "Brasil em 1961–1963",
+      "Alemanha",
+      "Reino Unido",
+      "Japão",
+      "Índia"
+    ],
+    "elections": "livres",
+    "termLimit": null,
+    "congress": "independente",
+    "removal": [
+      "desconfianca",
+      "revolta",
+      "golpe_contra"
+    ],
+    "kpiLabels": {
+      "aprovacao": "Aprovação",
+      "coalizao": "Maioria"
+    },
+    "institutionsCap": {},
+    "scenes": [
+      "telefonema",
+      "reuniao",
+      "coletiva"
+    ],
+    "debate": "sessao",
+    "drift": {}
+  },
+  {
+    "id": "monarquia",
+    "name": "Monarquia parlamentar",
+    "family": "democracia",
+    "icon": "👑",
+    "headTitle": "Primeiro-Ministro",
+    "accent": "#b58cff",
+    "summary": "Um monarca hereditário é o chefe de Estado e símbolo da nação. Quem governa é o primeiro-ministro, escolhido pelo Parlamento.",
+    "gains": "Um chefe de Estado acima dos partidos, que dá estabilidade e une o país nas crises.",
+    "losses": "Um cargo que ninguém elegeu, pago pelo contribuinte, e a coroa pode virar peça de disputa política.",
+    "examples": [
+      "Império do Brasil (1822–1889)",
+      "Reino Unido",
+      "Espanha",
+      "Japão",
+      "Suécia"
+    ],
+    "elections": "livres",
+    "termLimit": null,
+    "congress": "independente",
+    "removal": [
+      "desconfianca",
+      "revolta",
+      "golpe_contra"
+    ],
+    "kpiLabels": {
+      "aprovacao": "Aprovação",
+      "coalizao": "Maioria"
+    },
+    "institutionsCap": {},
+    "scenes": [
+      "telefonema",
+      "reuniao",
+      "coletiva",
+      "conselho"
+    ],
+    "council": {
+      "title": "Audiência no Paço Real",
+      "backdrop": "trono",
+      "members": [
+        {
+          "role": "Monarca",
+          "npc": "rei"
+        },
+        {
+          "role": "Mordomo da Casa Real",
+          "npc": "rui"
+        },
+        {
+          "role": "Líder da maioria",
+          "npc": "helena"
+        },
+        {
+          "role": "Líder da oposição",
+          "npc": "otavio"
+        }
+      ]
+    },
+    "debate": "sessao",
+    "drift": {}
+  },
+  {
+    "id": "hibrido",
+    "name": "Regime híbrido",
+    "family": "hibrido",
+    "icon": "🎭",
+    "headTitle": "Presidente",
+    "accent": "#ff9f5a",
+    "summary": "Ainda há eleições, Congresso e tribunais, mas o governo controla as regras do jogo: juízes aliados, imprensa pressionada, eleições desiguais.",
+    "gains": "O governo decide rápido e dificilmente perde uma eleição.",
+    "losses": "Sem freios, os erros se acumulam; a legitimidade vira pó e o país fica isolado.",
+    "examples": [
+      "Hungria",
+      "Turquia",
+      "Venezuela",
+      "Nicarágua",
+      "Rússia dos anos 2000"
+    ],
+    "elections": "controladas",
+    "termLimit": 2,
+    "congress": "independente",
+    "removal": [
+      "impeachment",
+      "revolta",
+      "golpe_contra"
+    ],
+    "institutionsCap": {
+      "stf": 55,
+      "imprensa": 50,
+      "eleicoes": 55
+    },
+    "scenes": [
+      "telefonema",
+      "reuniao",
+      "coletiva"
+    ],
+    "debate": "debate",
+    "drift": {
+      "aprovacao": 0.05
+    }
+  },
+  {
+    "id": "militar",
+    "name": "Ditadura militar",
+    "family": "autocracia",
+    "icon": "🪖",
+    "headTitle": "Chefe da Junta",
+    "accent": "#8fa05a",
+    "summary": "As Forças Armadas governam. O Congresso é fechado ou vira fachada, a imprensa é censurada e o chefe do governo depende dos generais.",
+    "gains": "Ordem imposta e decisões sem oposição. Obras e planos saem do papel rápido.",
+    "losses": "Censura, perseguição e nenhum jeito legal de trocar o governo. Quem te pôs lá pode te tirar.",
+    "examples": [
+      "Brasil (1964–1985)",
+      "Chile (1973–1990)",
+      "Argentina (1976–1983)",
+      "Mianmar"
+    ],
+    "elections": "nenhuma",
+    "termLimit": null,
+    "congress": "fechado",
+    "removal": [
+      "golpe_contra",
+      "revolta"
+    ],
+    "pillar": {
+      "faction": "seguranca",
+      "label": "os generais"
+    },
+    "factionLabels": {
+      "seguranca": [
+        "Alto Comando",
+        "Generais"
+      ],
+      "centrao": [
+        "Políticos do regime",
+        "Arena"
+      ],
+      "tecnologica": [
+        "Oposição clandestina",
+        "Oposição"
+      ]
+    },
+    "kpiLabels": {
+      "aprovacao": "Apoio popular",
+      "coalizao": "Sustentação"
+    },
+    "institutionsCap": {
+      "stf": 20,
+      "congresso": 10,
+      "imprensa": 15,
+      "eleicoes": 0
+    },
+    "scenes": [
+      "telefonema",
+      "conselho",
+      "coletiva"
+    ],
+    "council": {
+      "title": "Reunião da Junta",
+      "backdrop": "quartel",
+      "members": [
+        {
+          "role": "Exército",
+          "npc": "general"
+        },
+        {
+          "role": "Marinha",
+          "npc": "almirante"
+        },
+        {
+          "role": "Aeronáutica",
+          "npc": "brigadeiro"
+        },
+        {
+          "role": "Inteligência",
+          "npc": "espiao"
+        }
+      ]
+    },
+    "debate": null,
+    "drift": {
+      "seguranca": 0.03,
+      "educacao": -0.01,
+      "aprovacao": -0.08,
+      "inflacao": 0.02
+    }
+  },
+  {
+    "id": "personalista",
+    "name": "Ditadura personalista",
+    "family": "autocracia",
+    "icon": "🦅",
+    "headTitle": "Líder da Nação",
+    "accent": "#e0574f",
+    "summary": "Todo o poder gira em torno do líder: culto à personalidade, sindicatos e empresários atrelados ao Estado, leis por decreto.",
+    "gains": "Um líder carismático fala direto com o povo e decide tudo sozinho.",
+    "losses": "Ninguém ousa dizer não ao líder. Os erros viram tragédia, e a sucessão vira guerra.",
+    "examples": [
+      "Estado Novo de Vargas (1937–1945)",
+      "Peronismo",
+      "Coreia do Norte",
+      "Filipinas de Marcos"
+    ],
+    "elections": "nenhuma",
+    "termLimit": null,
+    "congress": "fechado",
+    "removal": [
+      "golpe_contra",
+      "revolta"
+    ],
+    "pillar": {
+      "faction": "seguranca",
+      "label": "a guarda do líder"
+    },
+    "factionLabels": {
+      "seguranca": [
+        "Guarda do Líder",
+        "Guarda"
+      ],
+      "centrao": [
+        "Sindicatos oficiais",
+        "Sindicatos"
+      ],
+      "tecnologica": [
+        "Dissidentes",
+        "Dissidentes"
+      ]
+    },
+    "kpiLabels": {
+      "aprovacao": "Devoção popular",
+      "coalizao": "Sustentação"
+    },
+    "institutionsCap": {
+      "stf": 15,
+      "congresso": 10,
+      "imprensa": 10,
+      "eleicoes": 0
+    },
+    "scenes": [
+      "telefonema",
+      "conselho",
+      "coletiva"
+    ],
+    "council": {
+      "title": "Círculo íntimo do Líder",
+      "backdrop": "gabinete",
+      "members": [
+        {
+          "role": "Chefe da Guarda",
+          "npc": "general"
+        },
+        {
+          "role": "Propaganda",
+          "npc": "caio"
+        },
+        {
+          "role": "Economia",
+          "npc": "helena"
+        },
+        {
+          "role": "Polícia política",
+          "npc": "espiao"
+        }
+      ]
+    },
+    "debate": null,
+    "drift": {
+      "aprovacao": 0.06,
+      "inflacao": 0.04,
+      "educacao": -0.01
+    }
+  },
+  {
+    "id": "socialista",
+    "name": "Socialismo de partido único",
+    "family": "autocracia",
+    "icon": "☭",
+    "headTitle": "Secretário-Geral",
+    "accent": "#d83a3a",
+    "summary": "Um só partido governa em nome dos trabalhadores. O Estado planeja a economia, estatiza as grandes empresas e controla a imprensa.",
+    "gains": "Emprego garantido, saúde e educação universais, menos desigualdade de renda.",
+    "losses": "Filas, escassez e mercado paralelo. Sem liberdade de imprensa nem eleições, e o perigo vem de dentro do partido.",
+    "examples": [
+      "Cuba",
+      "União Soviética",
+      "China",
+      "Vietnã"
+    ],
+    "elections": "nenhuma",
+    "termLimit": null,
+    "congress": "carimbo",
+    "removal": [
+      "expurgo",
+      "revolta"
+    ],
+    "pillar": {
+      "faction": "centrao",
+      "label": "o Comitê Central"
+    },
+    "factionLabels": {
+      "centrao": [
+        "Comitê Central do Partido",
+        "Partido"
+      ],
+      "ruralistas": [
+        "Cooperativas agrícolas",
+        "Cooperativas"
+      ],
+      "religiosos": [
+        "Igrejas toleradas",
+        "Igrejas"
+      ],
+      "seguranca": [
+        "Exército Popular",
+        "Exército"
+      ],
+      "tecnologica": [
+        "Técnicos do Plano",
+        "Plano"
+      ]
+    },
+    "kpiLabels": {
+      "aprovacao": "Apoio popular",
+      "coalizao": "Unidade do Partido"
+    },
+    "institutionsCap": {
+      "stf": 10,
+      "congresso": 15,
+      "imprensa": 5,
+      "eleicoes": 5
+    },
+    "scenes": [
+      "telefonema",
+      "conselho",
+      "coletiva"
+    ],
+    "council": {
+      "title": "Reunião do Politburo",
+      "backdrop": "politburo",
+      "members": [
+        {
+          "role": "Ideologia",
+          "npc": "otavio"
+        },
+        {
+          "role": "Planejamento",
+          "npc": "helena"
+        },
+        {
+          "role": "Exército Popular",
+          "npc": "general"
+        },
+        {
+          "role": "Segurança do Estado",
+          "npc": "espiao"
+        }
+      ]
+    },
+    "debate": null,
+    "drift": {
+      "desemprego": -0.1,
+      "inflacao": 0.06,
+      "educacao": 0.02,
+      "aprovacao": -0.04
+    }
+  },
+  {
+    "id": "teocracia",
+    "name": "Teocracia",
+    "family": "autocracia",
+    "icon": "🕌",
+    "headTitle": "Líder Supremo",
+    "accent": "#4fc27f",
+    "summary": "A lei religiosa está acima da Constituição. Um conselho de líderes religiosos aprova as leis e pode vetar candidatos e governantes.",
+    "gains": "Um código moral único e forte senso de comunidade entre os fiéis.",
+    "losses": "Minorias e outras crenças perdem direitos. Mulheres, artistas e cientistas sofrem restrições, e o país se isola.",
+    "examples": [
+      "Irã desde 1979",
+      "Afeganistão do Talibã",
+      "Vaticano",
+      "Genebra de Calvino"
+    ],
+    "elections": "nenhuma",
+    "termLimit": null,
+    "congress": "carimbo",
+    "removal": [
+      "destituicao",
+      "revolta"
+    ],
+    "pillar": {
+      "faction": "religiosos",
+      "label": "o Conselho de Líderes Religiosos"
+    },
+    "factionLabels": {
+      "religiosos": [
+        "Conselho de Líderes Religiosos",
+        "Conselho"
+      ],
+      "centrao": [
+        "Comerciantes do bazar",
+        "Bazar"
+      ],
+      "seguranca": [
+        "Guarda da Fé",
+        "Guarda"
+      ],
+      "tecnologica": [
+        "Reformistas",
+        "Reformistas"
+      ]
+    },
+    "kpiLabels": {
+      "aprovacao": "Apoio popular",
+      "coalizao": "Bênção do Conselho"
+    },
+    "institutionsCap": {
+      "stf": 20,
+      "congresso": 25,
+      "imprensa": 15,
+      "eleicoes": 25
+    },
+    "scenes": [
+      "telefonema",
+      "conselho",
+      "coletiva"
+    ],
+    "council": {
+      "title": "Conselho de Líderes Religiosos",
+      "backdrop": "templo",
+      "members": [
+        {
+          "role": "Guardião da Doutrina",
+          "npc": "clerigo1"
+        },
+        {
+          "role": "Tribunal Religioso",
+          "npc": "clerigo2"
+        },
+        {
+          "role": "Guarda da Fé",
+          "npc": "general"
+        },
+        {
+          "role": "Pregador da TV",
+          "npc": "clerigo3"
+        }
+      ]
+    },
+    "debate": null,
+    "drift": {
+      "educacao": -0.02,
+      "desemprego": 0.03,
+      "seguranca": 0.02
+    }
+  },
+  {
+    "id": "tecnocracia",
+    "name": "Tecnocracia",
+    "family": "autocracia",
+    "icon": "🤖",
+    "headTitle": "Coordenador-Geral",
+    "accent": "#3fd0d8",
+    "summary": "Especialistas e algoritmos governam por metas e indicadores. A política dá lugar à gestão; o voto vira um detalhe.",
+    "gains": "Decisões baseadas em dados, eficiência, planos de longo prazo sem ciclo eleitoral.",
+    "losses": "Quem não entra na planilha fica de fora. Sem voto, a legitimidade depende de entregar resultado todo mês.",
+    "examples": [
+      "Singapura (em parte)",
+      "Governos técnicos da Itália",
+      "China das metas quinquenais",
+      "Ficção: governo por IA"
+    ],
+    "elections": "nenhuma",
+    "termLimit": null,
+    "congress": "carimbo",
+    "removal": [
+      "destituicao",
+      "revolta"
+    ],
+    "pillar": {
+      "faction": "tecnologica",
+      "label": "o Conselho Técnico"
+    },
+    "factionLabels": {
+      "tecnologica": [
+        "Conselho Técnico",
+        "Conselho"
+      ],
+      "centrao": [
+        "Velha política",
+        "Políticos"
+      ],
+      "religiosos": [
+        "Humanistas",
+        "Humanistas"
+      ],
+      "seguranca": [
+        "Segurança algorítmica",
+        "Algoritmos"
+      ]
+    },
+    "kpiLabels": {
+      "aprovacao": "Satisfação medida",
+      "coalizao": "Confiança do Conselho"
+    },
+    "institutionsCap": {
+      "stf": 40,
+      "congresso": 15,
+      "imprensa": 30,
+      "eleicoes": 5
+    },
+    "scenes": [
+      "telefonema",
+      "conselho",
+      "coletiva"
+    ],
+    "council": {
+      "title": "Painel do Conselho Técnico",
+      "backdrop": "controle",
+      "members": [
+        {
+          "role": "Economia",
+          "npc": "helena"
+        },
+        {
+          "role": "Dados e IA",
+          "npc": "cientista"
+        },
+        {
+          "role": "Infraestrutura",
+          "npc": "tereza"
+        },
+        {
+          "role": "IA de governo",
+          "npc": "robo"
+        }
+      ]
+    },
+    "debate": null,
+    "drift": {
+      "educacao": 0.02,
+      "desemprego": -0.03,
+      "aprovacao": -0.1,
+      "inflacao": -0.02
+    }
+  }
+]

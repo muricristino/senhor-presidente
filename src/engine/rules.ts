@@ -1,6 +1,7 @@
 import { AXES } from './data';
 import { KPIS } from './kpis';
-import type { AxisId, Bill, BillProposal, Country, Deltas, Effects, GameState, Instrument, KpiId, Law, Player } from './types';
+import { capInstitutions, horizon, institutionsOf, isDemocracy, regimeOf, START_INSTITUTIONS } from './regime';
+import type { AxisId, Bill, BillProposal, Country, Deltas, Effects, GameState, InstitutionId, Instrument, KpiId, Law, Player } from './types';
 
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -29,6 +30,10 @@ export function createState(country: Country, player: Player): GameState {
     stf: 'OK',
     decisions: [],
     history: [],
+    regime: 'presidencialismo',
+    institutions: { ...START_INSTITUTIONS },
+    regimeHistory: [],
+    extraTerms: 0,
   };
   const bio = country.bios.find((b) => b.id === player.bioId);
   return bio ? applyEffects(state, bio.effects, country, false).state : state;
@@ -48,6 +53,16 @@ export function applyEffects(
     relations: { ...(state.relations ?? {}) },
   };
   const deltas: Deltas = { kpis: {}, axes: {}, factions: {}, relations: {} };
+
+  if (effects.institutions && Object.keys(effects.institutions).length) {
+    const before = institutionsOf(state);
+    const inst = { ...before };
+    for (const [id, d] of Object.entries(effects.institutions) as [InstitutionId, number][]) if (id in inst && d) inst[id] = inst[id] + d;
+    next.institutions = capInstitutions(inst, regimeOf(state));
+    deltas.institutions = Object.fromEntries(
+      (Object.keys(inst) as InstitutionId[]).map((id) => [id, next.institutions![id] - before[id]]).filter(([, d]) => d !== 0),
+    );
+  }
 
   for (const [id, d] of Object.entries(effects.relations ?? {})) {
     if (!(id in next.relations)) continue;
@@ -127,6 +142,20 @@ export function advanceMonth(state: GameState, country: Country, months = 1): Ga
     }
   }
   next.relations = relations;
+  // O regime mexe nos indicadores todo mês (economia planejada, propaganda, censura...).
+  const regime = regimeOf(state);
+  for (const [k, v] of Object.entries(regime.drift ?? {}) as [KpiId, number][]) {
+    const def = KPIS.find((d) => d.id === k);
+    if (def) next.kpis[k] = round(clamp(next.kpis[k] + v * months, def.min, def.max), 2);
+  }
+  // Instituições: na democracia, freios feridos se recuperam devagar se o governo não insiste;
+  // num governo que concentra poder, eles vão sendo corroídos.
+  const inst = { ...institutionsOf(state) };
+  for (const id of Object.keys(inst) as InstitutionId[]) {
+    if (isDemocracy(state) && state.axes.poder < 30 && inst[id] < START_INSTITUTIONS[id]) inst[id] = Math.min(START_INSTITUTIONS[id], inst[id] + 0.3 * months);
+    else if (state.axes.poder >= 50) inst[id] = inst[id] - 0.15 * months * (state.axes.poder / 100);
+  }
+  next.institutions = capInstitutions(inst, regime);
   // Leis em vigor fazem efeito todo mês.
   for (const law of state.laws ?? []) {
     if (next.month > law.until) continue;
@@ -145,22 +174,62 @@ export const INSTRUMENTS: Record<Instrument, { label: string; needed: number; mo
   lei: { label: 'Projeto de lei', needed: 257, months: 3, power: 1, note: 'Maioria simples. Vai ao plenário em 3 meses.' },
   pec: { label: 'PEC', needed: 308, months: 5, power: 1.3, note: '3/5 da Câmara. Demora mais, efeito maior e mais duradouro.' },
   mp: { label: 'Medida provisória', needed: 257, months: 4, power: 1, note: 'Vale na hora. Se o Congresso rejeitar em 4 meses, cai e parte do efeito se desfaz.' },
+  decreto: { label: 'Decreto', needed: 0, months: 0, power: 1, note: 'Sem Congresso para votar: vale na hora, e ninguém pode derrubar. O custo aparece lá fora e na rua.' },
 };
+
+/**
+ * Efeito das regras do jogo mudadas por lei: reeleição, STF, imprensa, eleições.
+ * O código aplica, para a mecânica ser a mesma seja qual for o texto que o Claude escreveu.
+ */
+export function specialEffects(p: Pick<BillProposal, 'special'>): Effects {
+  switch (p.special) {
+    case 'reeleicao':
+      return { institutions: { eleicoes: -12 }, axes: { poder: 10 } };
+    case 'stf':
+      return { institutions: { stf: -30 }, axes: { poder: 12 } };
+    case 'imprensa':
+      return { institutions: { imprensa: -25 }, axes: { poder: 8, direitos: -8 } };
+    case 'eleicoes':
+      return { institutions: { eleicoes: -25 }, axes: { poder: 10 } };
+    case 'fortalecer':
+      return { institutions: { stf: 8, congresso: 8, imprensa: 8, eleicoes: 8 }, axes: { poder: -8 } };
+    default:
+      return {};
+  }
+}
+
+const mergeEffects = (a: Effects, b: Effects): Effects => {
+  const m = (x?: Record<string, number | undefined>, y?: Record<string, number | undefined>) => {
+    const out: Record<string, number> = {};
+    for (const [k, v] of [...Object.entries(x ?? {}), ...Object.entries(y ?? {})]) out[k] = (out[k] ?? 0) + (v ?? 0);
+    return out;
+  };
+  return { axes: m(a.axes, b.axes), kpis: m(a.kpis, b.kpis), factions: m(a.factions, b.factions), relations: m(a.relations, b.relations), institutions: m(a.institutions, b.institutions) };
+};
+
+/** Lei que passou: efeito da proposta somado ao da regra mudada (e mandato extra, se for a PEC da reeleição). */
+function enact(state: GameState, p: BillProposal, k: number, country: Country): { state: GameState; deltas: Deltas } {
+  const r = applyEffects(state, mergeEffects(scaleEffects(p.effects, k), specialEffects(p)), country);
+  if (p.special !== 'reeleicao') return r;
+  const next = { ...r.state, extraTerms: (r.state.extraTerms ?? 0) + 1 };
+  return { state: { ...next, totalMonths: horizon(next) }, deltas: r.deltas };
+}
 
 /** Multiplica um efeito (usado para o peso de PEC e para desfazer MP rejeitada). */
 export function scaleEffects(e: Effects, k: number): Effects {
   const m = (o?: Record<string, number | undefined>) => Object.fromEntries(Object.entries(o ?? {}).map(([id, v]) => [id, (v ?? 0) * k]));
-  return { axes: m(e.axes), kpis: m(e.kpis), factions: m(e.factions), relations: m(e.relations) };
+  return { axes: m(e.axes), kpis: m(e.kpis), factions: m(e.factions), relations: m(e.relations), institutions: m(e.institutions) };
 }
 
 /** Envia o projeto: MP já vale e começa a fazer efeito; lei e PEC só depois da votação. */
 export function proposeBill(state: GameState, p: BillProposal, instrument: Instrument, country: Country): { state: GameState; deltas: Deltas } {
   const rule = INSTRUMENTS[instrument];
   const bill: Bill = { ...p, instrument, proposedMonth: state.month, voteMonth: state.month + rule.months };
-  if (instrument !== 'mp') return { state: { ...state, bill }, deltas: { kpis: {}, axes: {}, factions: {}, relations: {} } };
-  const r = applyEffects(state, p.effects, country);
+  if (instrument !== 'mp' && instrument !== 'decreto') return { state: { ...state, bill }, deltas: { kpis: {}, axes: {}, factions: {}, relations: {} } };
+  const r = enact(state, p, 1, country);
   const law: Law = { title: p.title, icon: p.icon, monthly: p.monthly, until: state.month + p.months };
-  return { state: { ...r.state, bill, laws: [...(state.laws ?? []), law] }, deltas: r.deltas };
+  // decreto não passa por votação: não fica projeto pendente
+  return { state: { ...r.state, bill: instrument === 'decreto' ? null : bill, laws: [...(r.state.laws ?? []), law] }, deltas: r.deltas };
 }
 
 /** Resultado da votação no plenário. */
@@ -170,8 +239,12 @@ export function concludeBill(state: GameState, passed: boolean, country: Country
   const rule = INSTRUMENTS[bill.instrument];
   let next: GameState = { ...state, bill: null };
   let r;
-  if (passed && bill.instrument !== 'mp') {
-    r = applyEffects(next, scaleEffects(bill.effects, rule.power), country);
+  if (passed && bill.special?.startsWith('regime:')) {
+    // plebiscito ou constituinte: a lei só convoca o voto; quem muda o regime é o resultado
+    r = applyEffects(next, { kpis: { coalizao: 3 } }, country);
+    next = r.state;
+  } else if (passed && bill.instrument !== 'mp') {
+    r = enact(next, bill, rule.power, country);
     const law: Law = { title: bill.title, icon: bill.icon, monthly: scaleEffects({ kpis: bill.monthly }, rule.power).kpis ?? {}, until: state.month + Math.round(bill.months * rule.power) };
     next = { ...r.state, laws: [...(r.state.laws ?? []), law] };
   } else if (passed) {

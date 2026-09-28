@@ -1,5 +1,8 @@
-import { ageOf, electionMonth, yearOf } from './calendar';
-import type { Country, Cutscene, GameEvent, GameState } from './types';
+import { ageOf, electionMonth } from './calendar';
+import { democracyIndex, economyScore, institutionsOf, isParliamentary, isPresidential, regimeOf, threats } from './regime';
+import type { Country, CrisisKind, Cutscene, Effects, Ending, GameState } from './types';
+
+export { economyScore } from './regime';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -13,14 +16,28 @@ function noise(state: GameState, salt: number, amplitude: number): number {
 
 // ---------- eleição ----------
 
-export function electionDue(state: GameState, country: Country): boolean {
-  if (state.term >= country.calendar.max_terms || state.electionsHeld.includes(state.term)) return false;
-  return state.month >= electionMonth(state, state.term, country.calendar.election_month);
+/** Quantos mandatos seguidos o regime permite agora (a PEC da reeleição soma mais um). */
+export function maxTerms(state: GameState, country: Country): number {
+  const limit = regimeOf(state).termLimit;
+  return (limit ?? country.calendar.max_terms) + (state.extraTerms ?? 0);
 }
 
-/** Nota da economia de 0 a 100: emprego e preços pesam no voto. */
-export function economyScore(state: GameState): number {
-  return clamp(50 + (8 - state.kpis.desemprego) * 6 + (4.5 - state.kpis.inflacao) * 6, 0, 100);
+/** Este é o último mandato permitido: não há mais reeleição. */
+export function lastTerm(state: GameState, country: Country): boolean {
+  return isPresidential(state) && state.term >= maxTerms(state, country);
+}
+
+/** Mês da próxima eleição do governante, ou null se o regime não tem eleição para o cargo. */
+export function nextElectionMonth(state: GameState, country: Country): number | null {
+  if (isPresidential(state)) return lastTerm(state, country) ? null : electionMonth(state, state.term, country.calendar.election_month);
+  if (isParliamentary(state)) return state.nextElection ?? state.month + 48;
+  return null;
+}
+
+export function electionDue(state: GameState, country: Country): boolean {
+  if (isPresidential(state) && state.electionsHeld.includes(state.term)) return false;
+  const m = nextElectionMonth(state, country);
+  return m !== null && state.month >= m;
 }
 
 export interface ElectionResult {
@@ -30,111 +47,18 @@ export interface ElectionResult {
 }
 
 export function electionResult(state: GameState): ElectionResult {
-  const base = 0.6 * state.kpis.aprovacao + 0.25 * economyScore(state) + 0.15 * state.kpis.coalizao;
+  const inst = institutionsOf(state);
+  // No parlamentarismo o voto é para o Parlamento: a maioria pesa mais que a figura do premiê.
+  let base = isParliamentary(state)
+    ? 0.45 * state.kpis.aprovacao + 0.2 * economyScore(state) + 0.35 * state.kpis.coalizao
+    : 0.6 * state.kpis.aprovacao + 0.25 * economyScore(state) + 0.15 * state.kpis.coalizao;
+  // Eleição controlada: tribunal eleitoral aliado e imprensa acuada dão votos que a urna não daria.
+  if (regimeOf(state).elections === 'controladas' || inst.eleicoes < 60) base += Math.max(0, 80 - inst.eleicoes) * 0.3 + Math.max(0, 60 - inst.imprensa) * 0.1;
   const firstRound = Math.round(clamp(base - 5 + noise(state, 1, 3), 3, 80) * 10) / 10;
   if (firstRound >= 50) return { firstRound, runoff: null, won: true };
   if (firstRound < 25) return { firstRound, runoff: null, won: false };
   const runoff = Math.round(clamp(50 + (base - 47) * 1.3 + noise(state, 2, 3), 20, 80) * 10) / 10;
   return { firstRound, runoff, won: runoff >= 50 };
-}
-
-export function campaignEvent(state: GameState): GameEvent {
-  const year = yearOf(state, state.month);
-  const post = (who: string, at: string, text: string, likes: number, tone: 'angry' | 'happy' | 'neutral' | 'press') => ({ who, at, text, likes, tone });
-  return {
-    id: `ELEICAO_${year}`,
-    country: state.countryId,
-    month: state.month,
-    month_name: 'Outubro',
-    kind: 'marco',
-    kicker: `ELEIÇÕES ${year} · RETA FINAL`,
-    title: 'A campanha pela reeleição',
-    dossier: [
-      `Faltam três semanas para o primeiro turno. As pesquisas mostram você com ${Math.round(state.kpis.aprovacao)}% de aprovação.`,
-      'O marqueteiro quer uma estratégia hoje. Cada caminho fala com um eleitor diferente.',
-    ],
-    echoes: [],
-    advisor: 'Presidente, a Constituição permite uma única reeleição seguida. Se perder, volta para casa. Se ganhar, são mais quatro anos, e depois não tem mais.',
-    scene: { anim: 'speech' },
-    pressure: { seconds: 60, label: 'DIAS ATÉ O PRIMEIRO TURNO', unitMax: 21, unit: 'd' },
-    ministers: {
-      casacivil: 'Os prefeitos aliados valem mais que qualquer propaganda. Mas eles cobram obras antes da eleição.',
-      fazenda: 'Qualquer bondade agora vira inflação no ano que vem. O mercado vai ler cada anúncio.',
-      comunicacao: 'Debate na TV é arriscado. Vídeo curto nas redes é garantido. O senhor escolhe o risco.',
-      justica: 'Cuidado: usar a máquina pública na campanha é crime eleitoral. O TSE está de olho.',
-    },
-    social: {
-      trending: `#Eleicoes${year}`,
-      sentiment: 0,
-      posts: [
-        post('Economia Hoje', 'economiahoje', `Pesquisa: presidente aparece com ${Math.round(state.kpis.aprovacao)}% de aprovação a três semanas do 1º turno.`, 6000, 'press'),
-        post('Tia Cleide', 'tiacleide.zap', 'Já sei em quem vou votar. Não vou falar. Mas já sei. 🤫', 30000, 'neutral'),
-        post('Pedro Memes', 'pedrao.memes', 'horário eleitoral começou e minha avó já decorou o jingle de todos os candidatos', 90000, 'happy'),
-      ],
-    },
-    options: [
-      {
-        id: 'obras',
-        icon: '🏗️',
-        title: 'Inaugurar obras pelo país inteiro',
-        summary: 'Maratona de inaugurações com prefeitos aliados. Vitrine forte, gasto alto.',
-        effects: { axes: { governanca: 5 }, kpis: { aprovacao: 5, inflacao: 0.3, coalizao: 3 }, factions: { centrao: 10 } },
-        scene: { anim: 'celebrate' },
-        headline: 'Presidente inaugura 40 obras em 20 dias',
-        subhead: 'Oposição acusa uso da máquina; TSE analisa denúncias.',
-        lesson: { title: 'A máquina pública na eleição', text: 'Quem está no cargo tem vantagem: obras, agenda e visibilidade. Por isso a lei eleitoral proíbe inaugurações com candidatos nos 3 meses antes da votação e limita gastos com publicidade. A reeleição, permitida desde 1997 (EC 16), criou esse dilema: o presidente governa e faz campanha ao mesmo tempo.' },
-        social: { trending: '#Inauguracao', sentiment: 10, posts: [post('Tia Cleide', 'tiacleide.zap', 'Asfaltaram minha rua! Depois de 20 anos! 🙌', 40000, 'happy'), post('Advogada Ju', 'ju.constituicao', 'Inauguração com candidato em período eleitoral é conduta vedada. Só lembrando.', 12000, 'press')] },
-      },
-      {
-        id: 'debate',
-        icon: '🎤',
-        title: 'Ir a todos os debates na TV',
-        summary: 'Encarar a oposição ao vivo. Pode virar o jogo, ou virar meme.',
-        effects: { axes: { poder: -5 }, kpis: { aprovacao: state.kpis.aprovacao >= 45 ? 4 : 6 }, factions: { tecnologica: 4 } },
-        scene: { anim: 'speech' },
-        headline: 'Presidente domina debate e sobe nas pesquisas',
-        subhead: 'Oponentes criticam números, mas a performance agrada eleitores indecisos.',
-        lesson: { title: 'Debate é prestação de contas', text: 'Debater com adversários é um ritual democrático: o governante se submete ao contraditório em público. Candidatos com folga costumam fugir dos debates; quem precisa virar votos, vai. Você preferiu o risco da exposição.' },
-        social: { trending: '#Debate', sentiment: 20, posts: [post('Pedro Memes', 'pedrao.memes', 'o presidente no debate: 🔥🔥 o adversário: 🧍', 150000, 'happy'), post('Economia Hoje', 'economiahoje', 'Checagem: 3 dos 10 números citados no debate estavam errados.', 7000, 'press')] },
-      },
-      {
-        id: 'bondades',
-        icon: '🎁',
-        title: 'Aumentar benefícios sociais agora',
-        summary: 'Reajuste de benefícios às vésperas da eleição. Popular, caro e polêmico.',
-        effects: { axes: { economia: -8 }, kpis: { aprovacao: 7, inflacao: 0.6, selic: 0.5 }, factions: { centrao: 5, tecnologica: -3 } },
-        scene: { anim: 'money_rain' },
-        headline: 'Governo turbina benefícios a um mês da eleição',
-        subhead: 'Economistas falam em “eleitoreiro”; beneficiários comemoram.',
-        lesson: { title: 'O ciclo político-econômico', text: 'Governos tendem a gastar mais perto das eleições e cortar depois. Economistas chamam isso de ciclo político-econômico. O eleitor sente o alívio agora; a conta, em inflação e juros, chega depois da posse.' },
-        social: { trending: '#Eleitoreiro', sentiment: 5, posts: [post('Tia Cleide', 'tiacleide.zap', 'Caiu o aumento! Esse presidente olha pelo povo 🙏', 70000, 'happy'), post('Faria Lima Insider', 'fl.insider', 'Bondade de véspera, ressaca garantida em janeiro.', 9000, 'angry')] },
-      },
-      {
-        id: 'ataque',
-        icon: '🗡️',
-        title: 'Campanha de ataque ao adversário',
-        summary: 'Dossiês, vídeos duros e muito conteúdo nas redes contra o oponente.',
-        effects: { axes: { poder: 6, direitos: -4 }, kpis: { aprovacao: 2, coalizao: -3 }, factions: { seguranca: 5, tecnologica: -8 } },
-        scene: { anim: 'phones_live' },
-        headline: 'Guerra de dossiês domina reta final da campanha',
-        subhead: 'TSE manda remover vídeos dos dois lados. Eleitores reclamam do nível.',
-        lesson: { title: 'Campanha negativa funciona?', text: 'Pesquisas mostram que ataques mobilizam a própria base e desanimam o eleitor do adversário, mas também aumentam a rejeição de quem ataca. No Brasil, o TSE pode mandar remover propaganda com fatos sabidamente falsos.' },
-        social: { trending: '#BaixoNivel', sentiment: -30, posts: [post('Tio Nando', 'tionando.patriota', 'Tem que mostrar quem é o outro mesmo! 🔥', 40000, 'happy'), post('Prof. Marina', 'profmarina', 'Nenhuma proposta, só ódio. Que campanha triste.', 30000, 'angry')] },
-      },
-    ],
-    omission: {
-      id: 'omissao',
-      icon: '⌛',
-      title: 'Campanha sem estratégia',
-      summary: 'O tempo acabou sem decisão.',
-      effects: { kpis: { aprovacao: -3 } },
-      scene: { anim: 'calm' },
-      headline: 'Campanha do presidente parece sem rumo',
-      subhead: 'Aliados reclamam de falta de comando na reta final.',
-      lesson: { title: 'Campanha também é governo', text: 'Uma campanha sem direção passa a imagem de um governo sem direção.' },
-      social: { trending: '#CadeACampanha', sentiment: -30, posts: [post('Pedro Memes', 'pedrao.memes', 'campanha do presidente tá mais parada que fila do INSS', 60000, 'angry')] },
-    },
-  };
 }
 
 export function electionCutscene(state: GameState, r: ElectionResult): Cutscene {
@@ -167,7 +91,17 @@ export function electionCutscene(state: GameState, r: ElectionResult): Cutscene 
 // ---------- impeachment ----------
 
 export function impeachmentDue(state: GameState): boolean {
-  return state.month >= state.impeachmentShieldUntil && state.kpis.aprovacao <= 28 && state.kpis.coalizao <= 35;
+  return crisisDue(state) === 'impeachment';
+}
+
+/** A crise terminal que explodiu agora (ameaça no máximo e fora do escudo), se houver. */
+export function crisisDue(state: GameState): CrisisKind | null {
+  const t = threats(state);
+  for (const [kind, level] of Object.entries(t) as [CrisisKind, number][]) {
+    const shield = kind === 'impeachment' ? Math.max(state.impeachmentShieldUntil, state.crisisShield?.impeachment ?? 0) : state.crisisShield?.[kind] ?? 0;
+    if (level >= 100 && state.month >= shield) return kind;
+  }
+  return null;
 }
 
 export interface ImpeachmentVote {
@@ -181,110 +115,14 @@ export interface ImpeachmentVote {
 export function impeachmentVote(state: GameState, country: Country): ImpeachmentVote {
   const { seats, impeachment_votes: needed } = country.chamber;
   const support = 0.65 * state.kpis.coalizao + 0.35 * state.kpis.aprovacao;
-  const yes = Math.round(clamp(seats * clamp(1.05 - support / 55, 0.05, 0.97) + noise(state, 3, 15), 0, seats - 5));
+  // Congresso capturado não afasta o governante: os votos de oposição encolhem com a independência.
+  const independence = state.regime === 'hibrido' ? Math.min(1, institutionsOf(state).congresso / 75) : 1;
+  const yes = Math.round(clamp(seats * clamp(1.05 - support / 55, 0.05, 0.97) * independence + noise(state, 3, 15), 0, seats - 5));
   const no = seats - yes - Math.round(clamp(8 + noise(state, 4, 6), 2, 20));
   return { yes, no, needed, passed: yes >= needed };
 }
 
-export function impeachmentEvent(state: GameState): GameEvent {
-  const post = (who: string, at: string, text: string, likes: number, tone: 'angry' | 'happy' | 'neutral' | 'press') => ({ who, at, text, likes, tone });
-  return {
-    id: `IMPEACHMENT_${state.month}`,
-    country: state.countryId,
-    month: state.month,
-    month_name: '',
-    kind: 'crise',
-    kicker: 'CRISE TERMINAL · CÂMARA DOS DEPUTADOS',
-    title: 'Pedido de impeachment aceito',
-    dossier: [
-      `Com ${Math.round(state.kpis.aprovacao)}% de aprovação e a base desfeita, o presidente da Câmara aceitou um pedido de impeachment por crime de responsabilidade.`,
-      'A votação no plenário é em poucos dias. São necessários 342 dos 513 deputados para o processo seguir ao Senado, que decide o afastamento.',
-    ],
-    echoes: [],
-    advisor: 'Presidente, isso é político, não só jurídico. Quem decide são os votos, e a hora de buscá-los é agora.',
-    scene: { anim: 'protest' },
-    pressure: { seconds: 55, label: 'DIAS ATÉ A VOTAÇÃO NO PLENÁRIO', unitMax: 10, unit: 'd' },
-    ministers: {
-      casacivil: 'O Centrão vende caro, mas vende. Cargos e emendas agora podem salvar o mandato.',
-      justica: 'O rito é o da Lei 1.079/1950 e dos artigos 85 e 86 da Constituição. A Câmara autoriza, o Senado julga.',
-      comunicacao: 'Uma fala em rede nacional pode reverter o humor da rua, se o senhor tiver algo a dizer.',
-      defesa: 'As Forças Armadas vão respeitar a Constituição, presidente. Não conte com a gente para outra coisa.',
-    },
-    social: {
-      trending: '#Impeachment',
-      sentiment: -60,
-      posts: [
-        post('Economia Hoje', 'economiahoje', 'Presidente da Câmara aceita pedido de impeachment. Votação deve ocorrer em 10 dias.', 20000, 'press'),
-        post('Tio Nando', 'tionando.patriota', 'É GOLPE!!! O povo votou!!!', 50000, 'angry'),
-        post('Advogada Ju', 'ju.constituicao', 'Impeachment não é golpe: está na Constituição. Mas precisa de crime de responsabilidade.', 30000, 'press'),
-      ],
-    },
-    options: [
-      {
-        id: 'centrao',
-        icon: '💼',
-        title: 'Entregar ministérios ao Centrão',
-        summary: 'Cargos, emendas e ministérios em troca de votos contra o impeachment.',
-        effects: { axes: { governanca: -5 }, kpis: { coalizao: 12, aprovacao: -3 }, factions: { centrao: 25 } },
-        scene: { anim: 'money_rain' },
-        headline: 'Governo loteia ministérios na véspera da votação',
-        subhead: 'Centrão promete votos; oposição fala em “balcão de negócios”.',
-        lesson: { title: 'O preço da sobrevivência', text: 'No presidencialismo de coalizão, quem perde a base perde o mandato. Os impeachments de 1992 e 2016 mostraram que a votação é, antes de tudo, política: conta quantos votos o governo consegue segurar, e o Centrão costuma ser o fiel da balança.' },
-        social: { trending: '#Balcao', sentiment: -40, posts: [post('Prof. Marina', 'profmarina', 'Compraram o mandato. Simples assim.', 40000, 'angry')] },
-      },
-      {
-        id: 'tv',
-        icon: '📺',
-        title: 'Pronunciamento em rede nacional',
-        summary: 'Falar direto com o povo, admitir erros e pedir uma segunda chance.',
-        effects: { axes: { poder: -5 }, kpis: { aprovacao: 7 }, factions: { tecnologica: 4 } },
-        scene: { anim: 'speech' },
-        headline: 'Em rede nacional, presidente admite erros e pede chance',
-        subhead: 'Panelaço em algumas capitais; aplausos em outras.',
-        lesson: { title: 'Opinião pública e impeachment', text: 'Deputados votam olhando para as ruas e para a própria reeleição. Reverter a opinião pública muda o cálculo de muitos, mas raramente em poucos dias.' },
-        social: { trending: '#Pronunciamento', sentiment: -10, posts: [post('Tia Cleide', 'tiacleide.zap', 'Achei sincero. Todo mundo erra.', 20000, 'happy')] },
-      },
-      {
-        id: 'ruas',
-        icon: '📣',
-        title: 'Convocar apoiadores para as ruas',
-        summary: 'Atos em todo o país para pressionar os deputados.',
-        effects: { axes: { poder: 12 }, kpis: { aprovacao: 4, coalizao: -5 }, factions: { seguranca: 8, centrao: -8 } },
-        scene: { anim: 'protest' },
-        headline: 'Atos a favor e contra o presidente dividem o país',
-        subhead: 'Deputados relatam pressão e ameaças nas redes.',
-        lesson: { title: 'A rua contra o plenário', text: 'Mobilizar a base mostra força, mas pode irritar os deputados que você precisa convencer. Emparedar o Congresso costuma unir o Congresso contra você.' },
-        social: { trending: '#FicaPresidente', sentiment: -20, posts: [post('Tio Nando', 'tionando.patriota', 'TODO MUNDO NA RUA DOMINGO!!! 🇧🇷', 90000, 'happy')] },
-      },
-      {
-        id: 'renunciar',
-        icon: '🚪',
-        title: 'Renunciar antes da votação',
-        summary: 'Sair antes de ser tirado. O vice assume e você preserva os direitos políticos.',
-        effects: {},
-        scene: { anim: 'calm' },
-        headline: 'Presidente renuncia antes da votação do impeachment',
-        subhead: 'Vice assume o Planalto. Mercado sobe.',
-        lesson: { title: 'A renúncia como saída', text: 'Renunciar evita a condenação e a perda de direitos políticos por 8 anos, que é a pena do impeachment. Em 1992, Collor renunciou horas antes do julgamento no Senado, mas o processo seguiu mesmo assim.' },
-        social: { trending: '#Renuncia', sentiment: 0, posts: [post('Economia Hoje', 'economiahoje', 'Presidente renuncia; vice toma posse ainda hoje.', 40000, 'press')] },
-      },
-    ],
-    omission: {
-      id: 'omissao',
-      icon: '⌛',
-      title: 'O presidente esperou',
-      summary: 'Sem reação.',
-      effects: { kpis: { coalizao: -4 } },
-      scene: { anim: 'vote_yes' },
-      headline: 'Sem reação do Planalto, base debanda',
-      subhead: 'Deputados indecisos passam para o lado do impeachment.',
-      lesson: { title: 'Silêncio é voto contra', text: 'Num processo de impeachment, a omissão do governo é lida como fraqueza, e deputados indecisos correm para o lado vencedor.' },
-      social: { trending: '#Impeachment', sentiment: -70, posts: [] },
-    },
-  };
-}
-
-export function impeachmentCutscene(v: ImpeachmentVote): Cutscene {
+export function impeachmentCutscene(v: ImpeachmentVote, kind: 'impeachment' | 'desconfianca' = 'impeachment'): Cutscene {
   return {
     backdrop: 'camara',
     actors: [
@@ -301,14 +139,235 @@ export function impeachmentCutscene(v: ImpeachmentVote): Cutscene {
       { t: 4, do: 'slam', actor: 'mesa' },
       { t: 4.2, do: v.passed ? 'jump' : 'shake', actor: 'sim', dur: 1 },
       { t: 4.2, do: v.passed ? 'shake' : 'jump', actor: 'nao', dur: 1 },
-      { t: 4.4, do: 'say', actor: 'mesa', text: v.passed ? 'AUTORIZADO!' : 'ARQUIVADO!', dur: 2 },
+      { t: 4.4, do: 'say', actor: 'mesa', text: v.passed ? (kind === 'desconfianca' ? 'O GOVERNO CAIU!' : 'AUTORIZADO!') : 'ARQUIVADO!', dur: 2 },
     ],
-    caption: v.passed
-      ? `Câmara autoriza o impeachment: ${v.yes} votos (eram necessários ${v.needed}). O Senado afasta o presidente.`
-      : `Impeachment barrado: ${v.yes} votos a favor, faltaram ${v.needed - v.yes}. O presidente sobrevive.`,
+    caption:
+      kind === 'desconfianca'
+        ? v.passed
+          ? `Moção de desconfiança aprovada: ${v.yes} votos (eram necessários ${v.needed}). O governo cai.`
+          : `Moção rejeitada: ${v.yes} votos contra o governo, faltaram ${v.needed - v.yes}. O governo fica.`
+        : v.passed
+          ? `Câmara autoriza o impeachment: ${v.yes} votos (eram necessários ${v.needed}). O Senado afasta o presidente.`
+          : `Impeachment barrado: ${v.yes} votos a favor, faltaram ${v.needed - v.yes}. O presidente sobrevive.`,
   };
 }
 
 export function presidentAge(state: GameState): number {
   return ageOf(state, state.month);
+}
+
+// ---------- crises terminais: como cada saída termina ----------
+
+/** As saídas de cada crise. O Claude escreve as opções; o papel de cada uma decide a mecânica. */
+export const CRISIS_ROLES: Record<CrisisKind, { id: string; hint: string }[]> = {
+  impeachment: [
+    { id: 'negociar', hint: 'comprar votos na Câmara com cargos e emendas' },
+    { id: 'opiniao', hint: 'falar ao país e virar a opinião pública' },
+    { id: 'ruas', hint: 'convocar a base às ruas para pressionar os deputados' },
+    { id: 'renunciar', hint: 'renunciar antes da votação' },
+  ],
+  desconfianca: [
+    { id: 'negociar', hint: 'recompor a maioria com cargos e concessões aos partidos' },
+    { id: 'opiniao', hint: 'discurso no Parlamento pedindo confiança' },
+    { id: 'dissolver', hint: 'dissolver o Parlamento e antecipar as eleições' },
+    { id: 'renunciar', hint: 'renunciar e deixar a maioria escolher outro chefe de governo' },
+  ],
+  revolta: [
+    { id: 'reprimir', hint: 'mandar a polícia e as tropas limparem as ruas' },
+    { id: 'ceder', hint: 'atender as exigências da rua, custe o que custar' },
+    { id: 'dialogar', hint: 'abrir negociação com os líderes do movimento' },
+    { id: 'renunciar', hint: 'deixar o palácio e sair do país' },
+  ],
+  golpe_contra: [
+    { id: 'resistir', hint: 'resistir com as tropas leais e as instituições' },
+    { id: 'negociar', hint: 'ceder poder aos militares para ficar no cargo' },
+    { id: 'povo', hint: 'chamar o povo às ruas para defender o governo' },
+    { id: 'renunciar', hint: 'aceitar a saída e partir para o exílio' },
+  ],
+  expurgo: [
+    { id: 'negociar', hint: 'dividir o poder com a facção rival do partido' },
+    { id: 'expurgar', hint: 'atacar primeiro: prender os conspiradores' },
+    { id: 'autocritica', hint: 'fazer autocrítica pública e mudar o rumo' },
+    { id: 'renunciar', hint: 'deixar o cargo em troca de uma aposentadoria tranquila' },
+  ],
+  destituicao: [
+    { id: 'negociar', hint: 'fazer concessões ao conselho' },
+    { id: 'expurgar', hint: 'dissolver o conselho e nomear leais' },
+    { id: 'autocritica', hint: 'reconhecer os erros e entregar metas novas' },
+    { id: 'renunciar', hint: 'deixar o cargo de forma negociada' },
+  ],
+};
+
+/** Como a crise termina se o governante perde ou sai. */
+export const CRISIS_ENDING: Record<CrisisKind, { lose: Ending; quit: Ending }> = {
+  impeachment: { lose: 'impeachment', quit: 'renuncia' },
+  desconfianca: { lose: 'desconfianca', quit: 'renuncia' },
+  revolta: { lose: 'queda', quit: 'exilio' },
+  golpe_contra: { lose: 'deposto', quit: 'exilio' },
+  expurgo: { lose: 'expurgo', quit: 'renuncia' },
+  destituicao: { lose: 'destituido', quit: 'renuncia' },
+};
+
+/** Força da saída escolhida (positivo favorece o governante). Impeachment e moção são decididos no voto. */
+function crisisScore(kind: CrisisKind, role: string, s: GameState): number {
+  const a = s.kpis.aprovacao;
+  const c = s.kpis.coalizao;
+  const dem = democracyIndex(s);
+  const seg = s.factions.seguranca ?? 0;
+  const auto = regimeOf(s).family === 'autocracia';
+  const pillar = regimeOf(s).pillar ? s.factions[regimeOf(s).pillar!.faction] ?? 0 : 0;
+  switch (`${kind}:${role}`) {
+    case 'revolta:reprimir':
+      return seg * 0.5 + (auto ? 15 : -10) - (dem - 40) * 0.3;
+    case 'revolta:ceder':
+      return (a - 22) * 1.2 + (economyScore(s) - 40) * 0.2;
+    case 'revolta:dialogar':
+      return (a - 25) + (dem - 50) * 0.2;
+    case 'golpe_contra:resistir':
+      return (dem - 45) * 0.6 + (a - 35) * 0.4 + seg * 0.2;
+    case 'golpe_contra:negociar':
+      return 8 + seg * 0.3;
+    case 'golpe_contra:povo':
+      return (a - 40) * 0.8 + (dem - 50) * 0.2;
+    case 'expurgo:negociar':
+    case 'destituicao:negociar':
+      return pillar * 0.4 + (c - 35) * 0.5;
+    case 'expurgo:expurgar':
+    case 'destituicao:expurgar':
+      return seg * 0.5 + 5 - Math.max(0, 30 - c);
+    case 'expurgo:autocritica':
+    case 'destituicao:autocritica':
+      return (c - 30) * 0.6 + (a - 35) * 0.3;
+    default:
+      // ficar parado numa crise terminal quase nunca salva ninguém
+      return -15;
+  }
+}
+
+/** Chance (0 a 1) de o governante sobreviver com esta saída, para a conselheira avisar antes. */
+export function crisisOdds(kind: CrisisKind, role: string, s: GameState, country: Country): number {
+  if (role === 'renunciar') return 0;
+  if (kind === 'impeachment') {
+    const v = impeachmentVote(s, country);
+    return clamp(0.5 + (v.needed - v.yes) / 60, 0.03, 0.97);
+  }
+  if (kind === 'desconfianca') {
+    const v = confidenceVote(s, country);
+    return role === 'dissolver' ? 1 : clamp(0.5 + (v.needed - v.yes) / 60, 0.03, 0.97);
+  }
+  return clamp(1 / (1 + Math.exp(-crisisScore(kind, role, s) / 8)), 0.03, 0.97);
+}
+
+export const oddsLabel = (p: number) => (p >= 0.7 ? 'alta' : p >= 0.4 ? 'média' : p > 0.03 ? 'baixa' : 'nenhuma');
+
+/** Moção de desconfiança: quantos deputados votam para derrubar o governo (maioria absoluta derruba). */
+export function confidenceVote(state: GameState, country: Country): ImpeachmentVote {
+  const { seats } = country.chamber;
+  const needed = Math.floor(seats / 2) + 1;
+  const support = 0.8 * state.kpis.coalizao + 0.2 * state.kpis.aprovacao;
+  const yes = Math.round(clamp(seats * clamp(1.02 - support / 70, 0.05, 0.95) + noise(state, 5, 15), 0, seats - 5));
+  const no = seats - yes - Math.round(clamp(6 + noise(state, 6, 4), 2, 12));
+  return { yes, no, needed, passed: yes >= needed };
+}
+
+export interface CrisisOutcome {
+  survived: boolean;
+  ending?: Ending;
+  /** Efeitos da saída escolhida, além dos que a opção já trouxe. */
+  effects: Effects;
+  vote?: ImpeachmentVote;
+  /** Moção de desconfiança respondida com dissolução: eleição agora. */
+  earlyElection?: boolean;
+}
+
+/** Resolve a crise com o estado já depois dos efeitos da opção escolhida. */
+export function resolveCrisis(kind: CrisisKind, role: string, s: GameState, country: Country): CrisisOutcome {
+  const ends = CRISIS_ENDING[kind];
+  if (role === 'renunciar') return { survived: false, ending: ends.quit, effects: {} };
+  if (kind === 'impeachment') {
+    const vote = impeachmentVote(s, country);
+    return { survived: !vote.passed, ending: vote.passed ? ends.lose : undefined, vote, effects: vote.passed ? {} : { kpis: { coalizao: 6, aprovacao: 3 } } };
+  }
+  if (kind === 'desconfianca') {
+    if (role === 'dissolver') return { survived: true, earlyElection: true, effects: {} };
+    const vote = confidenceVote(s, country);
+    return { survived: !vote.passed, ending: vote.passed ? ends.lose : undefined, vote, effects: vote.passed ? {} : { kpis: { coalizao: 5 } } };
+  }
+  const roll = (noise(s, 11 + kind.length, 0.5) + 0.5);
+  const survived = roll < crisisOdds(kind, role, s, country);
+  if (!survived) return { survived, ending: ends.lose, effects: {} };
+  // Sobreviver também tem preço, e ele depende de como se sobreviveu.
+  const cost: Record<string, Effects> = {
+    'revolta:reprimir': { kpis: { aprovacao: -6 }, axes: { direitos: -15, poder: 10 }, institutions: { imprensa: -8 }, relations: { eua: -10, ue: -15 } },
+    'revolta:ceder': { kpis: { inflacao: 0.8, aprovacao: 8 }, axes: { economia: -8 } },
+    'revolta:dialogar': { kpis: { aprovacao: 5, coalizao: -4 } },
+    'golpe_contra:resistir': { kpis: { aprovacao: 6 }, factions: { seguranca: -10 }, institutions: { congresso: 5, stf: 5 } },
+    'golpe_contra:negociar': { factions: { seguranca: 30 }, axes: { poder: 10, defesa: -10 }, institutions: { congresso: -8 } },
+    'golpe_contra:povo': { kpis: { aprovacao: 4 }, axes: { poder: 6 }, factions: { seguranca: 10 } },
+    'expurgo:expurgar': { factions: { seguranca: 5 }, kpis: { coalizao: 10 }, axes: { poder: 10, direitos: -10 }, relations: { ue: -8 } },
+    'destituicao:expurgar': { kpis: { coalizao: 10 }, axes: { poder: 10 } },
+  };
+  const pillar = regimeOf(s).pillar?.faction;
+  const generic: Effects = pillar ? { factions: { [pillar]: 20 }, kpis: { coalizao: 8 } } : { kpis: { coalizao: 6 } };
+  return { survived, effects: cost[`${kind}:${role}`] ?? generic };
+}
+
+/** O que o Claude precisa saber para escrever cada crise terminal. */
+export function crisisSituation(kind: CrisisKind, s: GameState, country: Country): string {
+  const r = regimeOf(s);
+  switch (kind) {
+    case 'impeachment':
+      return `A Câmara aceitou um pedido de impeachment por crime de responsabilidade. A votação no plenário é em poucos dias: são necessários ${country.chamber.impeachment_votes} dos ${country.chamber.seats} deputados para o processo seguir ao Senado.`;
+    case 'desconfianca':
+      return `A oposição apresentou uma moção de desconfiança no Parlamento. Se a maioria absoluta (${Math.floor(country.chamber.seats / 2) + 1} de ${country.chamber.seats}) votar a favor, o governo cai.`;
+    case 'revolta':
+      return `Revolta popular: multidões tomam as ruas das capitais e cercam o palácio. Inflação de ${s.kpis.inflacao.toFixed(1)}%, desemprego de ${s.kpis.desemprego.toFixed(1)}%, aprovação de ${Math.round(s.kpis.aprovacao)}%.`;
+    case 'golpe_contra':
+      return `Tanques nas ruas: parte das Forças Armadas se levanta contra o ${r.headTitle.toLowerCase()} e exige a sua saída em horas.`;
+    case 'expurgo':
+      return 'Uma facção do Comitê Central convocou uma reunião extraordinária para destituir o Secretário-Geral e expurgá-lo do partido.';
+    case 'destituicao':
+      return `${r.pillar?.label ?? 'O conselho'} se reuniu a portas fechadas para votar a destituição do ${r.headTitle.toLowerCase()}.`;
+  }
+}
+
+/** A reta final da eleição: as saídas que o jogo sabe resolver. */
+export const CAMPAIGN_ROLES = [
+  { id: 'maquina', hint: 'usar a máquina pública: obras, inaugurações e anúncios com o governo (funciona, mas o tribunal eleitoral pode cassar a chapa)' },
+  { id: 'propostas', hint: 'campanha de propostas e debates, falando com o eleitor indeciso' },
+  { id: 'bondades', hint: 'benefícios e bondades de véspera, com custo nas contas' },
+  { id: 'ataque', hint: 'campanha negativa contra o adversário' },
+];
+
+export function campaignSituation(s: GameState): string {
+  return isParliamentary(s)
+    ? `Reta final da eleição para o Parlamento. Se o partido do primeiro-ministro perder a maioria, ele deixa o cargo. Aprovação: ${Math.round(s.kpis.aprovacao)}%.`
+    : `Reta final da campanha: faltam três semanas para o primeiro turno e o ${regimeOf(s).headTitle.toLowerCase()} tenta continuar no cargo. Aprovação: ${Math.round(s.kpis.aprovacao)}%.${s.regime === 'hibrido' ? ' O regime controla boa parte das regras da eleição.' : ''}`;
+}
+
+/** Com a chapa acusada de abuso de poder, o tribunal eleitoral independente pode cassá-la. */
+export function cassationRisk(s: GameState): number {
+  if (!s.campaignAbuse) return 0;
+  return clamp((institutionsOf(s).eleicoes - 50) / 60, 0, 0.7);
+}
+
+export function cassated(s: GameState): boolean {
+  return noise(s, 21, 0.5) + 0.5 < cassationRisk(s);
+}
+
+/** Plebiscito da continuidade de uma autocracia (o Chile de 1988): a propaganda ajuda, mas não decide. */
+export function continuityYes(s: GameState): number {
+  const inst = institutionsOf(s);
+  return Math.round(clamp(18 + s.kpis.aprovacao * 0.55 + (60 - inst.imprensa) * 0.15 + noise(s, 23, 3), 5, 85) * 10) / 10;
+}
+
+export function plebisciteNoise(s: GameState): number {
+  return noise(s, 25, 4);
+}
+
+/** O STF independente derruba lei que fere cláusula pétrea (voto periódico, separação de Poderes). */
+export function stfStrikes(s: GameState, special: string | undefined): boolean {
+  if (!special || !['reeleicao', 'eleicoes', 'stf'].includes(special)) return false;
+  const chance = clamp((institutionsOf(s).stf - 45) / 50, 0, 0.8);
+  return noise(s, 27, 0.5) + 0.5 < chance;
 }

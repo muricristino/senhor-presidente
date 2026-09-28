@@ -4,6 +4,53 @@ export type AxisId =
 
 export type KpiId = 'aprovacao' | 'coalizao' | 'seguranca' | 'educacao' | 'desemprego' | 'selic' | 'inflacao';
 
+/** Os freios do poder: independência de cada instituição, de 0 (capturada) a 100 (plena). */
+export type InstitutionId = 'stf' | 'congresso' | 'imprensa' | 'eleicoes';
+
+export type RegimeId =
+  | 'presidencialismo' | 'parlamentarismo' | 'monarquia' | 'hibrido'
+  | 'militar' | 'personalista' | 'socialista' | 'teocracia' | 'tecnocracia';
+
+/** Como o governante pode perder o poder antes da hora. */
+export type CrisisKind = 'impeachment' | 'desconfianca' | 'revolta' | 'golpe_contra' | 'expurgo' | 'destituicao';
+
+/** Como o jogo terminou. */
+export type Ending =
+  | 'impeachment' | 'derrota' | 'renuncia' | 'fim' | 'pausa'
+  | 'desconfianca' | 'queda' | 'exilio' | 'deposto' | 'preso' | 'cassado' | 'expurgo' | 'destituido' | 'morte' | 'abertura';
+
+export interface Regime {
+  id: RegimeId;
+  name: string;
+  family: 'democracia' | 'hibrido' | 'autocracia';
+  icon: string;
+  /** Título de quem governa: Presidente, Primeiro-Ministro, Chefe da Junta... */
+  headTitle: string;
+  accent: string;
+  summary: string;
+  gains: string;
+  losses: string;
+  examples: string[];
+  elections: 'livres' | 'controladas' | 'nenhuma';
+  /** Mandatos seguidos permitidos (null: sem limite). */
+  termLimit: number | null;
+  /** Independente: projetos vão a voto. Carimbo ou fechado: o governante decreta. */
+  congress: 'independente' | 'carimbo' | 'fechado';
+  removal: CrisisKind[];
+  /** O grupo que sustenta o governante nas autocracias. */
+  pillar?: { faction: string; label: string };
+  /** Nome [completo, curto] das bancadas neste regime. */
+  factionLabels?: Record<string, [string, string]>;
+  kpiLabels?: Partial<Record<'aprovacao' | 'coalizao', string>>;
+  /** Teto de independência de cada instituição neste regime. */
+  institutionsCap: Partial<Record<InstitutionId, number>>;
+  scenes: string[];
+  council?: { title: string; backdrop: string; members: { role: string; npc: string }[] };
+  debate: 'debate' | 'sessao' | null;
+  /** O que o regime faz com os indicadores todo mês (economia planejada, propaganda, censura...). */
+  drift: Partial<Record<KpiId, number>>;
+}
+
 export interface AxisDef {
   id: AxisId;
   category: string;
@@ -21,6 +68,8 @@ export interface Effects {
   factions?: Record<string, number>;
   /** Relação com outros países (-100 a +100). */
   relations?: Record<string, number>;
+  /** Independência das instituições (0 a 100). */
+  institutions?: Partial<Record<InstitutionId, number>>;
 }
 
 export type RegionId = 'norte' | 'nordeste' | 'centro_oeste' | 'sudeste' | 'sul';
@@ -136,6 +185,8 @@ export interface EventOption {
   cutscene?: Cutscene;
   /** Ideia de cena que o gerador usa para escrever o roteiro depois. */
   cutscene_idea?: string;
+  /** Nos momentos decisivos: o papel da opção (negociar, renunciar, reprimir...), que decide a mecânica. */
+  role?: string;
 }
 
 export interface GameEvent {
@@ -207,6 +258,23 @@ export interface GameState {
   decisions: string[];
   /** Resumo do que já aconteceu, usado pelo gerador para dar continuidade. */
   history: HistoryEntry[];
+  /** Regime em vigor (ausente em saves antigos: presidencialismo). */
+  regime?: RegimeId;
+  institutions?: Record<InstitutionId, number>;
+  /** Trocas de regime: quando, para qual e por qual caminho. */
+  regimeHistory?: { month: number; regime: RegimeId; via: string }[];
+  /** Mandatos extras aprovados por PEC da reeleição. */
+  extraTerms?: number;
+  /** Mês até o qual cada crise terminal não volta (acabou de ser superada). */
+  crisisShield?: Partial<Record<CrisisKind, number>>;
+  /** Último nível de alerta já avisado para cada ameaça (evita repetir o aviso). */
+  warned?: Partial<Record<CrisisKind, number>>;
+  /** Mês da última vez que alguém ofereceu a ruptura. */
+  ruptureOfferedAt?: number;
+  /** Próxima eleição parlamentar (parlamentarismo e monarquia). */
+  nextElection?: number;
+  /** A campanha usou a máquina pública: o TSE pode cassar a chapa. */
+  campaignAbuse?: boolean;
 }
 
 export interface HistoryEntry {
@@ -223,6 +291,7 @@ export interface Deltas {
   axes: Partial<Record<AxisId, number>>;
   factions: Record<string, number>;
   relations: Record<string, number>;
+  institutions?: Partial<Record<InstitutionId, number>>;
 }
 
 // ---------- Cenas (roteiro que o Claude escreve e o jogo encena) ----------
@@ -332,7 +401,9 @@ export interface Interview {
 
 // ---------- Legislar: projetos do presidente ----------
 
-export type Instrument = 'lei' | 'pec' | 'mp';
+export type Instrument = 'lei' | 'pec' | 'mp' | 'decreto';
+
+export type BillSpecial = 'reeleicao' | 'stf' | 'imprensa' | 'eleicoes' | 'fortalecer' | `regime:${string}`;
 
 /** Proposta que o Claude escreve para o presidente enviar ao Congresso. */
 export interface BillProposal {
@@ -345,6 +416,8 @@ export interface BillProposal {
   needsPec: boolean;
   /** Efeito na aprovação da lei. */
   effects: Effects;
+  /** Mexe nas regras do jogo: reeleição, STF, imprensa, eleições, fortalecer instituições ou trocar o regime. */
+  special?: BillSpecial;
   /** O que a lei faz todo mês enquanto vale. */
   monthly: Partial<Record<KpiId, number>>;
   months: number;
