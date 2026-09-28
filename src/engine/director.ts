@@ -1,5 +1,31 @@
 import { ageOf, dateLabel, electionMonth, monthName } from './calendar';
 import { AXES } from './data';
+
+/*
+ * Acervo de despachos escritos pelo Claude com antecedência (tools/build-pool.mjs).
+ * Só cobre a espera enquanto a leva personalizada não chega, e não repete entre partidas.
+ */
+const poolFiles = import.meta.glob<{ default: (Record<string, unknown> & { pool: 'inicio' | 'geral'; title: string })[] }>('../../data/pool/*.json', { eager: true });
+const POOL = Object.values(poolFiles).flatMap((m) => m.default);
+const SEEN_KEY = 'sp.seenPool.v1';
+
+function seenPool(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function markSeen(title: string) {
+  try {
+    const seen = seenPool();
+    seen.add(title);
+    localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
+  } catch {
+    /* sem armazenamento: pode repetir, sem problema */
+  }
+}
 import { KPIS, formatKpi } from './kpis';
 import { dominantLeans, profileTitle } from './profile';
 import { mergeDetails, sanitizeCutscene, sanitizeDispatch, sanitizeEvent, sanitizeInterview } from './sanitize';
@@ -180,7 +206,7 @@ export class Director {
 
   /** Mantém a fila de despachos gerados abastecida (lotes de 4). */
   refillDispatches(state: GameState) {
-    if (this.dispatchPending || this.dispatchQueue.length >= 2) return;
+    if (this.dispatchPending || this.dispatchQueue.length >= 3) return;
     this.dispatchPending = true;
     void claudeOnline()
       .then((online) =>
@@ -206,11 +232,39 @@ export class Director {
       .finally(() => (this.dispatchPending = false));
   }
 
-  /** Próximo despacho escrito pelo Claude, se já houver um na fila. */
+  /**
+   * Próximo despacho: o personalizado da fila; se ela estiver vazia (a leva ainda está sendo escrita),
+   * um do acervo que o jogador ainda não viu: de início de mandato nos primeiros meses, geral depois.
+   */
   nextDispatch(state: GameState): Dispatch | null {
     this.refillDispatches(state);
-    return this.dispatchQueue.shift() ?? null;
+    return this.dispatchQueue.shift() ?? this.fromPool(state);
   }
+
+  private fromPool(state: GameState): Dispatch | null {
+    const want = state.month <= 4 ? 'inicio' : 'geral';
+    let seen = seenPool();
+    let left = POOL.filter((d) => !seen.has(d.title) && !this.usedTitles.has(d.title));
+    if (!left.length) {
+      // viu o acervo inteiro: recomeça, mas nunca repete dentro da mesma partida
+      try {
+        localStorage.removeItem(SEEN_KEY);
+      } catch {
+        /* nada */
+      }
+      seen = new Set();
+      left = POOL.filter((d) => !this.usedTitles.has(d.title));
+    }
+    const preferred = left.filter((d) => d.pool === want);
+    const options = preferred.length ? preferred : left.filter((d) => d.pool === 'geral');
+    const raw = options[Math.floor(Math.random() * options.length)];
+    if (!raw) return null;
+    this.usedTitles.add(raw.title);
+    markSeen(raw.title);
+    return sanitizeDispatch(raw, this.country);
+  }
+
+  private usedTitles = new Set<string>();
 
   get hasDispatch(): boolean {
     return this.dispatchQueue.length > 0;

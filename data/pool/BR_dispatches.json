@@ -1,0 +1,2593 @@
+[
+  {
+    "icon": "📊",
+    "region": "nacional",
+    "from": "Ministério da Fazenda",
+    "title": "Meta fiscal ou respiro?",
+    "text": "Equipe econômica propõe travar meta de déficit zero já no primeiro decreto orçamentário. Mercado observa o primeiro gesto do governo.",
+    "options": [
+      {
+        "icon": "🔒",
+        "label": "Travar meta zero",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "economia": 8,
+            "governanca": 4
+          },
+          "kpis": {
+            "aprovacao": -2,
+            "coalizao": 3,
+            "selic": -0.2
+          },
+          "factions": {
+            "centrao": 2
+          }
+        },
+        "reaction": "Credibilidade fiscal sobe, mas a coalizão sente o aperto logo na largada: rigidez orçamentária tem custo político imediato.",
+        "post": {
+          "who": "Faria Lima Insider",
+          "at": "@fl.insider",
+          "text": "Novo governo já chega travando meta fiscal. Sinal verde no radar, mas 8 dias de mandato e já cortando cafezinho.",
+          "likes": 4210,
+          "tone": "press"
+        },
+        "anim": "market_boom"
+      },
+      {
+        "icon": "🌊",
+        "label": "Deixar margem flexível",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "economia": -5,
+            "governanca": -2
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "coalizao": -2,
+            "inflacao": 0.2
+          },
+          "factions": {
+            "centrao": -2
+          }
+        },
+        "reaction": "Flexibilidade agrada a base política mas acende alerta no mercado: sem âncora fiscal clara, a inflação futura começa a ser precificada hoje.",
+        "anim": "prices_up"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🚓",
+    "region": "sudeste",
+    "from": "Ministério da Justiça",
+    "title": "Força-tarefa ou diálogo federativo?",
+    "text": "Onda de assaltos a caixas eletrônicos assusta capitais. Ministério quer decretar força nacional emergencial sem esperar pedido dos governadores.",
+    "options": [
+      {
+        "icon": "🛡️",
+        "label": "Decretar força federal",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "defesa": 9,
+            "governanca": -4
+          },
+          "kpis": {
+            "aprovacao": 4,
+            "seguranca": 3
+          },
+          "factions": {
+            "seguranca": 5,
+            "centrao": -2
+          }
+        },
+        "reaction": "Ação rápida agrada a opinião pública, mas governadores reclamam de invasão de competência: o federalismo cobrará essa fatura depois.",
+        "post": {
+          "who": "Tio Nando",
+          "at": "@tionando.patriota",
+          "text": "FINALMENTE um presidente que age! Segurança não espera protocolo, meu Brasil.",
+          "likes": 8890,
+          "tone": "faction"
+        },
+        "anim": "trucks_block"
+      },
+      {
+        "icon": "🤝",
+        "label": "Chamar governadores",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "governanca": 6,
+            "defesa": -2
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "seguranca": -1
+          },
+          "factions": {
+            "seguranca": -2
+          }
+        },
+        "reaction": "Respeitar o pacto federativo constrói pontes de longo prazo, mas a lentidão da articulação frustra quem queria resposta imediata.",
+        "anim": "speech"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🏥",
+    "region": "nacional",
+    "from": "Ministério da Saúde",
+    "title": "Fila do SUS: decreto ou diagnóstico?",
+    "text": "Dados de transição revelam fila de 1,2 milhão por cirurgias eletivas. Ministra quer anunciar mutirão nacional já na primeira semana.",
+    "options": [
+      {
+        "icon": "⚕️",
+        "label": "Anunciar mutirão já",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "direitos": 6,
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 5,
+            "coalizao": 1
+          },
+          "factions": {}
+        },
+        "reaction": "O anúncio rápido gera esperança popular, mas sem orçamento definido o mutirão vira promessa que a máquina pública terá que cumprir a tapas.",
+        "post": {
+          "who": "Tia Cleide",
+          "at": "@tiacleide.zap",
+          "text": "Fila da minha cirurgia de catarata desde 2023, viu. Se prometeu, cumpre, viu meu filho.",
+          "likes": 3120,
+          "tone": "neutral"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "📋",
+        "label": "Fazer diagnóstico antes",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "governanca": 5,
+            "direitos": -2
+          },
+          "kpis": {
+            "aprovacao": -3,
+            "coalizao": 2
+          },
+          "factions": {}
+        },
+        "reaction": "Planejamento técnico evita promessa vazia, mas o silêncio inicial é lido como desinteresse pela saúde pública.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🎓",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Bolsas no exterior: reabrir convênio?",
+    "text": "Governo anterior suspendeu acordo de intercâmbio acadêmico com a União Europeia. Chanceler propõe reativá-lo como gesto de reaproximação.",
+    "options": [
+      {
+        "icon": "🇪🇺",
+        "label": "Reativar convênio com UE",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "diplomacia": 8,
+            "cultura": 3
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 0
+          },
+          "factions": {},
+          "relations": {
+            "ue": 10,
+            "eua": -2
+          }
+        },
+        "reaction": "Reabrir portas acadêmicas sinaliza alinhamento ocidental, mas setores nacionalistas veem gesto como preferência por Bruxelas em detrimento de Washington.",
+        "post": {
+          "who": "Prof. Marina",
+          "at": "@profmarina",
+          "text": "Intercâmbio de volta! Ciência não tem bandeira, mas certamente tem visto de estudante.",
+          "likes": 2450,
+          "tone": "happy"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🚫",
+        "label": "Manter suspenso por ora",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -5,
+            "educacao": -1
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "coalizao": 1
+          },
+          "factions": {},
+          "relations": {
+            "ue": -6
+          }
+        },
+        "reaction": "Cautela evita desgaste com aliados regionais, mas isolamento acadêmico tem custo silencioso na formação de futuras lideranças.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🌳",
+    "region": "norte",
+    "from": "Ministério do Meio Ambiente",
+    "title": "Moratória no desmatamento",
+    "text": "Ministra propõe decreto imediato suspendendo novas licenças de desmate na Amazônia por 120 dias, para reorganizar a fiscalização do zerado.",
+    "options": [
+      {
+        "icon": "✍️",
+        "label": "Assinar moratória",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "governanca": 3,
+            "propriedade": -6,
+            "valores": 5
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "factions": {
+            "ruralistas": -10,
+            "tecnologica": 2
+          }
+        },
+        "reaction": "Decreto de efeito imediato agrada ambientalistas mas custa capital político com a bancada ruralista logo na largada.",
+        "post": {
+          "who": "@profmarina",
+          "at": "há 2 min",
+          "text": "Semana 1 e já temos decreto pra floresta. É isso que chamo de sinalizar prioridade.",
+          "likes": 4200,
+          "tone": "happy"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "📋",
+        "label": "Só criar grupo de estudo",
+        "stamp": "ADIADO",
+        "effects": {
+          "axes": {
+            "governanca": 1
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {
+            "ruralistas": 2,
+            "tecnologica": -1
+          }
+        },
+        "reaction": "Cautela evita atrito imediato, mas passa a impressão de indecisão logo na primeira semana de governo.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🏟️",
+    "region": "sudeste",
+    "from": "Ministério do Esporte",
+    "title": "Legado dos Jogos ou dívida herdada?",
+    "text": "Equipamento esportivo construído na gestão passada está abandonado. Pedem verba emergencial para reabrir como centro de cultura popular e esporte de base.",
+    "options": [
+      {
+        "icon": "💰",
+        "label": "Liberar verba de reforma",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "cultura": 6,
+            "economia": -2
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "coalizao": 1
+          },
+          "factions": {
+            "centrao": 2
+          }
+        },
+        "reaction": "Reabrir um elefante branco vira vitrine rápida de governo presente, mesmo com impacto fiscal marginal.",
+        "post": {
+          "who": "@pedrao.memes",
+          "at": "há 5 min",
+          "text": "Ginásio que virou point de pombo agora vira point de skatista. Governo 1 x 0 abandono",
+          "likes": 8900,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "🗑️",
+        "label": "Deixar para depois",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "cultura": -3
+          },
+          "kpis": {
+            "aprovacao": -2
+          },
+          "factions": {
+            "centrao": -1
+          }
+        },
+        "reaction": "Adiar sinaliza contenção de gastos, mas a comunidade local sente o descaso logo na estreia do mandato.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🤖",
+    "region": "nacional",
+    "from": "Casa Civil",
+    "title": "Marco regulatório de IA",
+    "text": "Equipe de transição deixou um rascunho de projeto de lei sobre inteligência artificial. Big techs pressionam por regras leves; especialistas pedem mais controle.",
+    "options": [
+      {
+        "icon": "⚖️",
+        "label": "Regra rígida, prioriza direitos",
+        "stamp": "ENVIADO AO CONGRESSO",
+        "effects": {
+          "axes": {
+            "tecnologia": -4,
+            "direitos": 6,
+            "governanca": 2
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "tecnologica": -5
+          }
+        },
+        "reaction": "Modelo protetivo agrada juristas e sociedade civil, mas gera receio de fuga de investimento em tecnologia.",
+        "anim": "gavel"
+      },
+      {
+        "icon": "🚀",
+        "label": "Regra leve, prioriza inovação",
+        "stamp": "ENVIADO AO CONGRESSO",
+        "effects": {
+          "axes": {
+            "tecnologia": 6,
+            "direitos": -4
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {
+            "tecnologica": 6
+          }
+        },
+        "reaction": "Abordagem pró-mercado atrai empresas de tecnologia, mas abre flanco de crítica sobre proteção de dados e trabalho.",
+        "post": {
+          "who": "@fl.insider",
+          "at": "há 8 min",
+          "text": "Marco de IA leve no dia 1? Faria Lima respira aliviada. Vamos ver se dura.",
+          "likes": 3100,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🌍",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Primeira ligação com Washington",
+    "text": "Casa Branca sinaliza interesse em retomar diálogo comercial, mas cobra postura sobre tarifas ao aço e alinhamento em fóruns multilaterais.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Abrir negociação ampla",
+        "stamp": "ACEITO",
+        "effects": {
+          "axes": {
+            "diplomacia": 5,
+            "comercio": 4
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {},
+          "relations": {
+            "eua": 8,
+            "china": -3
+          }
+        },
+        "reaction": "Aproximar-se dos EUA abre portas comerciais, mas exige equilíbrio para não desgastar a relação com a China.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "há 10 min",
+          "text": "Primeira semana e já ligação direta com a Casa Branca. Mercado gostou do tom pragmático.",
+          "likes": 2700,
+          "tone": "press"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🧭",
+        "label": "Resposta cautelosa, sem compromisso",
+        "stamp": "POSTADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -2
+          },
+          "kpis": {
+            "aprovacao": 0
+          },
+          "factions": {},
+          "relations": {
+            "eua": -2,
+            "china": 2
+          }
+        },
+        "reaction": "Postura neutra preserva autonomia diplomática, mas pode ser lida como indefinição logo na estreia internacional.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🚧",
+    "region": "nordeste",
+    "from": "Ministério da Infraestrutura",
+    "title": "Ferrovia parada há 3 governos",
+    "text": "Obra da Transnordestina, 40% concluída, some do orçamento há anos. Equipe técnica pede decisão: retomar com empréstimo chinês ou remodelar o projeto do zero.",
+    "options": [
+      {
+        "icon": "🚂",
+        "label": "Retomar com crédito chinês",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "economia": 4,
+            "comercio": 6
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 1
+          },
+          "factions": {
+            "centrao": 3
+          },
+          "relations": {
+            "china": 8,
+            "eua": -3
+          }
+        },
+        "reaction": "Financiamento externo acelera obras, mas cria dependência: infraestrutura estratégica financiada por potência estrangeira gera debate sobre soberania.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "Economia Hoje",
+          "text": "Transnordestina recebe aporte chinês de bilhões. Mercado local de olho nos contratos de fornecimento.",
+          "likes": 3200,
+          "tone": "press"
+        },
+        "anim": "trucks_leave"
+      },
+      {
+        "icon": "📐",
+        "label": "Remodelar projeto do zero",
+        "stamp": "EM REVISÃO",
+        "effects": {
+          "axes": {
+            "governanca": 5,
+            "economia": -2
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "coalizao": 0
+          },
+          "factions": {
+            "centrao": -2
+          }
+        },
+        "reaction": "Recomeçar do zero custa tempo político, mas evita repetir erros de projetos mal planejados: às vezes lento é mais barato que rápido e errado.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "📱",
+    "region": "nacional",
+    "from": "Secretaria de Comunicação",
+    "title": "Primeira entrevista como presidente",
+    "text": "Emissora concorrente pede exclusiva antes das outras. Aceitar gera ciúme das rivais; recusar todas e postar direto nas redes evita filtro, mas irrita a imprensa.",
+    "options": [
+      {
+        "icon": "🎙️",
+        "label": "Dar exclusiva à emissora",
+        "stamp": "CONCEDIDO",
+        "effects": {
+          "axes": {
+            "cultura": 2
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 0
+          }
+        },
+        "reaction": "Conceder furos exclusivos fideliza um veículo, mas o resto da imprensa cobra tratamento igual — a velha queda de braço entre governo e imprensa livre.",
+        "post": {
+          "who": "@ju.constituicao",
+          "at": "Advogada Ju",
+          "text": "Presidente escolhe emissora amiga pra estreia. Legítimo, mas fica registrado quem entrou primeiro na sala.",
+          "likes": 890,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "📲",
+        "label": "Postar direto, sem imprensa",
+        "stamp": "POSTADO",
+        "effects": {
+          "axes": {
+            "cultura": -3,
+            "valores": 4
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "coalizao": -2
+          }
+        },
+        "reaction": "Falar direto ao povo sem filtro da imprensa amplia controle da narrativa, mas alimenta a desconfiança da mídia tradicional — comunicação sem intermediário tem preço.",
+        "post": {
+          "who": "@pedrao.memes",
+          "at": "Pedro Memes",
+          "text": "Presidente ignorou a imprensa e foi direto pro story. A imprensa: 👁️👄👁️",
+          "likes": 15400,
+          "tone": "happy"
+        },
+        "anim": "phones_live"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🏛️",
+    "region": "nacional",
+    "from": "Articulação Política",
+    "title": "Primeira reunião de líderes",
+    "text": "Líderes partidários da base esperam anúncio de cargos e relatorias já na primeira semana. Atrasar a distribuição pode esfriar o entusiasmo da vitória.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Distribuir cargos agora",
+        "stamp": "ACORDADO",
+        "effects": {
+          "axes": {
+            "governanca": -2,
+            "poder": 3
+          },
+          "kpis": {
+            "coalizao": 6,
+            "aprovacao": -1
+          },
+          "factions": {
+            "centrao": 5
+          }
+        },
+        "reaction": "Loteamento rápido garante governabilidade no Congresso, mas reforça a lógica do presidencialismo de coalizão logo na largada.",
+        "post": {
+          "who": "@fl.insider",
+          "at": "Faria Lima Insider",
+          "text": "Distribuição de ministérios em tempo recorde. Mercado gosta de previsibilidade, mesmo que o preço seja político.",
+          "likes": 1100,
+          "tone": "press"
+        },
+        "anim": "gavel"
+      },
+      {
+        "icon": "⏳",
+        "label": "Adiar e priorizar técnicos",
+        "stamp": "ADIADO",
+        "effects": {
+          "axes": {
+            "governanca": 4,
+            "poder": -3
+          },
+          "kpis": {
+            "coalizao": -4,
+            "aprovacao": 2
+          }
+        },
+        "reaction": "Priorizar competência técnica melhora a gestão, mas irrita partidos que trocaram apoio por promessas — coalizão sem moeda de troca é frágil.",
+        "anim": "protest"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🌎",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Primeira ligação de chefe de Estado estrangeiro",
+    "text": "Presidente da Argentina liga oferecendo reabrir negociações do Mercosul travadas há anos, propondo agenda conjunta de tarifas com a UE.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Aceitar agenda conjunta",
+        "stamp": "ACEITO",
+        "effects": {
+          "axes": {
+            "diplomacia": 6,
+            "comercio": 4
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "coalizao": 0
+          },
+          "relations": {
+            "mercosul": 10,
+            "ue": 5,
+            "eua": -2
+          }
+        },
+        "reaction": "Reaproximação com vizinhos fortalece blocos regionais frente a potências maiores — mas pode custar espaço em acordos bilaterais com os EUA.",
+        "post": {
+          "who": "@profmarina",
+          "at": "Prof. Marina",
+          "text": "Mercosul volta à mesa. Integração regional é aposta de longo prazo, resultado não vem no primeiro ano.",
+          "likes": 670,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🗓️",
+        "label": "Adiar para definir agenda própria",
+        "stamp": "ADIADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -3
+          },
+          "kpis": {
+            "aprovacao": 0,
+            "coalizao": 0
+          },
+          "relations": {
+            "mercosul": -6
+          }
+        },
+        "reaction": "Cautela na primeira semana evita compromissos precipitados, mas parceiros regionais podem interpretar como desinteresse — diplomacia também é gesto e timing.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "⛪",
+    "region": "nacional",
+    "from": "Frente Parlamentar Evangélica",
+    "title": "Feriado de Reis Magos",
+    "text": "Bancada religiosa pede decreto criando feriado nacional dos Reis Magos, cumprindo promessa de campanha na Bahia e Pernambuco.",
+    "options": [
+      {
+        "icon": "✅",
+        "label": "Decretar feriado",
+        "stamp": "DECRETADO",
+        "effects": {
+          "axes": {
+            "valores": 6,
+            "cultura": 4
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 3
+          },
+          "factions": {
+            "religiosos": 6,
+            "centrao": 1
+          }
+        },
+        "reaction": "Feriados nacionais custam bilhões em produtividade, mas rendem capital simbólico rápido com bases religiosas.",
+        "post": {
+          "who": "@tionando.patriota",
+          "at": "há 12min",
+          "text": "Presidente cumprindo a palavra! Bênçãos sobre o mandato 🙏",
+          "likes": 4200,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "🚫",
+        "label": "Vetar, é laico",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "valores": -6,
+            "governanca": 4
+          },
+          "kpis": {
+            "aprovacao": -2,
+            "coalizao": -3
+          },
+          "factions": {
+            "religiosos": -6
+          }
+        },
+        "reaction": "Manter o Estado laico agrada setores progressistas mas custa caro na base evangélica que ajudou a eleger.",
+        "post": {
+          "who": "@ju.constituicao",
+          "at": "há 9min",
+          "text": "Estado laico não cria feriado religioso. Ponto pra Constituição hoje.",
+          "likes": 3100,
+          "tone": "press"
+        },
+        "anim": "gavel"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🪖",
+    "region": "norte",
+    "from": "Comando Militar da Amazônia",
+    "title": "Reforço na fronteira",
+    "text": "Generais pedem autorização para operação militar ampliada na tríplice fronteira, citando garimpo ilegal e narcotráfico.",
+    "options": [
+      {
+        "icon": "🎖️",
+        "label": "Autorizar operação",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "defesa": 8,
+            "governanca": 3
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "seguranca": 3
+          },
+          "factions": {
+            "seguranca": 6
+          }
+        },
+        "reaction": "Reforçar fronteiras logo na posse sinaliza força ao Congresso, mas militariza um problema também social.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "há 20min",
+          "text": "Mercado vê com bons olhos combate ao garimpo ilegal na Amazônia. Commodities reagem.",
+          "likes": 1800,
+          "tone": "neutral"
+        },
+        "anim": "military"
+      },
+      {
+        "icon": "🕊️",
+        "label": "Priorizar diálogo local",
+        "stamp": "ADIADO",
+        "effects": {
+          "axes": {
+            "defesa": -4,
+            "direitos": 5
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "seguranca": -2
+          },
+          "factions": {
+            "seguranca": -5
+          }
+        },
+        "reaction": "Adiar a operação preserva relações com povos indígenas locais, mas irrita o Alto Comando logo na largada.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🌾",
+    "region": "centro_oeste",
+    "from": "CNA e MST",
+    "title": "Primeiro decreto fundiário",
+    "text": "Ruralistas e movimento sem-terra pressionam em direções opostas por um decreto que define a política agrária do governo.",
+    "options": [
+      {
+        "icon": "🚜",
+        "label": "Priorizar agronegócio",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "propriedade": 8,
+            "economia": 5
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "coalizao": 4
+          },
+          "factions": {
+            "ruralistas": 8,
+            "centrao": 3
+          }
+        },
+        "reaction": "Sinalizar ao agro logo na posse garante governabilidade no Congresso, onde o setor tem bancada poderosa.",
+        "post": {
+          "who": "@fl.insider",
+          "at": "há 15min",
+          "text": "Agro sobe na bolsa após sinalização do novo governo. Confiança do mercado em alta.",
+          "likes": 2600,
+          "tone": "neutral"
+        },
+        "anim": "market_boom"
+      },
+      {
+        "icon": "✊",
+        "label": "Retomar assentamentos",
+        "stamp": "DECRETADO",
+        "effects": {
+          "axes": {
+            "direitos": 7,
+            "propriedade": -6
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": -4
+          },
+          "factions": {
+            "ruralistas": -8
+          }
+        },
+        "reaction": "Acelerar reforma agrária cumpre promessa histórica da esquerda, mas fragiliza a base ruralista da coalizão.",
+        "post": {
+          "who": "@profmarina",
+          "at": "há 7min",
+          "text": "Justiça agrária não é favor, é dívida histórica. Bom começo de mandato.",
+          "likes": 1900,
+          "tone": "happy"
+        },
+        "anim": "protest"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🛰️",
+    "region": "exterior",
+    "from": "NASA / Agência Espacial Brasileira",
+    "title": "Convite para parceria espacial",
+    "text": "Washington oferece parceria em lançamentos de satélites em Alcântara, mas exige exclusividade frente à China no programa.",
+    "options": [
+      {
+        "icon": "🇺🇸",
+        "label": "Aceitar exclusividade dos EUA",
+        "stamp": "ASSINADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 7,
+            "diplomacia": 5
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "coalizao": 2
+          },
+          "relations": {
+            "eua": 10,
+            "china": -8
+          }
+        },
+        "reaction": "Alinhar-se aos EUA acelera investimento tecnológico, mas fecha porta com a China, hoje maior parceiro comercial.",
+        "post": {
+          "who": "@fl.insider",
+          "at": "há 5min",
+          "text": "Alcântara vira base estratégica dos EUA. Mercado de tech comemora, agro já fica de olho na China.",
+          "likes": 2100,
+          "tone": "neutral"
+        },
+        "anim": "phones_live"
+      },
+      {
+        "icon": "🌐",
+        "label": "Negociar sem exclusividade",
+        "stamp": "NEGOCIADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 3,
+            "diplomacia": 2
+          },
+          "kpis": {
+            "aprovacao": 0,
+            "coalizao": 0
+          },
+          "relations": {
+            "eua": 3,
+            "china": 3
+          }
+        },
+        "reaction": "Manter multialinhamento preserva autonomia diplomática brasileira, tradição do Itamaraty desde a Guerra Fria.",
+        "anim": "speech"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🚇",
+    "region": "sudeste",
+    "from": "Ministério dos Transportes",
+    "title": "Metrô-Trem em obras paradas",
+    "text": "Consórcio abandonou a expansão do trem intermunicipal em SP. Retomar exige aval federal e verba de emergência já na primeira semana.",
+    "options": [
+      {
+        "icon": "🏗️",
+        "label": "Liberar verba de emergência",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "economia": -4,
+            "governanca": 5
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "coalizao": 1
+          },
+          "factions": {
+            "centrao": 2
+          }
+        },
+        "reaction": "Obra retomada rápido, mas o gasto extra tensiona o orçamento logo no início do mandato.",
+        "post": {
+          "who": "@fl.insider",
+          "at": "Faria Lima Insider",
+          "text": "Semana 1 e já saindo dinheiro pela porta. Ok, mas alguém avisa o Tesouro?",
+          "likes": 842,
+          "tone": "neutral"
+        },
+        "anim": "trucks_leave"
+      },
+      {
+        "icon": "📋",
+        "label": "Abrir licitação nova",
+        "stamp": "REVISADO",
+        "effects": {
+          "axes": {
+            "economia": 2,
+            "governanca": -2
+          },
+          "kpis": {
+            "aprovacao": -2,
+            "coalizao": 0
+          },
+          "factions": {
+            "centrao": -1
+          }
+        },
+        "reaction": "Processo mais lento e transparente, mas passageiros ficam sem solução imediata — custo político de curto prazo.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🏳️‍⚧️",
+    "region": "nacional",
+    "from": "Casa Civil",
+    "title": "Decreto de nome social no serviço público",
+    "text": "Movimento LGBTQIA+ pressiona por decreto imediato garantindo nome social em todos os órgãos federais, cumprindo promessa de campanha.",
+    "options": [
+      {
+        "icon": "✍️",
+        "label": "Assinar decreto agora",
+        "stamp": "DECRETADO",
+        "effects": {
+          "axes": {
+            "direitos": 8,
+            "valores": -4
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": -3
+          },
+          "factions": {
+            "religiosos": -5,
+            "tecnologica": 2
+          }
+        },
+        "reaction": "Cumprir promessa de campanha rápido fortalece a base, mas irrita a bancada religiosa antes mesmo da lua de mel acabar.",
+        "post": {
+          "who": "@tionando.patriota",
+          "at": "Tio Nando",
+          "text": "Primeira semana e já vem decreto pra agradar minoria. Isso é agenda ou é golpe de propaganda?",
+          "likes": 1930,
+          "tone": "angry"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "🕒",
+        "label": "Estudar antes de decretar",
+        "stamp": "EM ANÁLISE",
+        "effects": {
+          "axes": {
+            "direitos": 1,
+            "governanca": 3
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "coalizao": 1
+          },
+          "factions": {
+            "religiosos": 1
+          }
+        },
+        "reaction": "Cautela evita atrito imediato, mas ativistas cobram compromisso adiado — desgaste de credibilidade com a base.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "📊",
+    "region": "nacional",
+    "from": "Ministério da Fazenda",
+    "title": "Herança fiscal do governo anterior",
+    "text": "Equipe econômica encontra rombo maior que o esperado nas contas de 2025. Definir logo o tom: ajuste duro ou gradualismo.",
+    "options": [
+      {
+        "icon": "✂️",
+        "label": "Anunciar ajuste imediato",
+        "stamp": "ANUNCIADO",
+        "effects": {
+          "axes": {
+            "economia": 6,
+            "propriedade": 3
+          },
+          "kpis": {
+            "aprovacao": -4,
+            "selic": 0.5,
+            "desemprego": 0.2
+          },
+          "factions": {
+            "centrao": 3
+          }
+        },
+        "reaction": "Mercado recebe bem o sinal de responsabilidade fiscal, mas o corte pesa sobre a popularidade recém-estreada.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "Economia Hoje",
+          "text": "Novo governo já fala de ajuste fiscal na semana 1. Sinal raro de seriedade ou só para acalmar o dólar?",
+          "likes": 2100,
+          "tone": "press"
+        },
+        "anim": "market_boom"
+      },
+      {
+        "icon": "📈",
+        "label": "Gradualismo, sem choque",
+        "stamp": "POSTERGADO",
+        "effects": {
+          "axes": {
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "selic": -0.2
+          },
+          "factions": {
+            "centrao": -2
+          }
+        },
+        "reaction": "Populariza no curto prazo, mas mercado financeiro cobra plano concreto — a conta pode chegar mais cara depois.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🛂",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Convite da Argentina para acordo de fronteira",
+    "text": "Governo argentino propõe integração de policiamento na tríplice fronteira contra contrabando, primeiro teste diplomático do mandato.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Aceitar cooperação conjunta",
+        "stamp": "ACORDADO",
+        "effects": {
+          "axes": {
+            "diplomacia": 6,
+            "defesa": 2
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "seguranca": 0.3
+          },
+          "factions": {
+            "seguranca": 2
+          },
+          "relations": {
+            "mercosul": 8
+          }
+        },
+        "reaction": "Gesto fortalece o Mercosul e mostra pragmatismo em segurança regional já na primeira semana.",
+        "post": {
+          "who": "@profmarina",
+          "at": "Prof. Marina",
+          "text": "Cooperação de fronteira é isso: segurança sem populismo armamentista. Bom começo.",
+          "likes": 760,
+          "tone": "happy"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🚧",
+        "label": "Recusar, agir unilateralmente",
+        "stamp": "RECUSADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -5,
+            "defesa": 3
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "seguranca": 1
+          },
+          "relations": {
+            "mercosul": -6
+          }
+        },
+        "reaction": "Sinaliza autonomia nacional, mas isola o Brasil de uma solução regional mais eficaz contra o crime transfronteiriço.",
+        "anim": "trucks_block"
+      }
+    ],
+    "pool": "inicio"
+  },
+  {
+    "icon": "🚢",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Cota de etanol contra o Vietnã",
+    "text": "Vietnã inunda mercado com etanol subsidiado. Setor sucroalcooleiro pede retaliação tarifária imediata.",
+    "options": [
+      {
+        "icon": "⚖️",
+        "label": "Impor tarifa retaliatória",
+        "stamp": "TARIFADO",
+        "effects": {
+          "axes": {
+            "comercio": -6,
+            "diplomacia": -4
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "inflacao": 0.1
+          },
+          "factions": {
+            "ruralistas": 5
+          },
+          "relations": {
+            "china": -2
+          }
+        },
+        "reaction": "Protecionismo agrada o setor afetado, mas pode gerar retaliação cruzada em outros produtos brasileiros.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "Economia Hoje",
+          "text": "Tarifa no etanol asiático: usineiros comemoram, exportadores de soja tremem.",
+          "likes": 3400,
+          "tone": "press"
+        },
+        "anim": "trucks_block"
+      },
+      {
+        "icon": "🤝",
+        "label": "Negociar cota bilateral",
+        "stamp": "NEGOCIADO",
+        "effects": {
+          "axes": {
+            "comercio": 5,
+            "diplomacia": 6
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "ruralistas": -2
+          }
+        },
+        "reaction": "Diplomacia comercial reduz atrito, mas usineiros ficam insatisfeitos com solução lenta.",
+        "anim": "speech"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🚧",
+    "region": "nordeste",
+    "from": "Ministério dos Transportes",
+    "title": "Obra parada por achado arqueológico",
+    "text": "Duplicação de rodovia é embargada após sítio indígena ser encontrado no canteiro. Governador pressiona por liberação rápida.",
+    "options": [
+      {
+        "icon": "🏛️",
+        "label": "Priorizar preservação",
+        "stamp": "EMBARGADO",
+        "effects": {
+          "axes": {
+            "direitos": 6,
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "ruralistas": -3
+          }
+        },
+        "reaction": "Proteger patrimônio cultural custa tempo e obra, mas evita ação judicial e desgaste com movimentos indígenas.",
+        "anim": "calm"
+      },
+      {
+        "icon": "🚜",
+        "label": "Liberar obra com laudo expresso",
+        "stamp": "LIBERADO",
+        "effects": {
+          "axes": {
+            "economia": 4,
+            "direitos": -5
+          },
+          "kpis": {
+            "aprovacao": -2
+          },
+          "factions": {
+            "ruralistas": 4
+          }
+        },
+        "reaction": "Acelerar obra por decreto expõe o governo a questionamentos do MPF sobre atropelo de procedimentos ambientais.",
+        "post": {
+          "who": "@profmarina",
+          "at": "Prof. Marina",
+          "text": "Achado arqueológico vira detalhe burocrático quando tem asfalto no meio. Triste.",
+          "likes": 2100,
+          "tone": "angry"
+        },
+        "anim": "trucks_leave"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "📱",
+    "region": "nacional",
+    "from": "Assessoria de Comunicação",
+    "title": "Vídeo antigo do presidente viraliza fora de contexto",
+    "text": "Corte de uma fala de anos atrás circula como se fosse recente, gerando indignação. Assessoria sugere nota de esclarecimento.",
+    "options": [
+      {
+        "icon": "📝",
+        "label": "Publicar nota explicando o corte",
+        "stamp": "ESCLARECIDO",
+        "effects": {
+          "axes": {
+            "cultura": 2
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {}
+        },
+        "reaction": "Explicar o contexto original reduz o dano, mas corrigir boato dá ainda mais visibilidade a ele — o Efeito Streisand em ação.",
+        "post": {
+          "who": "@pedrao.memes",
+          "at": "Pedro Memes",
+          "text": "Governo publicou nota de 4 parágrafos pra explicar 8 segundos de vídeo. Cadê a arte de resumo?",
+          "likes": 5200,
+          "tone": "neutral"
+        },
+        "anim": "phones_live"
+      },
+      {
+        "icon": "🤐",
+        "label": "Ignorar e deixar esfriar",
+        "stamp": "SILÊNCIO",
+        "effects": {
+          "axes": {
+            "cultura": -1
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {}
+        },
+        "reaction": "Silêncio às vezes funciona, mas sem resposta oficial a narrativa falsa pode se cristalizar como verdade nas redes.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🏛️",
+    "region": "nacional",
+    "from": "Líder do Governo",
+    "title": "Partido pequeno ameaça deixar a base",
+    "text": "Legenda com poucas cadeiras quer mais um cargo de segundo escalão sob ameaça de votar contra a agenda econômica.",
+    "options": [
+      {
+        "icon": "✍️",
+        "label": "Ceder e nomear indicado",
+        "stamp": "NOMEADO",
+        "effects": {
+          "axes": {
+            "poder": -3
+          },
+          "kpis": {
+            "coalizao": 4,
+            "aprovacao": -1
+          },
+          "factions": {
+            "centrao": 4
+          }
+        },
+        "reaction": "Presidencialismo de coalizão tem preço: cargos trocados por votos mantêm a base unida, mas alimentam crítica de loteamento.",
+        "post": {
+          "who": "@ju.constituicao",
+          "at": "Advogada Ju",
+          "text": "Mais um cargo trocado por apoio. Presidencialismo de coalizão, aula prática de ciência política em tempo real.",
+          "likes": 1800,
+          "tone": "neutral"
+        },
+        "anim": "gavel"
+      },
+      {
+        "icon": "🚪",
+        "label": "Recusar e arriscar a saída",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "poder": 3
+          },
+          "kpis": {
+            "coalizao": -5
+          },
+          "factions": {
+            "centrao": -4
+          }
+        },
+        "reaction": "Recusar loteamento fortalece a imagem de governo técnico, mas pode custar votos decisivos no plenário.",
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🏙️",
+    "region": "nordeste",
+    "from": "Prefeitos do Consórcio Litoral",
+    "title": "Motim de garis e caos no lixo urbano",
+    "text": "Prefeitura de capital nordestina pede socorro federal após greve de garis. Oposição usa fotos de lixo nas ruas contra o governo.",
+    "options": [
+      {
+        "icon": "🚚",
+        "label": "Enviar Forças Armadas na coleta",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "governanca": 6,
+            "poder": 4
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": -2
+          },
+          "factions": {
+            "centrao": -2,
+            "seguranca": 3
+          }
+        },
+        "reaction": "Resolve rápido mas fere o pacto federativo: municípios reclamam que a União assume função que não é sua.",
+        "post": {
+          "who": "@tiacleide.zap",
+          "at": "Recife",
+          "text": "Rua limpa mas prefeito ficou pequenininho, viu",
+          "likes": 812,
+          "tone": "happy"
+        },
+        "anim": "trucks_leave"
+      },
+      {
+        "icon": "🚫",
+        "label": "Dizer que é questão municipal",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "governanca": -3
+          },
+          "kpis": {
+            "aprovacao": -3,
+            "coalizao": 1
+          },
+          "factions": {
+            "centrao": 2
+          }
+        },
+        "reaction": "Respeita o federalismo, mas a imagem do governo se desgasta com o caos visível na TV.",
+        "post": {
+          "who": "@pedrao.memes",
+          "at": "Twitter",
+          "text": "presidente: 'não é comigo' o lixo: 'sou com você sim'",
+          "likes": 1500,
+          "tone": "neutral"
+        },
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "⛪",
+    "region": "nacional",
+    "from": "Frente Parlamentar Evangélica",
+    "title": "Projeto de ensino religioso confessional nas escolas",
+    "text": "Bancada evangélica pressiona para sancionar lei que permite ensino religioso confessional em escolas públicas, hoje só facultativo e não confessional.",
+    "options": [
+      {
+        "icon": "✍️",
+        "label": "Sancionar integralmente",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "valores": 8,
+            "cultura": -6,
+            "direitos": -4
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 4
+          },
+          "factions": {
+            "religiosos": 6,
+            "centrao": 1
+          }
+        },
+        "reaction": "Fortalece a base religiosa no Congresso, mas juristas questionam a laicidade do Estado prevista na Constituição.",
+        "post": {
+          "who": "@ju.constituicao",
+          "at": "Twitter",
+          "text": "Estado laico não é Estado ateu, mas isso aqui é escorregadio demais",
+          "likes": 2100,
+          "tone": "angry"
+        },
+        "anim": "gavel"
+      },
+      {
+        "icon": "✂️",
+        "label": "Vetar trecho confessional",
+        "stamp": "VETADO PARCIAL",
+        "effects": {
+          "axes": {
+            "valores": -5,
+            "direitos": 5,
+            "cultura": 3
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "coalizao": -3
+          },
+          "factions": {
+            "religiosos": -5
+          }
+        },
+        "reaction": "O veto parcial é ferramenta clássica de negociação: agrada juristas e irrita a bancada evangélica sem travar toda a lei.",
+        "post": {
+          "who": "@tionando.patriota",
+          "at": "Twitter",
+          "text": "Vetou a fé mas sanciona tudo mais? Vamos cobrar isso na urna",
+          "likes": 1780,
+          "tone": "angry"
+        },
+        "anim": "gavel"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🪖",
+    "region": "norte",
+    "from": "Comando Militar da Amazônia",
+    "title": "Incursão de garimpo armado em terra indígena de fronteira",
+    "text": "Generais relatam confronto entre garimpeiros e força de segurança perto da fronteira com a Venezuela. Pedem reforço de tropas na região.",
+    "options": [
+      {
+        "icon": "🎖️",
+        "label": "Enviar reforço militar à fronteira",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "defesa": 8,
+            "direitos": 3
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "seguranca": 3
+          },
+          "factions": {
+            "seguranca": 5
+          }
+        },
+        "reaction": "Reforça a soberania na fronteira, tema sensível para as Forças Armadas, mas custa recursos e pode escalar o conflito.",
+        "post": {
+          "who": "@tionando.patriota",
+          "at": "Twitter",
+          "text": "Finalmente um presidente que entende que fronteira não se negocia",
+          "likes": 2300,
+          "tone": "happy"
+        },
+        "anim": "military"
+      },
+      {
+        "icon": "🤝",
+        "label": "Priorizar diálogo com lideranças indígenas",
+        "stamp": "DETERMINADO",
+        "effects": {
+          "axes": {
+            "direitos": 7,
+            "defesa": -4
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "seguranca": -2
+          },
+          "factions": {
+            "seguranca": -4
+          }
+        },
+        "reaction": "Alinhado a direitos indígenas e à Constituição, mas comandantes militares veem como fraqueza diante de crime organizado.",
+        "post": {
+          "who": "@profmarina",
+          "at": "Twitter",
+          "text": "Direito à terra é constitucional, não é favor. Bom ver isso lembrado",
+          "likes": 1400,
+          "tone": "happy"
+        },
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🌾",
+    "region": "centro_oeste",
+    "from": "Confederação da Agricultura e MST",
+    "title": "Fazenda produtiva ocupada gera impasse entre ruralistas e sem-terra",
+    "text": "MST ocupa fazenda que o INCRA classificou como produtiva. Ruralistas pedem reintegração imediata; movimento pede reclassificação e desapropriação.",
+    "options": [
+      {
+        "icon": "👮",
+        "label": "Determinar reintegração de posse",
+        "stamp": "DETERMINADO",
+        "effects": {
+          "axes": {
+            "propriedade": 8,
+            "direitos": -5
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "coalizao": 3
+          },
+          "factions": {
+            "ruralistas": 6,
+            "centrao": 2
+          }
+        },
+        "reaction": "Defende o direito de propriedade, pilar do agronegócio, mas alimenta a narrativa de descaso com a reforma agrária.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "Twitter",
+          "text": "Segurança jurídica no campo é o que sustenta a exportação. Decisão correta",
+          "likes": 1650,
+          "tone": "happy"
+        },
+        "anim": "gavel"
+      },
+      {
+        "icon": "📋",
+        "label": "Suspender e reabrir perícia do INCRA",
+        "stamp": "EM ANÁLISE",
+        "effects": {
+          "axes": {
+            "direitos": 5,
+            "propriedade": -6
+          },
+          "kpis": {
+            "aprovacao": -1,
+            "coalizao": -4
+          },
+          "factions": {
+            "ruralistas": -6
+          }
+        },
+        "reaction": "Ganha tempo e evita confronto, mas insegurança jurídica no campo é vista pelo agro como sinal de instabilidade para investimento.",
+        "post": {
+          "who": "@tiacleide.zap",
+          "at": "Goiânia",
+          "text": "Aqui no interior essa novela já tá com mais temporada que Amor de Mãe",
+          "likes": 990,
+          "tone": "neutral"
+        },
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🛰️",
+    "region": "nordeste",
+    "from": "AEB - Agência Espacial Brasileira",
+    "title": "Foguete nacional ou parceria estrangeira?",
+    "text": "A AEB quer lançar satélite de sensoriamento próprio, mas há oferta de lançamento mais barato com empresa chinesa em Alcântara.",
+    "options": [
+      {
+        "icon": "🚀",
+        "label": "Investir em foguete nacional",
+        "stamp": "APROVADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 8,
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 1
+          },
+          "factions": {
+            "tecnologica": 6
+          }
+        },
+        "reaction": "Programas espaciais próprios custam caro no curto prazo, mas constroem soberania tecnológica de longo prazo.",
+        "post": {
+          "who": "Prof. Marina",
+          "at": "@profmarina",
+          "text": "Autonomia espacial não é luxo, é estratégia. Que venha o foguete brasileiro! 🚀",
+          "likes": 3200,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "🇨🇳",
+        "label": "Fechar com empresa chinesa",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 2,
+            "economia": 3,
+            "comercio": 4
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {
+            "tecnologica": -2
+          },
+          "relations": {
+            "china": 6,
+            "eua": -4
+          }
+        },
+        "reaction": "Mais barato e rápido, mas gera dependência externa em setor estratégico — dilema clássico entre eficiência e soberania.",
+        "anim": "trucks_leave"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🚌",
+    "region": "sudeste",
+    "from": "Ministério dos Transportes",
+    "title": "Subsídio ao diesel ou trilhos urbanos?",
+    "text": "Prefeituras pedem repasse emergencial para manter tarifas de ônibus; setor ferroviário pede o mesmo valor para expandir metrôs.",
+    "options": [
+      {
+        "icon": "⛽",
+        "label": "Subsidiar diesel do transporte",
+        "stamp": "LIBERADO",
+        "effects": {
+          "axes": {
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "inflacao": -0.2
+          },
+          "factions": {
+            "centrao": 3
+          }
+        },
+        "reaction": "Alívio imediato no bolso do usuário, mas subsídio a combustível fóssil trava a transição para mobilidade mais limpa.",
+        "post": {
+          "who": "Tia Cleide",
+          "at": "@tiacleide.zap",
+          "text": "Graças a Deus, a passagem não subiu esse mês! 🙏",
+          "likes": 1800,
+          "tone": "happy"
+        },
+        "anim": "trucks_leave"
+      },
+      {
+        "icon": "🚇",
+        "label": "Investir em trilhos urbanos",
+        "stamp": "APROVADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 3,
+            "economia": -2
+          },
+          "kpis": {
+            "aprovacao": 1,
+            "educacao": 0
+          },
+          "factions": {
+            "tecnologica": 3
+          }
+        },
+        "reaction": "Investir em trilhos leva anos para maturar, mas reduz emissões e custo de mobilidade no futuro — política de longo prazo.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🏳️‍🌈",
+    "region": "sul",
+    "from": "Ministério dos Direitos Humanos",
+    "title": "Nome social em documentos federais",
+    "text": "Proposta libera inclusão automática de nome social em todos os cadastros federais, sem exigir laudo médico prévio.",
+    "options": [
+      {
+        "icon": "✅",
+        "label": "Sancionar sem exigir laudo",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "direitos": 7,
+            "valores": -2
+          },
+          "kpis": {
+            "aprovacao": -2,
+            "coalizao": -2
+          },
+          "factions": {
+            "religiosos": -5
+          }
+        },
+        "reaction": "Ampliar direitos sem burocracia médica é vitória para autodeterminação, mas custa apoio de bancadas conservadoras.",
+        "post": {
+          "who": "Advogada Ju",
+          "at": "@ju.constituicao",
+          "text": "Dignidade não deveria precisar de laudo. Avanço civilizatório. 🏳️‍⚧️",
+          "likes": 2600,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "📋",
+        "label": "Exigir laudo simplificado",
+        "stamp": "ALTERADO",
+        "effects": {
+          "axes": {
+            "direitos": 2,
+            "valores": 1
+          },
+          "kpis": {
+            "coalizao": 2
+          },
+          "factions": {
+            "religiosos": 2
+          }
+        },
+        "reaction": "Meio-termo que preserva algum controle estatal, mas adia o pleno reconhecimento da identidade de gênero.",
+        "anim": "gavel"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "📉",
+    "region": "nacional",
+    "from": "Tesouro Nacional",
+    "title": "Corte de gastos ou nova meta fiscal?",
+    "text": "Equipe econômica propõe corte linear em ministérios para cumprir meta fiscal; alternativa é renegociar meta com o Congresso.",
+    "options": [
+      {
+        "icon": "✂️",
+        "label": "Cortar gastos ministeriais",
+        "stamp": "DETERMINADO",
+        "effects": {
+          "axes": {
+            "economia": 6,
+            "governanca": 3
+          },
+          "kpis": {
+            "aprovacao": -3,
+            "coalizao": -3,
+            "selic": -0.2
+          }
+        },
+        "reaction": "Disciplina fiscal agrada mercado e reduz risco-país, mas cortes lineares atingem áreas sensíveis e geram atrito político.",
+        "post": {
+          "who": "Economia Hoje",
+          "at": "@economiahoje",
+          "text": "Mercado recebe bem sinal de responsabilidade fiscal. Dólar cai levemente.",
+          "likes": 1500,
+          "tone": "press"
+        },
+        "anim": "market_boom"
+      },
+      {
+        "icon": "🤝",
+        "label": "Renegociar meta fiscal",
+        "stamp": "NEGOCIADO",
+        "effects": {
+          "axes": {
+            "economia": -2,
+            "governanca": -2
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "coalizao": 4,
+            "inflacao": 0.2
+          }
+        },
+        "reaction": "Flexibilizar a meta acalma a base aliada no curto prazo, mas pode minar credibilidade fiscal perante investidores.",
+        "anim": "speech"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🚔",
+    "region": "nordeste",
+    "from": "Secretário de Segurança Estadual",
+    "title": "Força Nacional em disputa por facções",
+    "text": "Governador pede envio da Força Nacional para conter guerra entre facções em presídios. Oposição chama de militarização; base local aprova.",
+    "options": [
+      {
+        "icon": "🛡️",
+        "label": "Enviar Força Nacional",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "seguranca_eixo": 0,
+            "defesa": 6,
+            "direitos": -4
+          },
+          "kpis": {
+            "aprovacao": 3,
+            "seguranca": 0.4
+          },
+          "factions": {
+            "seguranca": 6,
+            "centrao": 2
+          }
+        },
+        "reaction": "Resposta rápida agrada quem pede ordem, mas o uso de tropas federais em crise estadual reacende o debate sobre limites do federalismo.",
+        "post": {
+          "who": "Tio Nando",
+          "at": "@tionando.patriota",
+          "text": "Bandido bom é bandido preso. Presidente agindo!",
+          "likes": 8200,
+          "tone": "faction"
+        },
+        "anim": "military"
+      },
+      {
+        "icon": "📋",
+        "label": "Só apoio técnico",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "defesa": -2,
+            "direitos": 3
+          },
+          "kpis": {
+            "aprovacao": -2,
+            "seguranca": -0.2
+          },
+          "factions": {
+            "seguranca": -4
+          }
+        },
+        "reaction": "Manter a competência estadual evita desgaste com militarização, mas o custo político vem se a violência escalar nos próximos dias.",
+        "post": {
+          "who": "Prof. Marina",
+          "at": "@profmarina",
+          "text": "Segurança pública é problema estrutural, não se resolve com tropa de choque.",
+          "likes": 4100,
+          "tone": "press"
+        },
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🏥",
+    "region": "nacional",
+    "from": "Ministério da Saúde",
+    "title": "Fila de cirurgias eletivas estourou",
+    "text": "Hospitais universitários acumulam fila recorde de cirurgias eletivas. Ministério pede verba extra emergencial via mutirão nacional.",
+    "options": [
+      {
+        "icon": "💉",
+        "label": "Liberar mutirão emergencial",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "governanca": 4,
+            "economia": -3
+          },
+          "kpis": {
+            "aprovacao": 5,
+            "educacao": 0
+          },
+          "factions": {
+            "centrao": 1
+          }
+        },
+        "reaction": "Mutirões aliviam filas e geram imagens positivas, mas dependem de repasse contínuo — sem previsibilidade orçamentária o alívio é temporário.",
+        "post": {
+          "who": "Tia Cleide",
+          "at": "@tiacleide.zap",
+          "text": "Minha vizinha finalmente vai operar a vista, gente! Deus é bom!",
+          "likes": 6700,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "📊",
+        "label": "Priorizar via análise técnica",
+        "stamp": "EM ANÁLISE",
+        "effects": {
+          "axes": {
+            "governanca": 1
+          },
+          "kpis": {
+            "aprovacao": -2
+          }
+        },
+        "factions": {},
+        "reaction": "Cautela técnica evita gasto impulsivo, mas pacientes na fila não esperam relatórios — a demora vira munição para a oposição.",
+        "post": {
+          "who": "Advogada Ju",
+          "at": "@ju.constituicao",
+          "text": "Direito à saúde não pode virar planilha de espera.",
+          "likes": 3300,
+          "tone": "press"
+        },
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🎓",
+    "region": "sudeste",
+    "from": "Reitores de universidades federais",
+    "title": "Greve de docentes ameaça semestre",
+    "text": "Sindicato de professores federais ameaça greve por reposição salarial defasada. Reitores pedem mediação presidencial urgente.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Abrir mesa de negociação",
+        "stamp": "CONVOCADO",
+        "effects": {
+          "axes": {
+            "governanca": 3,
+            "direitos": 2
+          },
+          "kpis": {
+            "aprovacao": 2,
+            "educacao": 0.3
+          },
+          "factions": {
+            "tecnologica": 3
+          }
+        },
+        "reaction": "Negociar diretamente mostra prioridade à educação, mas qualquer reajuste prometido vira compromisso fiscal futuro difícil de cumprir.",
+        "post": {
+          "who": "Economia Hoje",
+          "at": "@economiahoje",
+          "text": "Reajuste no funcionalismo hoje, buraco no orçamento amanhã. Sempre foi assim.",
+          "likes": 5400,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🚫",
+        "label": "Manter posição atual",
+        "stamp": "MANTIDO",
+        "effects": {
+          "axes": {
+            "direitos": -3
+          },
+          "kpis": {
+            "aprovacao": -4,
+            "educacao": -0.3
+          },
+          "factions": {
+            "tecnologica": -5
+          }
+        },
+        "reaction": "Segurar a linha evita novo custo, mas greve prolongada trava matrículas, pesquisa e a imagem do governo junto à comunidade acadêmica.",
+        "post": {
+          "who": "Prof. Marina",
+          "at": "@profmarina",
+          "text": "Universidade pública parada é o país perdendo o futuro em câmera lenta.",
+          "likes": 7100,
+          "tone": "angry"
+        },
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🌳",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Convite para cúpula climática em Bruxelas",
+    "text": "União Europeia convida o Brasil para cúpula sobre metas de desmatamento zero, condicionando acordo comercial a compromissos ambientais.",
+    "options": [
+      {
+        "icon": "✈️",
+        "label": "Aceitar e assumir metas",
+        "stamp": "ACEITO",
+        "effects": {
+          "axes": {
+            "diplomacia": 7,
+            "comercio": 3
+          },
+          "kpis": {
+            "aprovacao": 3
+          },
+          "factions": {
+            "ruralistas": -6
+          },
+          "relations": {
+            "ue": 10,
+            "mercosul": 2
+          }
+        },
+        "reaction": "Assumir metas abre portas comerciais com a Europa, mas irrita a bancada ruralista que teme restrições ao agronegócio de exportação.",
+        "post": {
+          "who": "Faria Lima Insider",
+          "at": "@fl.insider",
+          "text": "Mercado gostou: acordo com UE pode destravar bilhões em exportação verde.",
+          "likes": 4900,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🚜",
+        "label": "Recusar condicionantes",
+        "stamp": "RECUSADO",
+        "effects": {
+          "axes": {
+            "diplomacia": -6,
+            "comercio": -2
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {
+            "ruralistas": 6
+          },
+          "relations": {
+            "ue": -8
+          }
+        },
+        "reaction": "Proteger o agronegócio doméstico agrada a base ruralista, mas fecha uma janela comercial estratégica e isola o país em fóruns climáticos.",
+        "post": {
+          "who": "Tio Nando",
+          "at": "@tionando.patriota",
+          "text": "Soberania nacional não se negocia com europeu! Bem feito, presidente.",
+          "likes": 6300,
+          "tone": "faction"
+        },
+        "anim": "trucks_leave"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🎮",
+    "region": "sudeste",
+    "from": "Ministério do Esporte",
+    "title": "Time de eSports na Olimpíada de Cultura Digital",
+    "text": "Federação quer verba pública para levar seleção brasileira de games a torneio internacional. Bancada conservadora ironiza nas redes.",
+    "options": [
+      {
+        "icon": "💰",
+        "label": "Liberar patrocínio",
+        "stamp": "LIBERADO",
+        "effects": {
+          "axes": {
+            "cultura": 6,
+            "tecnologia": 4
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "factions": {
+            "tecnologica": 5,
+            "religiosos": -2
+          }
+        },
+        "reaction": "Investir em cultura digital rende capital político com jovens, mas expõe o governo a críticas de gasto supérfluo.",
+        "post": {
+          "who": "@pedrao.memes",
+          "at": "2h",
+          "text": "Presidente financiando gamer, e eu aqui pagando boleto sozinho",
+          "likes": 8200,
+          "tone": "happy"
+        },
+        "anim": "celebrate"
+      },
+      {
+        "icon": "🚫",
+        "label": "Negar verba",
+        "stamp": "NEGADO",
+        "effects": {
+          "axes": {
+            "cultura": -3,
+            "tecnologia": -2
+          },
+          "kpis": {
+            "aprovacao": -1
+          },
+          "factions": {
+            "tecnologica": -4
+          }
+        },
+        "reaction": "Recusar apoio a novas formas de cultura pode soar conservador demais para um governo jovem.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🤖",
+    "region": "nacional",
+    "from": "Ministério da Ciência e Tecnologia",
+    "title": "Regulação de IA generativa",
+    "text": "Projeto propõe exigir selo de conteúdo gerado por IA em campanhas e notícias. Big techs pressionam contra, defensores da transparência pressionam a favor.",
+    "options": [
+      {
+        "icon": "✅",
+        "label": "Sancionar selo obrigatório",
+        "stamp": "SANCIONADO",
+        "effects": {
+          "axes": {
+            "tecnologia": -3,
+            "direitos": 6,
+            "governanca": 4
+          },
+          "kpis": {
+            "aprovacao": 3
+          },
+          "factions": {
+            "tecnologica": -6
+          }
+        },
+        "reaction": "Regular IA fortalece a transparência informacional, mas cria atrito com o setor tecnológico e pode elevar custos de compliance.",
+        "post": {
+          "who": "@profmarina",
+          "at": "1h",
+          "text": "Selo de IA é o mínimo. Eleitor tem direito de saber quem — ou o quê — fez aquele post.",
+          "likes": 5400,
+          "tone": "press"
+        },
+        "anim": "gavel"
+      },
+      {
+        "icon": "❌",
+        "label": "Vetar exigência",
+        "stamp": "VETADO",
+        "effects": {
+          "axes": {
+            "tecnologia": 5,
+            "direitos": -4
+          },
+          "kpis": {
+            "aprovacao": -2
+          },
+          "factions": {
+            "tecnologica": 6
+          }
+        },
+        "reaction": "Vetar agrada empresas de tecnologia, mas abre o governo a acusações de negligência frente à desinformação.",
+        "anim": "gavel"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🌎",
+    "region": "exterior",
+    "from": "Itamaraty",
+    "title": "Acordo comercial com bloco asiático",
+    "text": "Negociadores fecharam termos preliminares para reduzir tarifas com países do Sudeste Asiático. Indústria nacional teme concorrência desleal.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Assinar protocolo",
+        "stamp": "ASSINADO",
+        "effects": {
+          "axes": {
+            "comercio": 8,
+            "diplomacia": 6
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "centrao": -2
+          },
+          "relations": {
+            "china": 4
+          }
+        },
+        "reaction": "Abrir mercado amplia exportações e laços diplomáticos, mas expõe setores protegidos à concorrência — o clássico dilema do livre-comércio.",
+        "post": {
+          "who": "@economiahoje",
+          "at": "3h",
+          "text": "Redução de tarifas com a Ásia pode baratear insumos, mas cadeia industrial nacional já entrou em alerta.",
+          "likes": 3100,
+          "tone": "neutral"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🛡️",
+        "label": "Adiar e proteger indústria",
+        "stamp": "ADIADO",
+        "effects": {
+          "axes": {
+            "comercio": -5,
+            "diplomacia": -3
+          },
+          "kpis": {
+            "aprovacao": 1
+          },
+          "factions": {
+            "centrao": 3
+          },
+          "relations": {
+            "china": -3
+          }
+        },
+        "reaction": "Proteger a indústria nacional agrada lobbies internos, mas o protecionismo pode custar credibilidade em futuras negociações.",
+        "anim": "calm"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🚧",
+    "region": "norte",
+    "from": "Ministério da Infraestrutura",
+    "title": "Rodovia atravessando área de nascentes",
+    "text": "Obra de duplicação encurtaria rota logística em 40%, mas passa perto de área de recarga hídrica sensível. Ambientalistas e transportadoras se enfrentam.",
+    "options": [
+      {
+        "icon": "🏗️",
+        "label": "Autorizar traçado original",
+        "stamp": "AUTORIZADO",
+        "effects": {
+          "axes": {
+            "economia": 5,
+            "sociedade": -4
+          },
+          "kpis": {
+            "aprovacao": -2
+          },
+          "factions": {
+            "ruralistas": 5
+          }
+        },
+        "reaction": "Priorizar logística reduz custos de transporte, mas o dano ambiental pode gerar passivos judiciais e desgaste de imagem no exterior.",
+        "post": {
+          "who": "@tiacleide.zap",
+          "at": "4h",
+          "text": "filho essa estrada vai passar em cima do rio que minha vó bebia água quando era criança 😢",
+          "likes": 6700,
+          "tone": "angry"
+        },
+        "anim": "trucks_block"
+      },
+      {
+        "icon": "🌱",
+        "label": "Exigir novo traçado",
+        "stamp": "REVISADO",
+        "effects": {
+          "axes": {
+            "economia": -3,
+            "sociedade": 5
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "factions": {
+            "ruralistas": -4
+          }
+        },
+        "reaction": "Preservar a área ganha apoio ambiental, mas atrasa a obra e encarece o projeto — o custo político do licenciamento ambiental.",
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "📱",
+    "region": "nacional",
+    "from": "Secretaria de Comunicação",
+    "title": "Vídeo antigo viraliza fora de contexto",
+    "text": "Um trecho cortado de discurso seu de anos atrás viraliza como se fosse recente. Imprensa pede posicionamento imediato.",
+    "options": [
+      {
+        "icon": "🎬",
+        "label": "Postar vídeo completo",
+        "stamp": "POSTADO",
+        "effects": {
+          "axes": {
+            "cultura": 2
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "factions": {}
+        },
+        "reaction": "Mostrar o contexto original neutraliza boataria: transparência costuma vencer o corte tendencioso, mas nem sempre viraliza igual.",
+        "post": {
+          "who": "Pedro Memes",
+          "at": "@pedrao.memes",
+          "text": "o vídeo completo tem 40 minutos, ninguém vai assistir mano",
+          "likes": 8200,
+          "tone": "neutral"
+        },
+        "anim": "phones_live"
+      },
+      {
+        "icon": "🤫",
+        "label": "Ignorar e deixar passar",
+        "stamp": "SEM COMENTÁRIOS",
+        "effects": {
+          "axes": {},
+          "kpis": {
+            "aprovacao": -2
+          },
+          "factions": {}
+        },
+        "reaction": "Silêncio pode ser confundido com confissão; na era das redes, o vácuo informativo é preenchido por quem grita mais alto.",
+        "anim": "phones_live"
+      },
+      {
+        "icon": "⚖️",
+        "label": "Notificar plataforma por descontextualização",
+        "stamp": "NOTIFICADO",
+        "effects": {
+          "axes": {
+            "direitos": -2
+          },
+          "kpis": {
+            "aprovacao": -3
+          },
+          "factions": {}
+        },
+        "reaction": "Tentar remover o conteúdo pode gerar Efeito Streisand: a busca pela censura amplia o alcance do que se queria esconder.",
+        "post": {
+          "who": "Advogada Ju",
+          "at": "@ju.constituicao",
+          "text": "pedir remoção de vídeo criticando presidente é osso duro de engolir juridicamente",
+          "likes": 5400,
+          "tone": "press"
+        },
+        "anim": "phones_live"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🏛️",
+    "region": "nacional",
+    "from": "Líder do Governo na Câmara",
+    "title": "Partido pequeno ameaça deixar a base",
+    "text": "Uma legenda de nove deputados reclama de pouco espaço em cargos e ameaça migrar para a oposição antes de votação importante.",
+    "options": [
+      {
+        "icon": "🤝",
+        "label": "Ceder uma secretaria",
+        "stamp": "NEGOCIADO",
+        "effects": {
+          "axes": {
+            "poder": -2
+          },
+          "kpis": {
+            "coalizao": 4
+          },
+          "factions": {
+            "centrao": 3
+          }
+        },
+        "reaction": "O presidencialismo de coalizão cobra seu preço em cargos: manter maioria no Congresso exige distribuir poder, não só discursos.",
+        "anim": "speech"
+      },
+      {
+        "icon": "🚪",
+        "label": "Deixar sair sem drama",
+        "stamp": "LIBERADO",
+        "effects": {
+          "axes": {
+            "poder": 2
+          },
+          "kpis": {
+            "coalizao": -4
+          },
+          "factions": {
+            "centrao": -3
+          }
+        },
+        "reaction": "Perder base reduz a margem de manobra em votações futuras, mas evita precedente de chantagem por cargos.",
+        "post": {
+          "who": "Faria Lima Insider",
+          "at": "@fl.insider",
+          "text": "governo perdendo aliado por 9 votos, mercado observando estabilidade política",
+          "likes": 3100,
+          "tone": "neutral"
+        },
+        "anim": "vote_no"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🗺️",
+    "region": "sudeste",
+    "from": "Governador de estado grande",
+    "title": "Prefeitura e governo estadual em guerra por verba",
+    "text": "Prefeito de capital e governador do mesmo estado disputam publicamente uma obra federal, cada um exigindo que fique com o crédito.",
+    "options": [
+      {
+        "icon": "🎗️",
+        "label": "Anunciar obra com os dois juntos",
+        "stamp": "MEDIADO",
+        "effects": {
+          "axes": {
+            "governanca": 3
+          },
+          "kpis": {
+            "aprovacao": 2
+          },
+          "factions": {}
+        },
+        "reaction": "Federalismo cooperativo funciona quando o presidente arbitra sem escolher lado: soma-se crédito em vez de disputar espaço.",
+        "anim": "speech"
+      },
+      {
+        "icon": "🏙️",
+        "label": "Priorizar o prefeito aliado",
+        "stamp": "DEFINIDO",
+        "effects": {
+          "axes": {
+            "poder": 3
+          },
+          "kpis": {
+            "coalizao": 2
+          },
+          "factions": {
+            "centrao": -2
+          }
+        },
+        "reaction": "Favorecer um nível de governo alimenta rivalidade regional e pode custar apoio do governador em pautas futuras no Congresso.",
+        "post": {
+          "who": "Tia Cleide",
+          "at": "@tiacleide.zap",
+          "text": "aqui na minha rua a obra nem começou mas os dois já brigaram na TV",
+          "likes": 4700,
+          "tone": "neutral"
+        },
+        "anim": "protest"
+      }
+    ],
+    "pool": "geral"
+  },
+  {
+    "icon": "🕊️",
+    "region": "nacional",
+    "from": "Frente Parlamentar Evangélica",
+    "title": "Projeto de lei sobre ensino religioso divide bancadas",
+    "text": "Bancada religiosa pressiona por ampliar carga de ensino religioso confessional nas escolas públicas; entidades laicas protestam.",
+    "options": [
+      {
+        "icon": "📿",
+        "label": "Apoiar ampliação confessional",
+        "stamp": "APOIADO",
+        "effects": {
+          "axes": {
+            "valores": 6,
+            "direitos": -3
+          },
+          "kpis": {
+            "coalizao": 3
+          },
+          "factions": {
+            "religiosos": 5
+          }
+        },
+        "reaction": "Ceder à bancada religiosa fortalece a coalizão, mas tensiona o princípio constitucional de laicidade do Estado.",
+        "post": {
+          "who": "Tio Nando",
+          "at": "@tionando.patriota",
+          "text": "finalmente um presidente que respeita os valores da família brasileira",
+          "likes": 9100,
+          "tone": "faction"
+        },
+        "anim": "speech"
+      },
+      {
+        "icon": "🏫",
+        "label": "Defender ensino não-confessional",
+        "stamp": "MANTIDO LAICO",
+        "effects": {
+          "axes": {
+            "direitos": 4,
+            "valores": -4
+          },
+          "kpis": {
+            "coalizao": -3
+          },
+          "factions": {
+            "religiosos": -4
+          }
+        },
+        "reaction": "Manter a laicidade escolar agrada juristas e educadores, mas custa apoio de uma bancada numerosa e organizada.",
+        "post": {
+          "who": "Prof. Marina",
+          "at": "@profmarina",
+          "text": "escola pública é de todas as crenças e de nenhuma, ponto final",
+          "likes": 6600,
+          "tone": "happy"
+        },
+        "anim": "gavel"
+      }
+    ],
+    "pool": "geral"
+  }
+]

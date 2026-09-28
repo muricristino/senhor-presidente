@@ -315,13 +315,8 @@ async function runMandate(countryId: string, start: GameState, fresh: boolean, p
   if (!fresh) void g.say(`Bem-vindo de volta, Presidente. Estamos em ${dateLabel(g.state, g.state.month)}.`);
   director.refillDispatches(g.state);
 
-  // Abertura: dá alguns segundos para a primeira crise chegar; se não chegar, começam os despachos.
-  if (fresh) {
-    g.desk.innerHTML = '<div class="desk-waiting"><div>📂</div>Primeiro dia no Planalto. A assessoria traz o primeiro dossiê…</div>';
-    for (let i = 0; i < 3 && director.bigInFlight; i++) await wait(1000);
-    const opening = director.takeBig(g.state);
-    if (opening) await playBig(opening);
-  }
+  // Abertura: sem espera. Os despachos do acervo cobrem o começo enquanto o Claude escreve
+  // a primeira crise e a primeira leva de despachos personalizados.
   saveGame(countryId, g.state);
   let sinceBig = 1;
   let sinceInterview = 2;
